@@ -47,8 +47,8 @@ ebsynth -style $PATH/source_style.png
   </thead>
   <tbody>
     <tr>
-      <td rowspan=2>Intel® Core™ i7-3537U CPU @ 2.00GHz × 4 </br> Ubuntu 14.04 LTS </td>
-      <td rowspan=2>uniformity: 3500 </br> 
+      <td rowspan=3>Intel® Core™ i7-3537U CPU @ 2.00GHz × 4 </br> Ubuntu 14.04 LTS </td>
+      <td rowspan=3>uniformity: 3500 </br> 
                     patchsize: 5 </br> 
                     pyramidlevels: 7 </br> 
                     searchvoteiters: 6 </br> 
@@ -65,6 +65,10 @@ ebsynth -style $PATH/source_style.png
     <tr>
       <td rowspan=1>pmap(1)</td>
       <td> total kB   (Kbytes)174152  (RSS)126104  (Dirty)124612 </br> verbose : pmap_examples_1-id_100324.log</td>
+    </tr>
+    <tr>
+      <td rowspan=1>gprof</td>
+      <td> verbose : gprof_examples_1-id_100324.log</td>
     </tr>
   </tbody>
 </table>
