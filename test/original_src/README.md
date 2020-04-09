@@ -47,8 +47,8 @@ ebsynth -style $PATH/source_style.png
   </thead>
   <tbody>
     <tr>
-      <td rowspan=2>Intel® Core™ i7-3537U CPU @ 2.00GHz × 4 </br> Ubuntu 14.04 LTS </td>
-      <td rowspan=2>uniformity: 3500 </br> 
+      <td rowspan=3>Intel® Core™ i7-3537U CPU @ 2.00GHz × 4 </br> Ubuntu 14.04 LTS </td>
+      <td rowspan=3>uniformity: 3500 </br> 
                     patchsize: 5 </br> 
                     pyramidlevels: 7 </br> 
                     searchvoteiters: 6 </br> 
