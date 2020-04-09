@@ -36,19 +36,12 @@ ebsynth -style $PATH/source_style.png
 
 ## Benchmarks
 
-*System*:
-```
-
-```
-
-*Tests*:
-
 <table>
   <thead>
     <tr>
       <th>System</th>
       <th>Stylit Params</th>
-      <th>Test</th>
+      <th>Benchmark</th>
       <th>Output</th>
   </tr>
   </thead>
@@ -68,8 +61,8 @@ ebsynth -style $PATH/source_style.png
       <td> 266.92s user 0.14s system </br> 372% cpu 1:11.74 total </td>
     </tr>
     <tr>
-      <td rowspan=1></td>
-      <td></td>
+      <td rowspan=1>pmap(1)</td>
+      <td>pmap_examples_1-id_100324.log </br> total kB   (Kbytes)174152  (RSS)126104  (Dirty)124612</td>
     </tr>
   </tbody>
 </table>
