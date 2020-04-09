@@ -1,6 +1,6 @@
 # StyLit: Illumination-Guided Stylization of 3D Renderings
 
-This repository contains the original source code of StyLit [7] taken from [here](https://github.com/jamriska/ebsynth). Citation can be found [below](#citation).
+This repository contains the original source code of StyLit [7](#references) taken from [here](https://github.com/jamriska/ebsynth). Citation can be found [below](#citation).
 
 
 ## Basic usage
