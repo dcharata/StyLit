@@ -1,6 +1,6 @@
 # StyLit: Illumination-Guided Stylization of 3D Renderings
 
-This repository contains the original source code of StyLit [7](#references) taken from [here](https://github.com/jamriska/ebsynth). Citation can be found [below](#citation).
+This repository contains the original source code of StyLit [[7]](#references) taken from [here](https://github.com/jamriska/ebsynth). Citation can be found [below](#citation).
 
 
 ## Basic usage
@@ -38,7 +38,6 @@ ebsynth -style source_style.png
 *System*:
 ```
 
-Ubuntu 14.04 LTS
 ```
 
 *Tests*:
@@ -47,22 +46,29 @@ Ubuntu 14.04 LTS
   <thead>
     <tr>
       <th>System</th>
-      <th>Code</th>
-      <th>Course</th>
-      <th>Semester</th>
+      <th>Stylit Params</th>
+      <th>Test</th>
+      <th>Output</th>
   </tr>
   </thead>
   <tbody>
     <tr>
-      <td rowspan=2>Intel® Core™ i7-3537U CPU @ 2.00GHz × 4</td>
-      <td rowspan=1>508</td>
-      <td>Formal Language and Automata</td>
-      <td>Fall (MS) </td>
+      <td rowspan=2>Intel® Core™ i7-3537U CPU @ 2.00GHz × 4 </br> Ubuntu 14.04 LTS </td>
+      <td rowspan=2>uniformity: 3500 </br> 
+                    patchsize: 5 </br> 
+                    pyramidlevels: 7 </br> 
+                    searchvoteiters: 6 </br> 
+                    patchmatchiters: 4 </br> 
+                    stopthreshold: 5 </br> 
+                    extrapass3x3: no </br> 
+                    backend: cpu </br>
+                    weight 0.66</td>
+      <td>time(1)</td>
+      <td> 266.92s user 0.14s system 372% cpu 1:11.74 total </td>
     </tr>
     <tr>
-      <td rowspan=1>512</td>
-      <td>Introduction to Data Structures and Algorithms</td>
-      <td>Fall / Spring (MS)
+      <td rowspan=1></td>
+      <td></td>
     </tr>
   </tbody>
 </table>
