@@ -13,7 +13,7 @@ Run one of the build scripts, depending on your current system. Executable shoul
 
 ```
 PATH=examples/1;
-ebsynth -style $PATH/source_style.png
+./bin/ebsynth -style $PATH/source_style.png
 -guide $PATH/source_fullgi.png $PATH/target_fullgi.png -weight 0.66
 -guide $PATH/source_dirdif.png $PATH/target_dirdif.png -weight 0.66
 -guide $PATH/source_indirb.png $PATH/target_indirb.png -weight 0.66
