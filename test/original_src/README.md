@@ -12,11 +12,12 @@ Run one of the build scripts, depending on your current system. Executable shoul
 ### Run
 
 ```
-ebsynth -style source_style.png
--guide source_fullgi.png target_fullgi.png -weight 0.66
--guide source_dirdif.png target_dirdif.png -weight 0.66
--guide source_indirb.png target_indirb.png -weight 0.66
--output output.png
+PATH=examples/1;
+ebsynth -style $PATH/source_style.png
+-guide $PATH/source_fullgi.png $PATH/target_fullgi.png -weight 0.66
+-guide $PATH/source_dirdif.png $PATH/target_dirdif.png -weight 0.66
+-guide $PATH/source_indirb.png $PATH/target_indirb.png -weight 0.66
+-output output/output.png
 ```
 
   #### Options
@@ -64,7 +65,7 @@ ebsynth -style source_style.png
                     backend: cpu </br>
                     weight 0.66</td>
       <td>time(1)</td>
-      <td> 266.92s user 0.14s system 372% cpu 1:11.74 total </td>
+      <td> 266.92s user 0.14s system </br> 372% cpu 1:11.74 total </td>
     </tr>
     <tr>
       <td rowspan=1></td>
