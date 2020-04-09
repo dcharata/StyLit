@@ -13,7 +13,7 @@ Run one of the build scripts, depending on your current system. Executable shoul
 
 ```
 PATH=examples/1;
-ebsynth -style $PATH/source_style.png
+./bin/ebsynth -style $PATH/source_style.png
 -guide $PATH/source_fullgi.png $PATH/target_fullgi.png -weight 0.66
 -guide $PATH/source_dirdif.png $PATH/target_dirdif.png -weight 0.66
 -guide $PATH/source_indirb.png $PATH/target_indirb.png -weight 0.66
@@ -73,7 +73,18 @@ ebsynth -style $PATH/source_style.png
   </tbody>
 </table>
 
+#### Usage:
 
+- [`time(1)`](http://man7.org/linux/man-pages/man1/time.1.html) :
+  - Run `$ time ./bin/ebsynth ....`  (refer to [#run](#run) for full list of arguments).
+- [`pmap(1)`](http://man7.org/linux/man-pages/man1/pmap.1.html) :
+  - Run `$ ./bin/ebsynth ...`    (refer to [#run](#run) for full list of arguments).
+  - While the above is running, open a new tab and run `$ pid_ebsynth="$(pgrep ebsynth)"; pmap -X $pid_ebsynth`
+- [`gprof`](http://man7.org/linux/man-pages/man1/gprof.1.html) :
+  - Add `-Wall -pg -O1` flag in the build script like in `build-linux-cpu_only_gprof.sh`.
+  - Compile.
+  - Run `$ ./bin/ebsynth ...`    (refer to [#run](#run) for full list of arguments). A `gmon.out` file should be generated.
+  - Run `$ gprof ./bin/ebsynth` (you don't have to provide arguments here).
 
 --------------------------------------------------------------------------
 
