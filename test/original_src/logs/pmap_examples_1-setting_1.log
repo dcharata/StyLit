@@ -1,0 +1,63 @@
+uniformity: 3500
+patchsize: 5
+pyramidlevels: 7
+searchvoteiters: 6
+patchmatchiters: 4
+stopthreshold: 5
+extrapass3x3: no
+backend: cpu
+weight 0.66
+
+Address           Kbytes     RSS   Dirty Mode  Mapping
+0000000000400000    3100     188       0 r-x-- ebsynth
+0000000000907000       4       4       4 r---- ebsynth
+0000000000908000       4       4       4 rw--- ebsynth
+0000000001f56000   68604   65596   65596 rw---   [ anon ]
+00007f7a637ad000       4       0       0 -----   [ anon ]
+00007f7a637ae000    8192       8       8 rw---   [ anon ]
+00007f7a63fae000       4       0       0 -----   [ anon ]
+00007f7a63faf000   17812    9628    9628 rw---   [ anon ]
+00007f7a65278000       4       0       0 -----   [ anon ]
+00007f7a65279000   57364   49180   49180 rw---   [ anon ]
+00007f7a68a7e000      12       8       0 r-x-- libdl-2.19.so
+00007f7a68a81000    2044       0       0 ----- libdl-2.19.so
+00007f7a68c80000       4       4       4 r---- libdl-2.19.so
+00007f7a68c81000       4       4       4 rw--- libdl-2.19.so
+00007f7a68c82000    1784     464       0 r-x-- libc-2.19.so
+00007f7a68e40000    2048       0       0 ----- libc-2.19.so
+00007f7a69040000      16      16      16 r---- libc-2.19.so
+00007f7a69044000       8       8       8 rw--- libc-2.19.so
+00007f7a69046000      20      16      16 rw---   [ anon ]
+00007f7a6904b000     100      72       0 r-x-- libpthread-2.19.so
+00007f7a69064000    2044       0       0 ----- libpthread-2.19.so
+00007f7a69263000       4       4       4 r---- libpthread-2.19.so
+00007f7a69264000       4       4       4 rw--- libpthread-2.19.so
+00007f7a69265000      16       4       4 rw---   [ anon ]
+00007f7a69269000      88      20       0 r-x-- libgcc_s.so.1
+00007f7a6927f000    2044       0       0 ----- libgcc_s.so.1
+00007f7a6947e000       4       4       4 r---- libgcc_s.so.1
+00007f7a6947f000       4       4       4 rw--- libgcc_s.so.1
+00007f7a69480000     184      76       0 r-x-- libgomp.so.1.0.0
+00007f7a694ae000    2044       0       0 ----- libgomp.so.1.0.0
+00007f7a696ad000       4       4       4 r---- libgomp.so.1.0.0
+00007f7a696ae000       4       4       4 rw--- libgomp.so.1.0.0
+00007f7a696af000    1044     120       0 r-x-- libm-2.19.so
+00007f7a697b4000    2044       0       0 ----- libm-2.19.so
+00007f7a699b3000       4       4       4 r---- libm-2.19.so
+00007f7a699b4000       4       4       4 rw--- libm-2.19.so
+00007f7a699b5000    1052     424       0 r-x-- libstdc++.so.6.0.24
+00007f7a69abc000    2044       0       0 ----- libstdc++.so.6.0.24
+00007f7a69cbb000      32      32      32 r---- libstdc++.so.6.0.24
+00007f7a69cc3000       8       8       8 rw--- libstdc++.so.6.0.24
+00007f7a69cc5000      12       4       4 rw---   [ anon ]
+00007f7a69cc8000     140     116       0 r-x-- ld-2.19.so
+00007f7a69eaa000      28      28      28 rw---   [ anon ]
+00007f7a69ee9000       4       4       4 rw---   [ anon ]
+00007f7a69eea000       4       4       4 r---- ld-2.19.so
+00007f7a69eeb000       4       4       4 rw--- ld-2.19.so
+00007f7a69eec000       4       4       4 rw---   [ anon ]
+00007ffd94031000     136      20      20 rw---   [ stack ]
+00007ffd940e4000       8       4       0 r-x--   [ anon ]
+ffffffffff600000       4       0       0 r-x--   [ anon ]
+---------------- ------- ------- ------- 
+total kB          174152  126104  124612
