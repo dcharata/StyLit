@@ -56,7 +56,8 @@ ebsynth -style $PATH/source_style.png
                     stopthreshold: 5 </br> 
                     extrapass3x3: no </br> 
                     backend: cpu </br>
-                    weight 0.66</td>
+                    weight 0.66 </br>
+                    build: linux-cpu_only </td>
       <td>time(1)</td>
       <td> 266.92s user 0.14s system </br> 372% cpu 1:11.74 total </td>
     </tr>
