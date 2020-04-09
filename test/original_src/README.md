@@ -66,6 +66,10 @@ ebsynth -style $PATH/source_style.png
       <td rowspan=1>pmap(1)</td>
       <td> total kB   (Kbytes)174152  (RSS)126104  (Dirty)124612 </br> verbose : pmap_examples_1-id_100324.log</td>
     </tr>
+    <tr>
+      <td rowspan=1>gprof</td>
+      <td> verbose : gprof_examples_1-id_100324.log</td>
+    </tr>
   </tbody>
 </table>
 
