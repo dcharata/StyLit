@@ -1,13 +1,3 @@
-uniformity: 3500
-patchsize: 5
-pyramidlevels: 7
-searchvoteiters: 6
-patchmatchiters: 4
-stopthreshold: 5
-extrapass3x3: no
-backend: cpu
-weight 0.66
-
 Address           Kbytes     RSS   Dirty Mode  Mapping
 0000000000400000    3100     188       0 r-x-- ebsynth
 0000000000907000       4       4       4 r---- ebsynth
