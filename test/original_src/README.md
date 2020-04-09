@@ -70,6 +70,29 @@ PATH=examples/1;
       <td rowspan=1>gprof</td>
       <td> verbose : gprof_examples_1-id_100324.log</td>
     </tr>
+    <tr>
+      <td rowspan=3>Intel® Core™ i7-8700K CPU @ 3.70GHz × 12 </br> Ubuntu 18.04.3 LTS </br> GeForce GTX 1080 Ti/PCIe/SSE2 </td>
+      <td rowspan=3>uniformity: 3500 </br> 
+                    patchsize: 5 </br> 
+                    pyramidlevels: 7 </br> 
+                    searchvoteiters: 6 </br> 
+                    patchmatchiters: 4 </br> 
+                    stopthreshold: 5 </br> 
+                    extrapass3x3: no </br> 
+                    backend: cpu </br>
+                    weight 0.66 </br>
+                    build: linux-cpu+cuda</td>
+      <td>time</td>
+      <td> 0 min 1.752 sec </br> verbose: time_gpu_examples_1.log </td>
+    </tr>
+    <tr>
+      <td rowspan=1>pmap</td>
+      <td> verbose : pmap_gpu_examples_1.log </td>
+    </tr>
+    <tr>
+      <td rowspan=1>gprof</td>
+      <td> cannot compile with profiler options using nvcc</td>
+    </tr>
   </tbody>
 </table>
 
