@@ -57,13 +57,14 @@ ebsynth -style $PATH/source_style.png
                     extrapass3x3: no </br> 
                     backend: cpu </br>
                     weight 0.66 </br>
-                    build: linux-cpu_only </td>
+                    build: linux-cpu_only </br>
+                    log id: #100324</td>
       <td>time(1)</td>
-      <td> 266.92s user 0.14s system </br> 372% cpu 1:11.74 total </td>
+      <td> 1 min 12.74 sec </br> verbose: time(1)_examples_1-id_100324.log </td>
     </tr>
     <tr>
       <td rowspan=1>pmap(1)</td>
-      <td>pmap_examples_1-id_100324.log </br> total kB   (Kbytes)174152  (RSS)126104  (Dirty)124612</td>
+      <td> total kB   (Kbytes)174152  (RSS)126104  (Dirty)124612 </br> verbose : pmap_examples_1-id_100324.log</td>
     </tr>
   </tbody>
 </table>
