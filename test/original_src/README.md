@@ -73,7 +73,9 @@ ebsynth -style $PATH/source_style.png
   </tbody>
 </table>
 
+#### Usage:
 
+- `time(1)` : run the cmd - `$ time ./bin/ebsynth ....`  (refer to #run for full list of arguments).
 
 --------------------------------------------------------------------------
 
