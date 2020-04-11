@@ -1,7 +1,8 @@
 '''
 This script renders the Light Path Expressions   \
 
-USAGE : blender --background <filename>.blend --factory-startup --python lpe_render.py -- --type=full --model=Sphere --output_dir=./ --resolution=20x20
+USAGE : blender --background <filename>.blend --factory-startup --python lpe_render.py -- 
+--type=full --model=Sphere --output_dir=./ --resolution=1200x912
 '''
 
 import bpy
@@ -47,13 +48,13 @@ def execute_blender(lpe_type, model_pth, output_pth, resolution):
     if model_pth != "Sphere":
         blender_instance.import_model(model_pth)
     filename = model_pth.split('.')[0].split('/')[-1]
-    # context.view_layer.objects.active = bpy.data.objects[filename]
+    context.view_layer.objects.active = bpy.data.objects[filename]
     width = int(resolution.split('x')[0])
     height = int(resolution.split('x')[1])
     blender_instance.render_modality(lpe_type, output_pth, width, height)
     bpy.ops.object.select_all(action='DESELECT')
-    # bpy.data.objects[filename].select_set(True)
-    # bpy.ops.object.delete()
+    bpy.data.objects[filename].select_set(True)
+    bpy.ops.object.delete()
 
 
 def main():
