@@ -1,0 +1,22 @@
+{
+    "inputs": {
+        "sourceGuideImagePaths": [
+            "path1",
+            "path2"
+        ],
+        "targetGuideImagePaths": [
+            "path3",
+            "path4"
+        ],
+        "sourceStyleImagePaths": [
+            "path5",
+            "path6"
+        ]
+    },
+    "outputs": {
+        "targetStyleImagePaths": [
+            "path7",
+            "path8"
+        ]
+    }
+}
