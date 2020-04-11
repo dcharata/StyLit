@@ -8,6 +8,7 @@
 #include <cfloat>
 #include <cmath>
 #include <cstring>
+#include <iostream>
 
 #ifdef __APPLE__
 #include <dispatch/dispatch.h>
@@ -383,6 +384,9 @@ void updateOmega(A2i &Omega, const V2i &size_of_target_B, const int patchWidth,
   }
 }
 
+// this function calculates the sum of the omega values in the patch of a source pixel
+// bxy is a value in the NNF (an index in the source)
+// this computes the
 static int patchOmega(const int patchWidth, const V2i &bxy, const A2i &Omega) {
   const int r = patchWidth / 2;
 
@@ -402,23 +406,47 @@ static int patchOmega(const int patchWidth, const V2i &bxy, const A2i &Omega) {
   return sum;
 }
 
+// FUNC is PatchSSD_Split, which is a struct whose operator() calculates error for a particular NNF location.
+// axy are coordinates in the NNF (this function sets NNF(axy) = bxy if it is beneficial)
+// N is the NNF
+// E is the error of the mappings contained in the NNF
+// omegaBest is (target area / source area) * patch area.
+// lambda is something like 3500
 template <typename FUNC>
 bool tryPatch(FUNC patchError, const V2i &size_of_target_B, int patchWidth, const V2i &axy,
               const V2i &bxy, A2V2i &N, A2f &E, A2i &Omega, float omegaBest,
               float lambda) {
+
+  // calculate the sum of omega values of the source pixel at N(xay) divided
+  // by the area of a patch, which is divided by (target area / source area) * patch area
   const float curOcc = (float(patchOmega(patchWidth, N(axy), Omega)) /
                         float(patchWidth * patchWidth)) /
                        omegaBest;
+
+  // calculate the sum of omega values of the source pixel at N(xay) divided
+  // by the area of a patch, which is divided by (target area / source area) * patch area
   const float newOcc = (float(patchOmega(patchWidth, bxy, Omega)) /
                         float(patchWidth * patchWidth)) /
                        omegaBest;
 
+  // get the error for the current assignment in the NNF
   const float curErr = E(axy);
+  // calculate the error for the possible new assignment in the NNF
   const float newErr =
       patchError(patchWidth, axy, bxy, curErr + lambda * curOcc);
 
+  // if the newErr is low and the sum of omega values of the source patch at
+  // bxy is low (i.e. lambda * newOcc is low), then update the NNF by setting
+  // NFF(axy) = bxy
+  // lambda * newOcc is low when the possible new patch has not been used too
+  // much. This means that we only use this patch if it is not overused, which
+  // encourages uniform use of source patches.
+  // I think we multiply by a large lambda so that the small newOcc/curOcc values
+  // are omparable to he big error values
   if ((newErr + lambda * newOcc) < (curErr + lambda * curOcc)) {
+    // increase the omega values of source patch centered at bxy
     updateOmega(Omega, size_of_target_B, patchWidth, axy, bxy, +1);
+    // decrease the omega values of source patch centered at N(axy)
     updateOmega(Omega, size_of_target_B, patchWidth, axy, N(axy), -1);
     N(axy) = bxy;
     E(axy) = newErr;
@@ -431,6 +459,10 @@ bool tryPatch(FUNC patchError, const V2i &size_of_target_B, int patchWidth, cons
 // size_of_target_B - I renamed this from sizeA because it is in fact not the size of the source A/A', but rather the size of the target B/B' and the NNF.
 // size_of_source_A - I also renamed this to make sense.
 // FUNC is PatchSSD_Split, which is a struct whose operator() calculates error for a particular NNF location.
+// lambda is something like 3500 (it is the uniformityWeight in ebsynthCpu)
+// N is the NNF of the current level that is being filled. The NNF is alway initialized by the time it gets here.
+// E is a target_size array of floats
+// Omega is a source size array of ints
 template <typename FUNC>
 void patchmatch(const V2i &size_of_target_B, const V2i &size_of_source_A, const int patchWidth,
                 FUNC patchError, const float lambda, const int numIters,
@@ -504,60 +536,96 @@ void patchmatch(const V2i &size_of_target_B, const V2i &size_of_source_A, const 
       const int threadId = omp_get_thread_num();
 #endif
 
+          //
           const int _y0 = threadId * tileHeight;
           const int _y1 = threadId == numTiles - 1
                               ? size_of_target_B(1)
                               : std::min(_y0 + tileHeight, size_of_target_B(1));
 
+          // if we are in an odd iteration, we move down the tile and to the
+          // right. If we are in an even iteration, we move up the tile and to
+          // the left. It looks like a tile is a horizontal strip that runs
+          // across the entire width of the image.
           const int q = odd ? 1 : -1;
           const int x0 = odd ? 0 : size_of_target_B(0) - 1;
           const int y0 = odd ? _y0 : _y1 - 1;
           const int x1 = odd ? size_of_target_B(0) : -1;
           const int y1 = odd ? _y1 : _y0 - 1;
 
+          // each thread goes through all of the pixels in its tile, first
+          // performing the propagation step, and then performing the random
+          // search step.
           for (int y = y0; y != y1; y += q)
             for (int x = x0; x != x1; x += q) {
+
+              // PROPAGATION STEP
+              // this branch checks to make sure the neighbor pixel used in the
+              // propagation step actually exists
               if (odd ? (x > 0) : (x < size_of_target_B(0) - 1)) {
+                // take the value of the NNF from the horizontal neighbor
                 V2i n = N(x - q, y);
+                // get the horizontal neighbor of the value from the NNF
                 n[0] += q;
 
+                // this executes if the entire source patch centered at n is in bounds
                 if (odd ? (n[0] < size_of_source_A(0) - w / 2) : (n[0] >= w / 2)) {
+                  // set N(x,y) to n if it improves the result
                   tryPatch(patchError, size_of_target_B, w, V2i(x, y), n, N, E, Omega,
                            omegaBest, lambda);
                 }
               }
 
+              // this branch checks to make sure the neighbor pixel used in the
+              // propagation step actually exists
               if (odd ? (y > 0) : (y < size_of_target_B(1) - 1)) {
+                // take the value of the NNF from the vertical neighbor
                 V2i n = N(x, y - q);
+                // get the vertical neighbor of the value from the NNF
                 n[1] += q;
 
+                // this executes if the entire source patch centered at n is in bounds
                 if (odd ? (n[1] < size_of_source_A(1) - w / 2) : (n[1] >= w / 2)) {
+                  // set N(x,y) to n if it improves the result
                   tryPatch(patchError, size_of_target_B, w, V2i(x, y), n, N, E, Omega,
                            omegaBest, lambda);
                 }
               }
 
+              // RANDOM SEARCH STEP
 #define RANDI(u) (18000 * ((u)&65535) + ((u) >> 16))
 
+              // get a seed for a random integer
               unsigned int seed = (x | (y << 11)) ^ iter_seed;
+              // get a random integer, which is then the seed for the next random integer
               seed = RANDI(seed);
 
               const V2i pix0 = N(x, y);
-              // for (int i = 0; i < nir; i++)
+
+              // nir is around 5 or so
+              // go through nir random index searches to find a better match
               for (int i = nir - 1; i >= 0; i--) {
+                // irad is something like [18, 9, 4, 2, 1]. Each value indicates the size
+                // of the radius around pix0 (i.e. NNF(x,y)) in which we are willing to
+                // search in the source image for a new value for NNF(x,y). The radius
+                // we search in gets smaller and smaller as we perform more iterations,
+                // for the same x,y
+
+                // these are the bounds of the search
                 V2i tl = pix0 - V2i(irad[i], irad[i]);
                 V2i br = pix0 + V2i(irad[i], irad[i]);
 
+                // ensure that bounds are  within the size of the source
                 tl = std::max(tl, V2i(w / 2, w / 2));
                 br = std::min(br, size_of_source_A - V2i(w / 2, w / 2));
 
+                // n is a random source pixel inside the radius
                 const int _rndX = RANDI(seed);
                 const int _rndY = RANDI(_rndX);
                 seed = _rndY;
-
                 const V2i n = V2i(tl[0] + (_rndX % (br[0] - tl[0])),
                                   tl[1] + (_rndY % (br[1] - tl[1])));
 
+                // set N(x,y) to n if it improves the result
                 tryPatch(patchError, size_of_target_B, w, V2i(x, y), n, N, E, Omega,
                          omegaBest, lambda);
               }
