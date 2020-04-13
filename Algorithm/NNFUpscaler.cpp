@@ -12,7 +12,7 @@ bool NNFUpscaler::upscaleNNF(const Configuration &configuration,
 }
 
 bool NNFUpscaler::implementationOfUpscaleNNF(const Configuration &configuration,
-                                const NNF &half, NNF &full) override {
+                                const NNF &half, NNF &full) {
 
 
     for (int i = 0; i < full.targetDimensions.rows; i++) {
