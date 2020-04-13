@@ -9,3 +9,7 @@ bool ImageDimensions::within(const ImageDimensions &dimensions) const {
 bool ImageDimensions::halfTheSizeOf(const ImageDimensions &dimensions) const {
   return rows == dimensions.rows / 2 && cols == dimensions.cols / 2;
 }
+
+bool operator==(const ImageDimensions &lhs, const ImageDimensions &rhs) {
+  return lhs.rows == rhs.rows && lhs.cols == rhs.cols;
+}

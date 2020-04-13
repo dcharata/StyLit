@@ -2,7 +2,8 @@
 #define NNFERROR_H
 
 #include "Image.h"
-#include "NNF.h"
+
+class NNF;
 
 /**
  * @brief The NNFError struct This struct holds a float error for each source

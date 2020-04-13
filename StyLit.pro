@@ -18,11 +18,11 @@ DEFINES += QT_DEPRECATED_WARNINGS
 DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000
 
 SOURCES += \
+    Algorithm/ErrorBudgetCalculator.cpp \
     Algorithm/ImageDimensions.cpp \
     Algorithm/NNF.cpp \
     Algorithm/NNFUpscaler.cpp \
     Algorithm/PatchMatcher.cpp \
-    Algorithm/StyLitCoordinator.cpp \
     Configuration/Configuration.cpp \
     Configuration/ConfigurationParser.cpp \
     main.cpp \
@@ -31,12 +31,15 @@ SOURCES += \
 HEADERS += \
     Algorithm/ChannelWeights.h \
     Algorithm/Downscaler.h \
+    Algorithm/ErrorBudgetCalculator.h \
+    Algorithm/ErrorCalculator.h \
     Algorithm/FeatureVector.h \
     Algorithm/Image.h \
     Algorithm/ImageDimensions.h \
     Algorithm/ImagePair.h \
     Algorithm/NNF.h \
     Algorithm/NNFError.h \
+    Algorithm/NNFGenerator.h \
     Algorithm/NNFUpscaler.h \
     Algorithm/PatchMatcher.h \
     Algorithm/Pyramid.h \

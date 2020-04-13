@@ -25,7 +25,8 @@ int main(int argc, char *argv[]) {
   // Sets up the configuration file argument.
   QCommandLineOption configurationFileOption(
       QStringList() << "f"
-                    << "configuration", "Configure StyLit using a JSON configuration file.",
+                    << "configuration",
+      "Configure StyLit using a JSON configuration file.",
       "the JSON configuration file");
   parser.addOption(configurationFileOption);
 
@@ -42,8 +43,8 @@ int main(int argc, char *argv[]) {
   QString configurationPath = parser.value(configurationFileOption);
   Configuration configuration;
   ConfigurationParser configurationParser(configurationPath);
-  if(!configurationParser.parse(configuration)) {
-      return 1;
+  if (!configurationParser.parse(configuration)) {
+    return 1;
   }
 
   // If necessary, shows the UI.

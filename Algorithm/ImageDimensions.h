@@ -50,4 +50,6 @@ struct ImageDimensions {
 
 typedef ImageDimensions ImageCoordinates;
 
+bool operator==(const ImageDimensions &lhs, const ImageDimensions &rhs);
+
 #endif // IMAGEDIMENSIONS_H
