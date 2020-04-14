@@ -52,6 +52,7 @@ typedef ImageDimensions ImageCoordinates;
 
 bool operator==(const ImageDimensions &lhs, const ImageDimensions &rhs);
 ImageDimensions operator*(const ImageDimensions &dimensions, const int n);
+ImageDimensions operator+(const ImageDimensions &dim1, const ImageDimensions &dim2);
 
 
 #endif // IMAGEDIMENSIONS_H
