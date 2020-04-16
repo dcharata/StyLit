@@ -47,7 +47,10 @@ HEADERS += \
     Algorithm/StyLitCoordinator.h \
     Configuration/Configuration.h \
     Configuration/ConfigurationParser.h \
-    MainWindow.h
+    MainWindow.h \
+    CPU/PatchMatcherCPU.h \
+    CPU/NNFGeneratorCPU.h \
+    CPU/StyLitCoordinatorCPU.h
 
 FORMS += \
     MainWindow.ui
