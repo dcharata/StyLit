@@ -1,7 +1,7 @@
 #ifndef NNFGENERATOR_H
 #define NNFGENERATOR_H
 
-#include "PyramidLevel.h"
+#include "Pyramid.h"
 
 struct Configuration;
 
@@ -24,13 +24,13 @@ public:
    * checks, but I included it so that NNFGenerator's format is the same as
    * that of Downscaler, NNFUpscaler, etc.
    * @param configuration the configuration StyLit is running
-   * @param pyramidLevel the pyramidLevel for which to populate forwardNNF
+   * @param pyramid the image pyramid
+   * @param level the level of the pyramid for which the forward NNF is being generated
    * @return true if NNF generation succeeds; otherwise false
    */
-  bool generateNNF(
-      const Configuration &configuration,
-      PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel) {
-    return implementationOfGenerateNNF(configuration, pyramidLevel);
+  bool generateNNF(const Configuration &configuration,
+                   Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int level) {
+    return implementationOfGenerateNNF(configuration, pyramid, level);
   }
 
 protected:
@@ -40,12 +40,12 @@ protected:
    * should be updated. This might end up needed the next-coarsest PyramidLevel
    * as an argument as well.
    * @param configuration the configuration StyLit is running
-   * @param pyramidLevel the pyramidLevel for which to populate forwardNNF
+   * @param pyramid the image pyramid
+   * @param level the level of the pyramid for which the forward NNF is being generated
    * @return true if NNF generation succeeds; otherwise false
    */
-  virtual bool implementationOfGenerateNNF(
-      const Configuration &configuration,
-      PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel) = 0;
+  virtual bool implementationOfGenerateNNF(const Configuration &configuration,
+                                           Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int level) = 0;
 };
 
 #endif // NNFGENERATOR_H

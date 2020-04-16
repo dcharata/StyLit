@@ -2,7 +2,6 @@
 #define NNFGENERATORCPU_H
 
 #include "Algorithm/NNFGenerator.h"
-#include <vector>
 
 struct Configuration;
 
@@ -12,7 +11,7 @@ struct Configuration;
  */
 template <typename T, unsigned int numGuideChannels,
           unsigned int numStyleChannels>
-class NNFGeneratorCPU {
+class NNFGeneratorCPU : NNFGenerator<T, numGuideChannels, numStyleChannels> {
 public:
   NNFGeneratorCPU() = default;
   ~NNFGeneratorCPU() = default;
@@ -24,11 +23,12 @@ private:
    * should be updated. This might end up needed the next-coarsest PyramidLevel
    * as an argument as well.
    * @param configuration the configuration StyLit is running
-   * @param pyramidLevel the pyramidLevel for which to populate forwardNNF
+   * @param pyramid the image pyramid
+   * @param level the level of the pyramid for which the forward NNF is being generated
    * @return true if NNF generation succeeds; otherwise false
    */
    bool implementationOfGenerateNNF(const Configuration &configuration,
-                                   PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel) {
+                                   Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int level) {
 
    }
 };
