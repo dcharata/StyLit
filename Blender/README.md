@@ -18,3 +18,13 @@ example:
 ```
 blender --background blender_scenes/lpe_render_a.blend --factory-startup --python lpe_render.py -- --type=full --model=Sphere --output_dir=./ --resolution=1200x912
 ```
+
+### RESULT
+
+resolution : 600x456 
+
+![](output/600x456/result.png?raw=true)
+
+resolution : 240x182 
+
+![](output/240x182/result.png?raw=true)
