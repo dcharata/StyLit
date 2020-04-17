@@ -23,6 +23,10 @@ SOURCES += \
     Algorithm/PatchMatcher.cpp \
     Configuration/Configuration.cpp \
     Configuration/ConfigurationParser.cpp \
+    Tests/TestImageIO.cpp \
+    Tests/TestMain.cpp \
+    Utilities/FloatTools.cpp \
+    Utilities/ImageFormatTools.cpp \
     main.cpp \
     MainWindow.cpp
 
@@ -45,7 +49,14 @@ HEADERS += \
     Algorithm/StyLitCoordinator.h \
     Configuration/Configuration.h \
     Configuration/ConfigurationParser.h \
-    MainWindow.h
+    Tests/TestImageIO.h \
+    Tests/TestMain.h \
+    Tests/UnitTest.h \
+    Utilities/FloatTools.h \
+    Utilities/ImageFormat.h \
+    Utilities/ImageFormatTools.h \
+    MainWindow.h \
+    Utilities/ImageIO.h
 
 FORMS += \
     MainWindow.ui

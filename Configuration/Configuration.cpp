@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "Utilities/ImageFormatTools.h"
+
 using namespace std;
 
 void Configuration::print() {
@@ -28,6 +30,24 @@ void Configuration::print() {
   cout << "Target style image paths:" << endl;
   for (const QString &path : targetStyleImagePaths) {
     cout << path.toLocal8Bit().constData() << endl;
+  }
+  cout << endl;
+
+  cout << "Guide image formats:" << endl;
+  for (const ImageFormat &imageFormat : guideImageFormats) {
+    cout << ImageFormatTools::imageFormatToString(imageFormat) << endl;
+  }
+  cout << endl;
+
+  cout << "Guide image formats:" << endl;
+  for (const ImageFormat &imageFormat : guideImageFormats) {
+    cout << ImageFormatTools::imageFormatToString(imageFormat) << endl;
+  }
+  cout << endl;
+
+  cout << "Style image formats:" << endl;
+  for (const ImageFormat &imageFormat : styleImageFormats) {
+    cout << ImageFormatTools::imageFormatToString(imageFormat) << endl;
   }
   cout << endl;
 }
