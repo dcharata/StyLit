@@ -31,7 +31,8 @@ SOURCES += \
     Utilities/ImageFormatTools.cpp \
     Utilities/ImageIO.cpp \
     main.cpp \
-    MainWindow.cpp
+    MainWindow.cpp \
+    Tests/TestImageResize.cpp
 
 HEADERS += \
     Algorithm/ChannelWeights.h \
@@ -61,7 +62,9 @@ HEADERS += \
     Utilities/ImageFormat.h \
     Utilities/ImageFormatTools.h \
     MainWindow.h \
-    Utilities/ImageIO.h
+    Utilities/ImageIO.h \
+    CPU/DownscalerCPU.h \
+    Tests/TestImageResize.h
 
 FORMS += \
     MainWindow.ui
