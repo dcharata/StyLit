@@ -2,6 +2,7 @@
 #define NNFGENERATORCPU_H
 
 #include "Algorithm/NNFGenerator.h"
+#include "Algorithm/PyramidLevel.h"
 
 struct Configuration;
 
@@ -29,7 +30,7 @@ private:
    */
    bool implementationOfGenerateNNF(const Configuration &configuration,
                                    Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int level) {
-
+     return false;
    }
 };
 

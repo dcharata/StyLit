@@ -50,15 +50,18 @@ protected:
    *        maps to indices in codomain images
    * @param pyramid the image pyramid
    * @param level the level of the pyramid for which an NNF is being generated
-   * @param make_reverse_nnf indicates whether a reverse or forward nnf is
+   * @param makeReverseNNF indicates whether a reverse or forward nnf is
    *        being generated
-   * @param blacklist Another NNF of pixels that should not be mapped to. See
-   * the comment for implementationOfPatchMatch for more details.
+   * @param blacklist This optional NNF goes in the opposite direction of NNF.
+   * Source coordinates that correspond to valid mappings in blacklist should
+   * not be mapped to. This is used in the iterative creation of NNFs via
+   * reverse NNFs in the knee point step, where parts of the forward NNF that
+   * have already been mapped shouldn't be mapped again.
    * @return true if patch matching succeeds; otherwise false
    */
   virtual bool implementationOfPatchMatch(const Configuration &configuration, NNF &nnf,
                                           const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid,
-                                          int level, bool make_reverse_nnf, const NNF *const blacklist = nullptr) = 0;
+                                          int level, bool makeReverseNNF, const NNF *const blacklist = nullptr) = 0;
 };
 
 #endif // PATCHMATCHER_H

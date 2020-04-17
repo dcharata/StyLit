@@ -45,6 +45,7 @@ HEADERS += \
     Algorithm/Pyramid.h \
     Algorithm/PyramidLevel.h \
     Algorithm/StyLitCoordinator.h \
+    CPU/ErrorCalculatorCPU.h \
     Configuration/Configuration.h \
     Configuration/ConfigurationParser.h \
     MainWindow.h \
