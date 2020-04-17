@@ -24,7 +24,8 @@ SOURCES += \
     Configuration/Configuration.cpp \
     Configuration/ConfigurationParser.cpp \
     main.cpp \
-    MainWindow.cpp
+    MainWindow.cpp \
+    CPU/NNFUpscalerCPU.cpp
 
 HEADERS += \
     Algorithm/ChannelWeights.h \
@@ -45,7 +46,8 @@ HEADERS += \
     Algorithm/StyLitCoordinator.h \
     Configuration/Configuration.h \
     Configuration/ConfigurationParser.h \
-    MainWindow.h
+    MainWindow.h \
+    CPU/NNFUpscalerCPU.h
 
 FORMS += \
     MainWindow.ui
