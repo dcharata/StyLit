@@ -49,14 +49,14 @@ private:
   bool implementationOfPatchMatch(const Configuration &configuration, NNF &nnf,
                                   const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid,
                                   int level, bool makeReverseNNF, bool initRandom, const NNF *const blacklist = nullptr) {
+
     PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel = pyramid.levels[level];
-    Image<T, numGuideChannels> &domainGuide = makeReverseNNF ? pyramidLevel.guide.source : pyramidLevel.guide.target;
-    Image<T, numStyleChannels> &domainStyle = makeReverseNNF ? pyramidLevel.style.source : pyramidLevel.style.target;
-    Image<T, numGuideChannels> &codomainGuide = makeReverseNNF ? pyramidLevel.guide.target : pyramidLevel.guide.source;
-    Image<T, numStyleChannels> &codomainStyle = makeReverseNNF ? pyramidLevel.style.target : pyramidLevel.style.source;
 
     int numNNFRows = nnf.sourceDimensions.rows;
     int numNNFCols = nnf.sourceDimensions.cols;
+
+    ChannelWeights<numGuideChannels> guideWeights = pyramid.guideWeights;
+    ChannelWeights<numStyleChannels> styleWeights = pyramid.styleWeights;
 
     if (initRandom) {
       randomlyInitializeNNF(nnf);
@@ -71,10 +71,13 @@ private:
         }
       }
     }
+
+    return true;
   }
 
   void propagationStep(const Configuration &configuration, int row, int col, bool makeReverseNNF, bool iterationIsOdd,
                        NNF &nnf, const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel,
+                       ChannelWeights<numGuideChannels> guideWeights, ChannelWeights<numStyleChannels> styleWeights,
                        const NNF *const blacklist = nullptr) {
     ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels> errorCalc = ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels>();
     float newPatchError1 = -1.0; // we know if a patch was out of bounds if its error remains -1, so don't consider it the end of this method
@@ -97,9 +100,9 @@ private:
       if (nnf.targetDimensions.within(newPatch1)) {
         if (newPatch1Available) {
           if (makeReverseNNF) {
-            errorCalc.calculateError(configuration, pyramidLevel, currentPatch, newPatch1, newPatchError1);
+            errorCalc.calculateError(configuration, pyramidLevel, currentPatch, newPatch1, guideWeights, styleWeights, newPatchError1);
           } else {
-            errorCalc.calculateError(configuration, pyramidLevel, newPatch1, currentPatch, newPatchError1);
+            errorCalc.calculateError(configuration, pyramidLevel, newPatch1, currentPatch, guideWeights, styleWeights, newPatchError1);
           }
         } else {
           newPatchError1 = MAXFLOAT; // if newPatch1 is not available, automatically set the energy to MAXFLOAT
@@ -119,9 +122,9 @@ private:
       if (nnf.targetDimensions.within(newPatch2)) {
         if (newPatch2Available) {
           if (makeReverseNNF) {
-            errorCalc.calculateError(configuration, pyramidLevel, currentPatch, newPatch2, newPatchError2);
+            errorCalc.calculateError(configuration, pyramidLevel, currentPatch, newPatch2, guideWeights, styleWeights, newPatchError2);
           } else {
-            errorCalc.calculateError(configuration, pyramidLevel, newPatch2, currentPatch, newPatchError2);
+            errorCalc.calculateError(configuration, pyramidLevel, newPatch2, currentPatch, guideWeights, styleWeights, newPatchError2);
           }
         } else {
           newPatchError2 = MAXFLOAT;
@@ -132,9 +135,9 @@ private:
     // calculate the energy from the current mapping
     float currentError;
     if (makeReverseNNF) {
-      errorCalc.calculateError(configuration, pyramidLevel, currentPatch, nnf.getMapping(currentPatch), currentError);
+      errorCalc.calculateError(configuration, pyramidLevel, currentPatch, nnf.getMapping(currentPatch), guideWeights, styleWeights, currentError);
     } else {
-      errorCalc.calculateError(configuration, pyramidLevel, nnf.getMapping(currentPatch), currentPatch, currentError);
+      errorCalc.calculateError(configuration, pyramidLevel, nnf.getMapping(currentPatch), currentPatch, guideWeights, styleWeights, currentError);
     }
 
     // now that we have the errors of the new patches we are considering and the current error, we can decide which one is the best
@@ -155,8 +158,9 @@ private:
     }
   }
 
-  void searchStep(const Configuration &configuration, int row, int col, bool makeReverseNNF, bool iterationIsOdd,
+  void searchStep(const Configuration &configuration, int row, int col, bool makeReverseNNF,
                   NNF &nnf, const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel,
+                  ChannelWeights<numGuideChannels> guideWeights, ChannelWeights<numStyleChannels> styleWeights,
                   const NNF *const blacklist = nullptr) {
     // NOTE: maximum search radius is the largest dimension of the images. We should tune this later on.
     ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels> errorCalc = ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels>();
@@ -166,9 +170,9 @@ private:
     ImageCoordinates currentCodomainPatch = nnf.getMapping(currentPatch);
     float currentError;
     if (makeReverseNNF) {
-      errorCalc.calculateError(configuration, pyramidLevel, currentPatch, currentCodomainPatch, currentError);
+      errorCalc.calculateError(configuration, pyramidLevel, currentPatch, currentCodomainPatch, guideWeights, styleWeights, currentError);
     } else {
-      errorCalc.calculateError(configuration, pyramidLevel, currentCodomainPatch, currentPatch, currentError);
+      errorCalc.calculateError(configuration, pyramidLevel, currentCodomainPatch, currentPatch, guideWeights, styleWeights, currentError);
     }
     int i = 0;
     while (w * pow(RANDOM_SEARCH_ALPHA, i) > 1.0) {
@@ -181,9 +185,9 @@ private:
         if (newCodomainPatchAvailable) { // it is only worth to check whether we should move to this new patch if it is not on the blacklist
           float newError;
           if (makeReverseNNF) {
-            errorCalc.calculateError(configuration, pyramidLevel, currentPatch, newCodomainPatch, newError);
+            errorCalc.calculateError(configuration, pyramidLevel, currentPatch, newCodomainPatch, guideWeights, styleWeights, newError);
           } else {
-            errorCalc.calculateError(configuration, pyramidLevel, newCodomainPatch, currentPatch, newError);
+            errorCalc.calculateError(configuration, pyramidLevel, newCodomainPatch, currentPatch, guideWeights, styleWeights, newError);
           }
           if (newError < currentError) { // update the patch that currentPatch maps to if it has lower error
             nnf.setMapping(currentPatch, newCodomainPatch);
