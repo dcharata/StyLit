@@ -11,6 +11,10 @@ int randi(int min, int max) {
   return (std::rand() % (max - min)) + min;
 }
 
+float rand_uniform() {
+  return (float(std::rand()) / float(INT_MAX)) * 2.0 - 1.0;
+}
+
 class NNF;
 
 /**
@@ -26,6 +30,7 @@ public:
 
 private:
   const int NUM_PATCHMATCH_ITERATIONS = 6;
+  const float RANDOM_SEARCH_ALPHA = .5;
 
   /**
    * @brief patchMatch This is a wrapper around implementationOfPatchMatch. It
@@ -153,7 +158,44 @@ private:
   void searchStep(const Configuration &configuration, int row, int col, bool makeReverseNNF, bool iterationIsOdd,
                   NNF &nnf, const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel,
                   const NNF *const blacklist = nullptr) {
+    // NOTE: maximum search radius is the largest dimension of the images. We should tune this later on.
+    ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels> errorCalc = ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels>();
+    int w = std::max(std::max(nnf.sourceDimensions.cols, nnf.sourceDimensions.rows),
+                     std::max(nnf.targetDimensions.cols, nnf.targetDimensions.rows));
+    ImageCoordinates currentPatch{row, col};
+    ImageCoordinates currentCodomainPatch = nnf.getMapping(currentPatch);
+    float currentError;
+    if (makeReverseNNF) {
+      errorCalc.calculateError(configuration, pyramidLevel, currentPatch, currentCodomainPatch, currentError);
+    } else {
+      errorCalc.calculateError(configuration, pyramidLevel, currentCodomainPatch, currentPatch, currentError);
+    }
+    int i = 0;
+    while (w * pow(RANDOM_SEARCH_ALPHA, i) > 1.0) {
+      int col_offset = int(w * pow(RANDOM_SEARCH_ALPHA, i) * rand_uniform());
+      int row_offset = int(w * pow(RANDOM_SEARCH_ALPHA, i) * rand_uniform());
+      ImageCoordinates newCodomainPatch{currentCodomainPatch.row + row_offset, currentCodomainPatch.col + col_offset};
+      if (nnf.targetDimensions.within(newCodomainPatch)) {
+        bool newCodomainPatchAvailable = (blacklist == nullptr) || (blacklist->getMapping(newCodomainPatch).row == -1 &&
+                                                                    blacklist->getMapping(newCodomainPatch).col == -1);
+        if (newCodomainPatchAvailable) { // it is only worth to check whether we should move to this new patch if it is not on the blacklist
+          float newError;
+          if (makeReverseNNF) {
+            errorCalc.calculateError(configuration, pyramidLevel, currentPatch, newCodomainPatch, newError);
+          } else {
+            errorCalc.calculateError(configuration, pyramidLevel, newCodomainPatch, currentPatch, newError);
+          }
+          if (newError < currentError) { // update the patch that currentPatch maps to if it has lower error
+            nnf.setMapping(currentPatch, newCodomainPatch);
+            currentCodomainPatch.row = newCodomainPatch.row;
+            currentCodomainPatch.col = newCodomainPatch.col;
+            currentError = newError;
+          }
+        }
+      }
 
+      i++;
+    }
   }
 
   void randomlyInitializeNNF(NNF &nnf) {
