@@ -1,8 +1,9 @@
 '''
 This script renders the Light Path Expressions   \
 
-USAGE : blender --background <filename>.blend --factory-startup --python lpe_render.py -- 
---type=full --model=Sphere --output_dir=./ --resolution=1200x912
+USAGE : blender --background blend_scenes/lpe_render_a.blend --factory-startup --python lpe_render.py -- 
+--type=source --guide=a --model=Sphere --output_dir=./ --resolution=1200x912 --samples=50
+
 '''
 
 import bpy
@@ -18,17 +19,28 @@ import math
 class Blender():
     def __init__(self):
         self.model = None
+    def remove_obj(self, name):
+        bpy.ops.object.select_all(action='DESELECT')
+        bpy.data.objects[name].select_set(True)
+        bpy.ops.object.delete()
     def import_model(self, path):
+        self.remove_obj('Sphere')
         old_obj = set(context.scene.objects)
         bpy.ops.import_scene.obj(filepath=path, filter_glob="*.obj")
         self.model = (set(context.scene.objects) - old_obj).pop()
     def set_material(self):
-        pass
-    def render_modality(self, lpe_type, output_pth, width, height):
+        mat = bpy.data.materials['Material.001']
+        ob = context.view_layer.objects.active
+        if ob.data.materials:
+            ob.data.materials[0] = mat
+        else:
+            ob.data.materials.append(mat)
+    def render_modality(self, lpe_type, guide, output_pth, width, height, samples):
+        context.scene.cycles.samples = int(samples);
         context.scene.render.resolution_x = width
         context.scene.render.resolution_y = height
         context.scene.render.resolution_percentage = 100
-        context.scene.render.filepath = os.path.join(output_pth, lpe_type + '.png')
+        context.scene.render.filepath = os.path.join(output_pth, lpe_type + '_' + guide + '.png')
         bpy.ops.render.render(write_still=True)
 
 def get_objs_in_directory(path):
@@ -42,8 +54,7 @@ def get_objs_in_directory(path):
         objs.append(f)
     return objs
 
-def execute_blender(lpe_type, model_pth, output_pth, resolution):
-    # DATA = get_objs_in_directory(path)
+def execute_blender(img_type, guide, model_pth, output_pth, resolution, samples):
     blender_instance = Blender()
     if model_pth != "Sphere":
         blender_instance.import_model(model_pth)
@@ -51,10 +62,9 @@ def execute_blender(lpe_type, model_pth, output_pth, resolution):
     context.view_layer.objects.active = bpy.data.objects[filename]
     width = int(resolution.split('x')[0])
     height = int(resolution.split('x')[1])
-    blender_instance.render_modality(lpe_type, output_pth, width, height)
-    bpy.ops.object.select_all(action='DESELECT')
-    bpy.data.objects[filename].select_set(True)
-    bpy.ops.object.delete()
+    blender_instance.set_material()
+    blender_instance.render_modality(img_type, guide, output_pth, width, height, samples)
+    blender_instance.remove_obj(filename)
 
 
 def main():
@@ -76,7 +86,12 @@ def main():
 
     parser.add_argument(
         "-t", "--type", dest="type", type=str, required=True,
-        help="What LPE do you want to render? Options {full, dirdiff, dirspec, diff2b, diffinter}",
+        help="Source or Target",
+    )
+
+    parser.add_argument(
+        "-g", "--guide", dest="guide", type=str, required=True,
+        help="What LPE do you want to render? Options {a,b,c,d,e}",
     )
 
     parser.add_argument(
@@ -92,6 +107,11 @@ def main():
         help="Output resolution: Options {1200x912, ...}",
     )
 
+    parser.add_argument(
+        "-s", "--samples", dest="samples", type=str, required=True,
+        help="SPP, eg: 50",
+    )
+
     args = parser.parse_args(argv)
 
     if not argv:
@@ -99,19 +119,21 @@ def main():
         return
 
     if (not args.type or 
+        not args.guide or 
         not args.model or 
         not args.output_dir or 
+        not args.samples or 
         not args.resolution):
         print("Error: argument not given, aborting.")
         parser.print_help()
         return
 
-    if args.model != "Sphere" and os.path.isfile(args.model):
+    if args.model != "Sphere" and not os.path.isfile(args.model):
         print("Invalid .obj path: Path does not exist.")
         return 
 
 
-    execute_blender(args.type, args.model, args.output_dir, args.resolution)
+    execute_blender(args.type, args.guide, args.model, args.output_dir, args.resolution, args.samples)
 
 if __name__ == "__main__":
     main()
