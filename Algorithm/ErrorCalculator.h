@@ -3,6 +3,7 @@
 
 #include "ImageDimensions.h"
 #include "PyramidLevel.h"
+#include "ChannelWeights.h"
 
 struct Configuration;
 
@@ -60,7 +61,9 @@ protected:
       const Configuration &configuration,
       const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel,
       const ImageCoordinates &sourceCoordinates,
-      const ImageCoordinates &targetCoordinates, float &error) = 0;
+      const ImageCoordinates &targetCoordinates,
+      const ChannelWeights<numGuideChannels> &guideWeights,
+      const ChannelWeights<numStyleChannels> &styleWeights, float &error) = 0;
 };
 
 #endif // ERRORCALCULATOR_H

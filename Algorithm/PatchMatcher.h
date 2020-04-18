@@ -36,8 +36,8 @@ public:
    */
   bool patchMatch(const Configuration &configuration, NNF &nnf,
                   const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid,
-                  int level, bool make_reverse_nnf, const NNF *const blacklist = nullptr) {
-    implementationOfPatchMatch(configuration, nnf, pyramid, level, make_reverse_nnf, blacklist);
+                  int level, bool makeReverseNNF, bool initRandom, const NNF *const blacklist = nullptr) {
+    implementationOfPatchMatch(configuration, nnf, pyramid, level, makeReverseNNF, initRandom, blacklist);
   }
 
 protected:
@@ -61,7 +61,7 @@ protected:
    */
   virtual bool implementationOfPatchMatch(const Configuration &configuration, NNF &nnf,
                                           const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid,
-                                          int level, bool makeReverseNNF, const NNF *const blacklist = nullptr) = 0;
+                                          int level, bool makeReverseNNF, bool initRandom, const NNF *const blacklist = nullptr) = 0;
 };
 
 #endif // PATCHMATCHER_H

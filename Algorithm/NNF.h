@@ -41,6 +41,8 @@ public:
    */
   void setMapping(const ImageCoordinates &from, const ImageCoordinates &to);
 
+  void setToInitializedBlacklist();
+
   // the source image's size
   const ImageDimensions sourceDimensions;
 

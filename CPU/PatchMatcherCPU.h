@@ -77,7 +77,7 @@ private:
 
   void propagationStep(const Configuration &configuration, int row, int col, bool makeReverseNNF, bool iterationIsOdd,
                        NNF &nnf, const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel,
-                       ChannelWeights<numGuideChannels> guideWeights, ChannelWeights<numStyleChannels> styleWeights,
+                       ChannelWeights<numGuideChannels> &guideWeights, ChannelWeights<numStyleChannels> &styleWeights,
                        const NNF *const blacklist = nullptr) {
     ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels> errorCalc = ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels>();
     float newPatchError1 = -1.0; // we know if a patch was out of bounds if its error remains -1, so don't consider it the end of this method

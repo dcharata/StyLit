@@ -11,7 +11,7 @@ ImageCoordinates clamp(ImageCoordinates c, ImageCoordinates min, ImageCoordinate
   if (c.row < min.row) {
     ret.row = min.row;
   } else if (c.row > max.row - 1) {
-    ret.row = max.row;
+    ret.row = max.row - 1;
   } else {
     ret.row = c.row;
   }
@@ -19,7 +19,7 @@ ImageCoordinates clamp(ImageCoordinates c, ImageCoordinates min, ImageCoordinate
   if (c.col < min.col) {
     ret.col = min.col;
   } else if (c.col > max.col - 1) {
-    ret.col = max.col;
+    ret.col = max.col - 1;
   } else {
     ret.col = c.col;
   }
@@ -56,8 +56,8 @@ private:
                                               const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel,
                                               const ImageCoordinates &sourceCoordinates,
                                               const ImageCoordinates &targetCoordinates,
-                                              ChannelWeights<numGuideChannels> guideWeights,
-                                              ChannelWeights<numStyleChannels> styleWeights, float &error) {
+                                              const ChannelWeights<numGuideChannels> &guideWeights,
+                                              const ChannelWeights<numStyleChannels> &styleWeights, float &error) {
     error = 0;
     Image<T, numGuideChannels> &A = pyramidLevel.guide.source;
     Image<T, numStyleChannels> &A_prime = pyramidLevel.style.target;
@@ -70,6 +70,8 @@ private:
     int centerColSource = sourceCoordinates.col;
     int centerRowTarget = targetCoordinates.row;
     int centerColTarget = targetCoordinates.col;
+    // go through all of the feature vectors from the guide and style in the patch and subtract the
+    // source from the target. Add (source - target)^2 * weight to the total error.
     for (int colOffset = -PATCH_SIZE / 2; colOffset <= PATCH_SIZE / 2; colOffset++) {
       for (int rowOffset = -PATCH_SIZE / 2; rowOffset <= PATCH_SIZE / 2; rowOffset++) {
         ImageCoordinates sourceCoords = clamp(ImageCoordinates{centerRowSource + rowOffset, centerColSource + colOffset}, min, A_max);
@@ -77,9 +79,9 @@ private:
         FeatureVector<T, numGuideChannels> guideDiff = A.data[sourceCoords.row * A_max.cols + sourceCoords.col]
                                                        - B.data[targetCoords.row * B_max.cols + targetCoords.col];
         error += (guideDiff.array().square() * guideWeights.array()).matrix().sum();
-        FeatureVector<T, numGuideChannels> styleDiff = A_prime.data[sourceCoords.row * A_max.cols + sourceCoords.col]
+        FeatureVector<T, numStyleChannels> styleDiff = A_prime.data[sourceCoords.row * A_max.cols + sourceCoords.col]
                                                        - B_prime.data[targetCoords.row * B_max.cols + targetCoords.col];
-        error += (styleDiff.array().square() * guideWeights.array()).matrix().sum();
+        error += (styleDiff.array().square() * styleWeights.array()).matrix().sum();
       }
     }
 
