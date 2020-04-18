@@ -89,7 +89,22 @@ private:
         blacklist.setMapping(pyramidLevel.reverseNNF.getMapping(sortedCoordinates[i]), sortedCoordinates[i]);
         i++;
       }
+    }
 
+    // if the level's forward NNf is not completely full, make a new forward NNF from patchmatch and
+    // use that to fill up the holes in the level's forward NNF
+    if (patchesFilled < forwardNNFSize) {
+      NNF forwardNNF = NNF(pyramidLevel.guide.target.dimensions, pyramidLevel.guide.source.dimensions);
+      patchMatcher.patchMatch(configuration, forwardNNF, pyramid, level, false, true);
+      for (int col = 0; col < forwardNNF.sourceDimensions.cols; col++) {
+        for (int row = 0; row < forwardNNF.sourceDimensions.rows; row++) {
+          ImageCoordinates currentPatch{row, col};
+          ImageCoordinates blacklistVal = blacklist.getMapping(currentPatch);
+          if (blacklistVal.col == -1 && blacklistVal.row == -1) {
+            pyramidLevel.forwardNNF.setMapping(forwardNNF.getMapping(currentPatch));
+          }
+        }
+      }
     }
 
     return true;
