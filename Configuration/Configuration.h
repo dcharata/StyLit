@@ -4,6 +4,8 @@
 #include <QString>
 #include <vector>
 
+#include "Utilities/ImageFormat.h"
+
 struct Configuration {
   Configuration() = default;
 
@@ -21,6 +23,12 @@ struct Configuration {
 
   // output paths for the images in B'
   std::vector<QString> targetStyleImagePaths;
+
+  // how guide images are interpreted (see ImageFormat.h)
+  std::vector<ImageFormat> guideImageFormats;
+
+  // how style images are interpreted (see ImageFormat.h)
+  std::vector<ImageFormat> styleImageFormats;
 };
 
 #endif // CONFIGURATION_H

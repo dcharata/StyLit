@@ -18,5 +18,15 @@
             "path7",
             "path8"
         ]
+    },
+    "settings": {
+        "guideImageFormats": [
+            "rgb",
+            "bw"
+        ],
+        "styleImageFormats": [
+            "rgba",
+            "bwa"
+        ]
     }
 }
