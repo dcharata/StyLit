@@ -1,6 +1,8 @@
 #include "TestMain.h"
 
 #include "TestImageIO.h"
+#include "TestImageIOHelpers.h"
+#include "TestImageIOWrite.h"
 #include "UnitTest.h"
 
 #include <stdio.h>
@@ -16,11 +18,14 @@ int TestMain::run() {
   // This is the list of tests.
   // Instantiate your new unit test here. Don't forget to add it to unitTests
   // below as well.
-  TestImageIO testImageReader;
+  TestImageIO testImageIO;
+  TestImageIOHelpers testImageIOHelpers;
+  TestImageIOWrite testImageIOWrite;
 
   // All tests in unitTests are run.
-  const int numTests = 1;
-  UnitTest *unitTests[] = {&testImageReader};
+  const int numTests = 3;
+  UnitTest *unitTests[] = {&testImageIO, &testImageIOWrite,
+                           &testImageIOHelpers};
 
   // Runs the tests and counts how many succeed.
   int numPasses = 0;
