@@ -13,6 +13,17 @@ const float TOLERANT_EQUALS_EPSILON = 1e-5f;
  * otherwise false
  */
 bool tolerantEquals(float lhs, float rhs);
+
+/**
+ * @brief tolerantEquals Returns true if lhs and rhs are within tolerance of
+ * each other.
+ * @param lhs left-hand side of equality check
+ * @param rhs right-hand side of equality check
+ * @param tolerance the tolerance
+ * @return true if lhs and rhs are within tolerance of each other; otherwise
+ * false
+ */
+bool tolerantEquals(float lhs, float rhs, float tolerance);
 }; // namespace FloatTools
 
 #endif // FLOATTOOLS_H
