@@ -2,7 +2,7 @@
 This script renders the Light Path Expressions   \
 
 USAGE : blender --background blend_scenes/lpe_render_a.blend --factory-startup --python lpe_render.py -- 
---type=source --guide=a --model=Sphere --output_dir=./ --resolution=1200x912 --samples=50
+--type=source --guide=a --model=Sphere --output_dir=./ --resolution=1200x912 --samples=50 --device=GPU
 
 '''
 
@@ -35,7 +35,9 @@ class Blender():
             ob.data.materials[0] = mat
         else:
             ob.data.materials.append(mat)
-    def render_modality(self, lpe_type, guide, output_pth, width, height, samples):
+    def render_modality(self, lpe_type, guide, output_pth, 
+                            width, height, samples, device):
+        context.scene.cycles.device = device
         context.scene.cycles.samples = int(samples);
         context.scene.render.resolution_x = width
         context.scene.render.resolution_y = height
@@ -54,7 +56,8 @@ def get_objs_in_directory(path):
         objs.append(f)
     return objs
 
-def execute_blender(img_type, guide, model_pth, output_pth, resolution, samples):
+def execute_blender(img_type, guide, model_pth, output_pth, 
+                        resolution, samples, device):
     blender_instance = Blender()
     if model_pth != "Sphere":
         blender_instance.import_model(model_pth)
@@ -63,7 +66,7 @@ def execute_blender(img_type, guide, model_pth, output_pth, resolution, samples)
     width = int(resolution.split('x')[0])
     height = int(resolution.split('x')[1])
     blender_instance.set_material()
-    blender_instance.render_modality(img_type, guide, output_pth, width, height, samples)
+    blender_instance.render_modality(img_type, guide, output_pth, width, height, samples, device)
     blender_instance.remove_obj(filename)
 
 
@@ -112,6 +115,11 @@ def main():
         help="SPP, eg: 50",
     )
 
+    parser.add_argument(
+        "-d", "--device", dest="device", type=str, required=True,
+        help="CPU / GPU",
+    )
+
     args = parser.parse_args(argv)
 
     if not argv:
@@ -123,6 +131,7 @@ def main():
         not args.model or 
         not args.output_dir or 
         not args.samples or 
+        not args.device or 
         not args.resolution):
         print("Error: argument not given, aborting.")
         parser.print_help()
@@ -133,7 +142,7 @@ def main():
         return 
 
 
-    execute_blender(args.type, args.guide, args.model, args.output_dir, args.resolution, args.samples)
+    execute_blender(args.type, args.guide, args.model, args.output_dir, args.resolution, args.samples, args.device)
 
 if __name__ == "__main__":
     main()
