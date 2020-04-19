@@ -40,6 +40,7 @@ HEADERS += \
     Algorithm/ImageDimensions.h \
     Algorithm/ImagePair.h \
     Algorithm/NNF.h \
+    Algorithm/NNFApplicator.h \
     Algorithm/NNFError.h \
     Algorithm/NNFGenerator.h \
     Algorithm/NNFUpscaler.h \
@@ -47,6 +48,7 @@ HEADERS += \
     Algorithm/Pyramid.h \
     Algorithm/PyramidLevel.h \
     Algorithm/StyLitCoordinator.h \
+    CPU/NNFApplicatorCPU.h \
     Configuration/Configuration.h \
     Configuration/ConfigurationParser.h \
     Tests/TestImageIO.h \
