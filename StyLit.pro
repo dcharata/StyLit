@@ -24,9 +24,12 @@ SOURCES += \
     Configuration/Configuration.cpp \
     Configuration/ConfigurationParser.cpp \
     Tests/TestImageIO.cpp \
+    Tests/TestImageIOHelpers.cpp \
+    Tests/TestImageIOWrite.cpp \
     Tests/TestMain.cpp \
     Utilities/FloatTools.cpp \
     Utilities/ImageFormatTools.cpp \
+    Utilities/ImageIO.cpp \
     main.cpp \
     MainWindow.cpp
 
@@ -50,6 +53,8 @@ HEADERS += \
     Configuration/Configuration.h \
     Configuration/ConfigurationParser.h \
     Tests/TestImageIO.h \
+    Tests/TestImageIOHelpers.h \
+    Tests/TestImageIOWrite.h \
     Tests/TestMain.h \
     Tests/UnitTest.h \
     Utilities/FloatTools.h \
