@@ -3,7 +3,10 @@
 
 #include "ImageDimensions.h"
 #include "PyramidLevel.h"
+<<<<<<< HEAD
 #include "ChannelWeights.h"
+=======
+>>>>>>> master
 
 struct Configuration;
 

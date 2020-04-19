@@ -2,6 +2,7 @@
 #define NNFGENERATOR_H
 
 #include "Pyramid.h"
+#include "PyramidLevel.h"
 
 struct Configuration;
 

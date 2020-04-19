@@ -22,7 +22,6 @@ SOURCES += \
     Algorithm/ImageDimensions.cpp \
     Algorithm/NNF.cpp \
     Algorithm/NNFUpscaler.cpp \
-    Algorithm/PatchMatcher.cpp \
     Configuration/Configuration.cpp \
     Configuration/ConfigurationParser.cpp \
     main.cpp \

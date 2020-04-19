@@ -15,7 +15,6 @@ struct PyramidLevel {
   ImagePair<T, numStyleChannels> style;
   NNF forwardNNF; // this is the target sized array of source indices
   NNF reverseNNF; // this is the source sized array of target indices
-  NNF savedReverseNNF; // this is the first reverse NNF created when all target indices are available to be mapped to
 };
 
 #endif // PYRAMIDLEVEL_H

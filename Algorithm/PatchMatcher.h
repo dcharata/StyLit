@@ -12,8 +12,7 @@ class NNF;
  * NNFs (nearest-neighbor fields). The NNF must have the size of the domain and
  * will map to indices in the codomain.
  */
-template <typename T, unsigned int numGuideChannels,
-          unsigned int numStyleChannels>
+template <typename T, unsigned int numGuideChannels, unsigned int numStyleChannels>
 class PatchMatcher {
 public:
   PatchMatcher() = default;
@@ -30,6 +29,7 @@ public:
    * @param level the level of the pyramid for which an NNF is being generated
    * @param make_reverse_nnf indicates whether a reverse or forward nnf is
    *        being generated
+   * @param nnf the NNF that should be improved with PatchMatch
    * @param blacklist Another NNF of pixels that should not be mapped to. See
    * the comment for implementationOfPatchMatch for more details.
    * @return true if patch matching succeeds; otherwise false
@@ -51,7 +51,15 @@ protected:
    * @param pyramid the image pyramid
    * @param level the level of the pyramid for which an NNF is being generated
    * @param makeReverseNNF indicates whether a reverse or forward nnf is
-   *        being generated
+   *        being generated const NNF *const blacklist = nullptr);
+
+protected:
+  /**
+   * @brief implementationOfPatchMatch Runs PatchMatch to improve the specified
+   * NNF. If a blacklist is specified, coordinates that map to valid coordinates
+   * in blacklist should not be mapped to.
+   * @param configuration the configuration StyLit is running
+   * @param nnf the NNF that should be improved with PatchMatch
    * @param blacklist This optional NNF goes in the opposite direction of NNF.
    * Source coordinates that correspond to valid mappings in blacklist should
    * not be mapped to. This is used in the iterative creation of NNFs via
@@ -62,6 +70,9 @@ protected:
   virtual bool implementationOfPatchMatch(const Configuration &configuration, NNF &nnf,
                                           const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid,
                                           int level, bool makeReverseNNF, bool initRandom, const NNF *const blacklist = nullptr) = 0;
+  virtual bool
+  implementationOfPatchMatch(const Configuration &configuration, NNF &nnf,
+                             const NNF *const blacklist = nullptr) = 0;
 };
 
 #endif // PATCHMATCHER_H
