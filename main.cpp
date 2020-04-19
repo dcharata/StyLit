@@ -2,6 +2,7 @@
 
 #include "Configuration/Configuration.h"
 #include "Configuration/ConfigurationParser.h"
+#include "Tests/TestMain.h"
 
 #include <QApplication>
 #include <QCommandLineParser>
@@ -30,8 +31,21 @@ int main(int argc, char *argv[]) {
       "the JSON configuration file");
   parser.addOption(configurationFileOption);
 
+  // Sets up the test argument.
+  QCommandLineOption testOption(
+      QStringList() << "t"
+                    << "test",
+      "Run the unit tests instead of the image generator.");
+  parser.addOption(testOption);
+
   // Processes the arguments.
   parser.process(a);
+  if (parser.isSet(testOption)) {
+    // Runs tests if the testing flag is specified.
+    // The process returns the number of failed tests.
+    TestMain testMain;
+    return testMain.run();
+  }
   if (!parser.isSet(configurationFileOption)) {
     std::cerr << "You must specify a JSON configuration file using the "
                  "--configuration flag."
@@ -46,6 +60,7 @@ int main(int argc, char *argv[]) {
   if (!configurationParser.parse(configuration)) {
     return 1;
   }
+  configuration.print();
 
   // If necessary, shows the UI.
   MainWindow w;

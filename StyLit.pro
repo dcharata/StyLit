@@ -24,6 +24,13 @@ SOURCES += \
     Algorithm/NNFUpscaler.cpp \
     Configuration/Configuration.cpp \
     Configuration/ConfigurationParser.cpp \
+    Tests/TestImageIO.cpp \
+    Tests/TestImageIOHelpers.cpp \
+    Tests/TestImageIOWrite.cpp \
+    Tests/TestMain.cpp \
+    Utilities/FloatTools.cpp \
+    Utilities/ImageFormatTools.cpp \
+    Utilities/ImageIO.cpp \
     main.cpp \
     MainWindow.cpp
 
@@ -51,6 +58,16 @@ HEADERS += \
     CPU/PatchMatcherCPU.h \
     CPU/NNFGeneratorCPU.h \
     CPU/StyLitCoordinatorCPU.h
+    Tests/TestImageIO.h \
+    Tests/TestImageIOHelpers.h \
+    Tests/TestImageIOWrite.h \
+    Tests/TestMain.h \
+    Tests/UnitTest.h \
+    Utilities/FloatTools.h \
+    Utilities/ImageFormat.h \
+    Utilities/ImageFormatTools.h \
+    MainWindow.h \
+    Utilities/ImageIO.h
 
 FORMS += \
     MainWindow.ui

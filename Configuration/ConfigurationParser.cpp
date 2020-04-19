@@ -7,6 +7,8 @@
 #include <QString>
 #include <iostream>
 
+using namespace std;
+
 ConfigurationParser::ConfigurationParser(const QString &path) : path(path) {}
 
 bool ConfigurationParser::parse(Configuration &configuration) {
@@ -14,7 +16,7 @@ bool ConfigurationParser::parse(Configuration &configuration) {
   QFile file;
   file.setFileName(path);
   if (!file.open(QIODevice::ReadOnly)) {
-    std::cerr << "Could not open configuration file." << std::endl;
+    cerr << "Could not open configuration file." << endl;
     return false;
   }
   QString configurationJSON = file.readAll();
@@ -24,13 +26,12 @@ bool ConfigurationParser::parse(Configuration &configuration) {
   QJsonDocument json =
       QJsonDocument::fromJson(configurationJSON.toUtf8(), &parseError);
   if (parseError.error != QJsonParseError::NoError) {
-    std::cerr << "Could not parse configuration JSON ("
-              << parseError.errorString().toLocal8Bit().constData() << ")."
-              << std::endl;
+    cerr << "Could not parse configuration JSON ("
+         << parseError.errorString().toLocal8Bit().constData() << ")." << endl;
     return false;
   }
   if (!json.isObject()) {
-    std::cerr << "Expected parent-level JSON object." << std::endl;
+    cerr << "Expected parent-level JSON object." << endl;
     return false;
   }
   QJsonObject parent = json.object();
@@ -45,22 +46,90 @@ bool ConfigurationParser::parse(Configuration &configuration) {
     return false;
   }
 
-  // Confirms that the numbers of style and guide images match.
-  if (configuration.sourceGuideImagePaths.size() !=
-      configuration.targetGuideImagePaths.size()) {
-    std::cerr << "The number of source and target guide image paths must match."
-              << std::endl;
-    return false;
-  }
-  if (configuration.sourceStyleImagePaths.size() !=
-      configuration.targetStyleImagePaths.size()) {
-    std::cerr << "The number of source and target style image paths must match."
-              << std::endl;
+  // Parses the settings.
+  if (!parseSettings(parent.value(QString("settings")), configuration)) {
     return false;
   }
 
-  // Parses the settings.
-  // TODO!
+  // Confirms that the numbers of style and guide images match.
+  if (configuration.sourceGuideImagePaths.size() !=
+          configuration.targetGuideImagePaths.size() ||
+      configuration.sourceGuideImagePaths.size() !=
+          configuration.guideImageFormats.size()) {
+    cerr << "The number of source guide image paths, target guide image paths "
+            "and guide formats must match."
+         << endl;
+    return false;
+  }
+  if (configuration.sourceStyleImagePaths.size() !=
+          configuration.targetStyleImagePaths.size() ||
+      configuration.sourceStyleImagePaths.size() !=
+          configuration.styleImageFormats.size()) {
+    cerr << "The number of source style image paths, target style image paths "
+            "and style formats must match."
+         << endl;
+    return false;
+  }
+  return true;
+}
+
+bool ConfigurationParser::parseSettings(const QJsonValue &settings,
+                                        Configuration &configuration) {
+  // Ensures that settings exist.
+  if (!settings.isObject()) {
+    cerr << "Required field \"settings\" was not an object." << endl;
+    return false;
+  }
+  const QJsonObject settingsObject = settings.toObject();
+
+  // Parses the guide image formats.
+  QJsonValue guideImageFormats =
+      settingsObject.value(QString("guideImageFormats"));
+  vector<QString> guideImageFormatStrings;
+  if (!parseStringArray(guideImageFormats, guideImageFormatStrings) ||
+      !parseImageFormatArray(guideImageFormatStrings,
+                             configuration.guideImageFormats)) {
+    cerr << "Failed to parse a guide image format. The image format must be "
+            "one of rgb, rgba, bw or bwa."
+         << endl;
+    return false;
+  }
+
+  // Parses the style image formats.
+  QJsonValue styleImageFormats =
+      settingsObject.value(QString("styleImageFormats"));
+  vector<QString> styleImageFormatStrings;
+  if (!parseStringArray(styleImageFormats, styleImageFormatStrings) ||
+      !parseImageFormatArray(styleImageFormatStrings,
+                             configuration.styleImageFormats)) {
+    cerr << "Failed to parse a style image format. The image format must be "
+            "one of rgb, rgba, bw or bwa."
+         << endl;
+    return false;
+  }
+
+  return true;
+}
+
+bool ConfigurationParser::parseImageFormatArray(
+    const std::vector<QString> &strings,
+    std::vector<ImageFormat> &imageFormats) {
+  imageFormats.clear();
+  imageFormats.reserve(strings.size());
+  for (const QString &string : strings) {
+    if (!string.compare(QString("rgb"), Qt::CaseInsensitive)) {
+      imageFormats.push_back(ImageFormat::RGB);
+    } else if (!string.compare(QString("rgba"), Qt::CaseInsensitive)) {
+      imageFormats.push_back(ImageFormat::RGBA);
+    } else if (!string.compare(QString("bw"), Qt::CaseInsensitive)) {
+      imageFormats.push_back(ImageFormat::BW);
+    } else if (!string.compare(QString("bwa"), Qt::CaseInsensitive)) {
+      imageFormats.push_back(ImageFormat::BWA);
+    } else {
+      // Parsing fails if the image format is not recognized.
+      return false;
+    }
+  }
   return true;
 }
 
@@ -68,7 +137,7 @@ bool ConfigurationParser::parseInputs(const QJsonValue &inputs,
                                       Configuration &configuration) {
   // Ensures that inputs exist.
   if (!inputs.isObject()) {
-    std::cerr << "Required field \"inputs\" was not an object." << std::endl;
+    cerr << "Required field \"inputs\" was not an object." << endl;
     return false;
   }
   const QJsonObject inputsObject = inputs.toObject();
@@ -78,8 +147,7 @@ bool ConfigurationParser::parseInputs(const QJsonValue &inputs,
       inputsObject.value(QString("sourceGuideImagePaths"));
   if (!parseStringArray(sourceGuideImagePaths,
                         configuration.sourceGuideImagePaths)) {
-    std::cerr << "Could not parse \"sourceGuideImagePaths\" in \"inputs\"."
-              << std::endl;
+    cerr << "Could not parse \"sourceGuideImagePaths\" in \"inputs\"." << endl;
     return false;
   }
 
@@ -88,8 +156,7 @@ bool ConfigurationParser::parseInputs(const QJsonValue &inputs,
       inputsObject.value(QString("targetGuideImagePaths"));
   if (!parseStringArray(targetGuideImagePaths,
                         configuration.targetGuideImagePaths)) {
-    std::cerr << "Could not parse \"targetGuideImagePaths\" in \"inputs\"."
-              << std::endl;
+    cerr << "Could not parse \"targetGuideImagePaths\" in \"inputs\"." << endl;
     return false;
   }
 
@@ -98,8 +165,7 @@ bool ConfigurationParser::parseInputs(const QJsonValue &inputs,
       inputsObject.value(QString("sourceStyleImagePaths"));
   if (!parseStringArray(sourceStyleImagePaths,
                         configuration.sourceStyleImagePaths)) {
-    std::cerr << "Could not parse \"sourceStyleImagePaths\" in \"inputs\"."
-              << std::endl;
+    cerr << "Could not parse \"sourceStyleImagePaths\" in \"inputs\"." << endl;
     return false;
   }
   return true;
@@ -109,7 +175,7 @@ bool ConfigurationParser::parseOutputs(const QJsonValue &outputs,
                                        Configuration &configuration) {
   // Ensures that outputs exist.
   if (!outputs.isObject()) {
-    std::cerr << "Required field \"outputs\" was not an object." << std::endl;
+    cerr << "Required field \"outputs\" was not an object." << endl;
     return false;
   }
   const QJsonObject outputsObject = outputs.toObject();
@@ -119,30 +185,27 @@ bool ConfigurationParser::parseOutputs(const QJsonValue &outputs,
       outputsObject.value(QString("targetStyleImagePaths"));
   if (!parseStringArray(targetStyleImagePaths,
                         configuration.targetStyleImagePaths)) {
-    std::cerr << "Could not parse \"targetStyleImagePaths\" in \"outputs\"."
-              << std::endl;
+    cerr << "Could not parse \"targetStyleImagePaths\" in \"outputs\"." << endl;
     return false;
   }
   return true;
 }
 
 bool ConfigurationParser::parseStringArray(const QJsonValue &source,
-                                           std::vector<QString> &destination) {
+                                           vector<QString> &destination) {
   destination.clear();
 
   // Checks whether source is an array.
   if (!source.isArray()) {
-    std::cerr
-        << "Expected array but received non-array (possibly undefined) value."
-        << std::endl;
+    cerr << "Expected array but received non-array (possibly undefined) value."
+         << endl;
     return false;
   }
   QJsonArray sourceArray = source.toArray();
 
   // Checks whether source is empty.
   if (sourceArray.isEmpty()) {
-    std::cerr << "Expected non-empty array but received empty array."
-              << std::endl;
+    cerr << "Expected non-empty array but received empty array." << endl;
     return false;
   }
   destination.reserve(sourceArray.size());
@@ -154,9 +217,8 @@ bool ConfigurationParser::parseStringArray(const QJsonValue &source,
 
     // Checks whether the entry is a string.
     if (!entry.isString()) {
-      std::cerr
-          << "Expected string array entry but received non-string array entry."
-          << std::endl;
+      cerr << "Expected string array entry but received non-string array entry."
+           << endl;
       return false;
     }
 
