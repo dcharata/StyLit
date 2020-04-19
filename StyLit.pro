@@ -27,6 +27,7 @@ SOURCES += \
     Algorithm/PatchMatcher.cpp \
     Configuration/Configuration.cpp \
     Configuration/ConfigurationParser.cpp \
+    Tests/TestErrorBudget.cpp \
     dlib/all/source.cpp \
     Tests/TestImageIO.cpp \
     Tests/TestMain.cpp \
@@ -54,6 +55,7 @@ HEADERS += \
     Algorithm/StyLitCoordinator.h \
     Configuration/Configuration.h \
     Configuration/ConfigurationParser.h \
+    Tests/TestErrorBudget.h \
     Tests/TestImageIO.h \
     Tests/TestMain.h \
     Tests/UnitTest.h \

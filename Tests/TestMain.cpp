@@ -1,6 +1,7 @@
 #include "TestMain.h"
 
 #include "TestImageIO.h"
+#include "TestErrorBudget.h"
 #include "UnitTest.h"
 
 #include <stdio.h>
@@ -17,16 +18,18 @@ int TestMain::run() {
   // Instantiate your new unit test here. Don't forget to add it to unitTests
   // below as well.
   TestImageIO testImageReader;
+  TestErrorBudget testErrorBudget;
 
   // All tests in unitTests are run.
-  const int numTests = 1;
-  UnitTest *unitTests[] = {&testImageReader};
+  const int numTests = 2;
+  UnitTest *unitTests[] = {&testImageReader, &testErrorBudget};
 
   // Runs the tests and counts how many succeed.
   int numPasses = 0;
   for (int i = 0; i < numTests; i++) {
     if (unitTests[i]->run()) {
       numPasses++;
+      printf("Passed test %d. \n", i);
     }
   }
   printf("Passed %d of %d tests.\n", numPasses, numTests);
