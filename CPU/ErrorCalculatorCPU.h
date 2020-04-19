@@ -76,11 +76,11 @@ private:
       for (int rowOffset = -PATCH_SIZE / 2; rowOffset <= PATCH_SIZE / 2; rowOffset++) {
         ImageCoordinates sourceCoords = clamp(ImageCoordinates{centerRowSource + rowOffset, centerColSource + colOffset}, min, A_max);
         ImageCoordinates targetCoords = clamp(ImageCoordinates{centerRowTarget + rowOffset, centerColTarget + colOffset}, min, B_max);
-        FeatureVector<T, numGuideChannels> guideDiff = A.data[sourceCoords.row * A_max.cols + sourceCoords.col]
-                                                       - B.data[targetCoords.row * B_max.cols + targetCoords.col];
+        FeatureVector<T, numGuideChannels> guideDiff = A(sourceCoords.row, sourceCoords.col)
+                                                       - B(targetCoords.row, targetCoords.col);
         error += (guideDiff.array().square() * guideWeights.array()).matrix().sum();
-        FeatureVector<T, numStyleChannels> styleDiff = A_prime.data[sourceCoords.row * A_max.cols + sourceCoords.col]
-                                                       - B_prime.data[targetCoords.row * B_max.cols + targetCoords.col];
+        FeatureVector<T, numStyleChannels> styleDiff = A_prime(sourceCoords.row, sourceCoords.col)
+                                                       - B_prime(targetCoords.row, targetCoords.col);
         error += (styleDiff.array().square() * styleWeights.array()).matrix().sum();
       }
     }
