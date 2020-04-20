@@ -5,6 +5,9 @@
 //#define DLIB_NO_GUI_SUPPORT
 #include <dlib/optimization.h>
 
+#include "Algorithm/NNF.h"
+#include "Algorithm/NNFError.h"
+#include "Configuration/Configuration.h"
 #include "Algorithm/ErrorBudgetCalculator.h"
 #include "Algorithm/ErrorBudgetCalculator.cpp"
 
@@ -12,18 +15,17 @@ using namespace dlib;
 
 // ----------------------------------------------------------------------------------------
 // unit test for the knee point finding functions
-void test_generate_datasamples(
+void generate_datasamples(
+        int num_samples,
         std::vector<std::pair<input_vector, double>>& data_samples,
         parameter_vector params,
-        bool addnoise, bool sort) {
-    // create an error vector
-    int height = 600; // dummy
-    int width = 800;
+        bool addnoise, bool sort, bool shuffle) {
 
+    // create an error vector
     double rand_scale = 1.f;
-    double x_scale = 1.f / (height*width);
+    double x_scale = 1.f / num_samples;
     std::vector<double> vecerror;
-    for (double i=0.f; i<height*width; i++) {
+    for (double i=0.f; i<num_samples; i++) {
         // hyperbolic function value
         double value = model(i*x_scale, params);
         if (addnoise==true) {
@@ -33,15 +35,35 @@ void test_generate_datasamples(
         vecerror.push_back(value);
     }
 
-//    if (sort==true) {
-//        // sort the data samples into accending order
-//        std::sort( vecerror.begin(), vecerror.end() );
-//    }
+    if (sort==true) {
+        // sort the data samples into accending order
+        std::sort( vecerror.begin(), vecerror.end() );
+    }
 
+    if (shuffle==true) {
+        // sort the data samples into accending order
+        std::random_shuffle( vecerror.begin(), vecerror.end() );
+    }
 
     // convert to data_samples
-    for (int i=0; i<height*width; i++) {
+    for (int i=0; i<num_samples; i++) {
         data_samples.push_back(std::make_pair(i*x_scale, vecerror[i]));
+    }
+}
+
+void generate_errorimage(NNFError &nnferror, parameter_vector params, bool addnoise, bool shuffle) {
+    std::vector<std::pair<input_vector, double> > data_samples;
+    int height = nnferror.error.dimensions.rows;
+    int width = nnferror.error.dimensions.cols;
+    int num_samples = height * width;
+    bool sort = false;
+    generate_datasamples(num_samples, data_samples, params, addnoise, sort, shuffle);
+
+    for (int row=0; row<height; row++) {
+        for (int col=0; col<width; col++) {
+            int i = row * width + col;
+            nnferror.error(row, col)[0] = (float)data_samples[i].second;
+        }
     }
 }
 
@@ -56,14 +78,16 @@ void test_hyperbolic_derivative(
                    derivative(residual)(data, params)) << std::endl;
 }
 
-void test_errorbudget() {
+void test_hyperbolic_fitting() {
     std::vector<std::pair<input_vector, double> > data_samples;
     parameter_vector gt_params = {2.f, 2.f}; // a, b
     std::cout << "ground-truth parameters: " << trans(gt_params) << std::endl;
 
+    int num_samples = 10000;
     bool addnoise = true;
     bool sort = false;
-    test_generate_datasamples(data_samples, gt_params, addnoise, sort);
+    bool shuffle = false;
+    generate_datasamples(num_samples, data_samples, gt_params, addnoise, sort, shuffle);
 
 //    test_hyperbolic_derivative(data_samples[0], gt_params);
 
@@ -81,7 +105,7 @@ void test_errorbudget() {
                            residual_derivative,
                            data_samples,
                            params);
-    std::cout << "estimated parameters: " << trans(params)<< std::endl;
+    std::cout << "estimated parameters: " << trans(params);
     std::cout << "solution error: " << length(params - gt_params) << std::endl;
     std::cout << std::endl;
 
@@ -94,7 +118,7 @@ void test_errorbudget() {
                            derivative(residual),
                            data_samples,
                            params);
-    std::cout << "estimated parameters: " << trans(params)<< std::endl;
+    std::cout << "estimated parameters: " << trans(params);;
     std::cout << "solution error: " << length(params - gt_params) << std::endl;
     std::cout << std::endl;
 
@@ -108,7 +132,7 @@ void test_errorbudget() {
                            residual_derivative,
                            data_samples,
                            params);
-    std::cout << "estimated parameters: " << trans(params)<< std::endl;
+    std::cout << "estimated parameters: " << trans(params);
     std::cout << "solution error: " << length(params - gt_params) << std::endl;
     std::cout << std::endl;
 }
@@ -118,8 +142,36 @@ void test_errorbudget() {
 
 bool TestErrorBudget::run()
 {
-    std::cout << "Test error budget... " << std::endl;
-    test_errorbudget();
+    std::cout << "Testing error budget... " << std::endl;
+    std::cout << std::endl;
+
+    // curve fitting
+//    test_hyperbolic_fitting();
+
+    // error budget
+    // Generate dummy nnferror data
+    int height = 600;
+    int width = 800;
+    const NNF nnf(ImageDimensions(height, width), ImageDimensions(height, width));
+    NNFError nnferror = {nnf};
+    float errorBudget = 0.f;
+
+    // set gt hyperbolic function parameter
+    parameter_vector gt_params = {2.f, 2.f}; // a, b
+    std::cout << "ground-truth parameters: " << trans(gt_params) << std::endl;
+    bool addnoise = true;
+    bool shuffle = true;
+    generate_errorimage(nnferror, gt_params, addnoise, shuffle);
+    Configuration configuration;
+    ErrorBudgetCalculator calc;
+    calc.calculateErrorBudget(configuration, nnferror, errorBudget);
+
     return true;
 }
 
+// NOTES:
+/* not sure if the objective of the first solver should be 0 in the end of optimization
+ * should test the solvers on real data and pick one
+ * the nnferror error image is set to sourceDimensions at the moment (in NNFError.cpp)
+ * the optimization is probably not real time for a large error image.
+*/
