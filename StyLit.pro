@@ -23,6 +23,7 @@ SOURCES += \
     Algorithm/ErrorBudgetCalculator.cpp \
     Algorithm/ImageDimensions.cpp \
     Algorithm/NNF.cpp \
+    Algorithm/NNFError.cpp \
     Algorithm/NNFUpscaler.cpp \
     Algorithm/PatchMatcher.cpp \
     Configuration/Configuration.cpp \
