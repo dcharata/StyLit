@@ -28,6 +28,7 @@ SOURCES += \
     Tests/TestImageIOHelpers.cpp \
     Tests/TestImageIOWrite.cpp \
     Tests/TestMain.cpp \
+    Tests/TestNNFGenerator.cpp \
     Tests/TestPatchMatch.cpp \
     Utilities/FloatTools.cpp \
     Utilities/ImageFormatTools.cpp \
@@ -45,6 +46,7 @@ HEADERS += \
     Algorithm/ImageDimensions.h \
     Algorithm/ImagePair.h \
     Algorithm/NNF.h \
+    Algorithm/NNFApplicator.h \
     Algorithm/NNFError.h \
     Algorithm/NNFGenerator.h \
     Algorithm/NNFUpscaler.h \
@@ -53,6 +55,7 @@ HEADERS += \
     Algorithm/PyramidLevel.h \
     Algorithm/StyLitCoordinator.h \
     CPU/ErrorCalculatorCPU.h \
+    CPU/NNFApplicatorCPU.h \
     Configuration/Configuration.h \
     Configuration/ConfigurationParser.h \
     MainWindow.h \
@@ -63,6 +66,7 @@ HEADERS += \
     Tests/TestImageIOHelpers.h \
     Tests/TestImageIOWrite.h \
     Tests/TestMain.h \
+    Tests/TestNNFGenerator.h \
     Tests/TestPatchMatch.h \
     Tests/UnitTest.h \
     Utilities/FloatTools.h \

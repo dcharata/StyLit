@@ -98,7 +98,7 @@ private:
     ImageCoordinates newPatch1{-1, -1};
     ImageCoordinates newPatch2{-1, -1};
     ImageCoordinates domainNeighbor1{row + offset, col};
-    if (domainNeighbor1.within(nnf.sourceDimensions)) {
+    if (domainNeighbor1.within(nnf.sourceDimensions)) { // if the neighbor in the nnf domain actually exists
       ImageCoordinates codomainNeighbor1 = nnf.getMapping(domainNeighbor1);
       // get the patch in the codomain that we might want to map the current (row, col) domain patch to
       // NOTE: the -offset below is from the ebsynth implementation, and is not part of the original patchmatch algorithm
@@ -108,7 +108,7 @@ private:
       // if the corresponding element in the blacklist is (-1,-1), then this new patch is available
       bool newPatch1Available = (blacklist == nullptr) || (blacklist->getMapping(newPatch1).row == -1 &&
                                                            blacklist->getMapping(newPatch1).col == -1);
-      if (newPatch1.within(nnf.targetDimensions)) {
+      if (newPatch1.within(nnf.targetDimensions)) { // if new codomain patch is in the codomain dimensions
         if (newPatch1Available) {
           if (makeReverseNNF) {
             errorCalc.calculateError(configuration, pyramidLevel, currentPatch, newPatch1, guideWeights, styleWeights, newPatchError1);
@@ -123,14 +123,14 @@ private:
 
     // do the exact same thing as above but with the analogous col offset
     ImageCoordinates domainNeighbor2{row, col + offset};
-    if (domainNeighbor2.within(nnf.sourceDimensions)) {
+    if (domainNeighbor2.within(nnf.sourceDimensions)) { // if the neighbor in te nnf domain actually exists
       ImageCoordinates codomainNeighbor2 = nnf.getMapping(domainNeighbor2);
       // NOTE: we have the same -offset that we have above
       newPatch2.row = codomainNeighbor2.row;
       newPatch2.col = codomainNeighbor2.col - offset;
       bool newPatch2Available = (blacklist == nullptr) || (blacklist->getMapping(newPatch2).row == -1 &&
                                                            blacklist->getMapping(newPatch2).col == -1);
-      if (newPatch2.within(nnf.targetDimensions)) {
+      if (newPatch2.within(nnf.targetDimensions)) { // if the new codomain patch is in the codomain dimensions
         if (newPatch2Available) {
           if (makeReverseNNF) {
             errorCalc.calculateError(configuration, pyramidLevel, currentPatch, newPatch2, guideWeights, styleWeights, newPatchError2);
@@ -190,7 +190,7 @@ private:
       int col_offset = int(w * pow(RANDOM_SEARCH_ALPHA, i) * rand_uniform());
       int row_offset = int(w * pow(RANDOM_SEARCH_ALPHA, i) * rand_uniform());
       ImageCoordinates newCodomainPatch{currentCodomainPatch.row + row_offset, currentCodomainPatch.col + col_offset};
-      if (newCodomainPatch.within(nnf.targetDimensions)) {
+      if (newCodomainPatch.within(nnf.targetDimensions)) { // if this new codomain patch is within the codomain dimensions of the nnf
         bool newCodomainPatchAvailable = (blacklist == nullptr) || (blacklist->getMapping(newCodomainPatch).row == -1 &&
                                                                     blacklist->getMapping(newCodomainPatch).col == -1);
         if (newCodomainPatchAvailable) { // it is only worth to check whether we should move to this new patch if it is not on the blacklist
