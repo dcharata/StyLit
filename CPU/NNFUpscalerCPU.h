@@ -16,18 +16,6 @@ public:
   NNFUpscalerCPU() = default;
   virtual ~NNFUpscalerCPU() = default;
 
-  /**
-   * @brief upscaleNNF This is a wrapper around implementationOfUpscaleNNF. It
-   * asserts that the NNF dimensions make sense before calling the
-   * implementation-specific NNF upscaler.
-   * @param configuration the configuration StyLit is running
-   * @param half the NNF to upscale
-   * @param full the NNF to store the result in
-   * @return true if upscaling succeeds; otherwise false
-   */
-  bool upscaleNNFCPU(const Configuration &configuration, const NNF &half,
-                  NNF &full);
-
 protected:
   /**
    * @brief implementationOfUpscaleNNF Upscales the NNF half to twice the
@@ -37,8 +25,8 @@ protected:
    * @param full the NNF to store the result in
    * @return true if upscaling succeeds; otherwise false
    */
-  virtual bool implementationOfUpscaleNNFCPU(const Configuration &configuration,
-                                          const NNF &half, NNF &full) = 0;
+  virtual bool implementationOfUpscaleNNF(const Configuration &configuration,
+                                          const NNF &half, NNF &full) override;
 };
 
 #endif // NNFUPSCALERCPU_H
