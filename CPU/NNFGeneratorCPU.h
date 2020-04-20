@@ -7,7 +7,7 @@
 #include "Algorithm/NNFError.h"
 #include "ErrorCalculatorCPU.h"
 #include "Algorithm/FeatureVector.h"
-#include "ErrorBudgetCalculatorCPU.h"
+//#include "ErrorBudgetCalculatorCPU.h"
 
 struct Configuration;
 
@@ -44,7 +44,7 @@ private:
     PatchMatcherCPU<T, numGuideChannels, numStyleChannels> patchMatcher = PatchMatcherCPU<T, numGuideChannels, numStyleChannels>();
     PyramidLevel<T, numGuideChannels, numStyleChannels> pyramidLevel = pyramid.levels[level];
     ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels> errorCalc = ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels>();
-    ErrorBudgetCalculatorCPU budgetCalc = ErrorBudgetCalculatorCPU();
+    //ErrorBudgetCalculatorCPU budgetCalc = ErrorBudgetCalculatorCPU();
 
     // create and initialize the blacklist
     NNF blacklist = NNF(pyramidLevel.guide.target.dimensions, pyramidLevel.guide.source.dimensions);
@@ -79,7 +79,7 @@ private:
       // get the error budget
       float budget;
       std::vector<ImageCoordinates> sortedCoordinates; // **************** these need to be sorted by calculateErrorBudget ************************
-      budgetCalc.calculateErrorBudget(configuration, nnfError, budget);
+      //budgetCalc.calculateErrorBudget(configuration, nnfError, budget);
 
       // fill up the forward NNF using the reverse NNF until we hit the error budget
       float errorIntegral = 0;

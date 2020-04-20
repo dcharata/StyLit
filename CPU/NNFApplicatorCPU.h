@@ -49,6 +49,8 @@ private:
              // only add to the average if the pixel we are looking at actually exists in the target
              if (offsetTargetCoords.within(pyramidLevel.style.target.dimensions)) {
                // get the source coordinates from the NNF and then offset them as shown in the ebsynth source
+               // so that they are moved back in the direction of the current pixel
+               // offsetting the pixel we add to the average in this way is a reasonable thing to do and seems to reduce blurriness
                ImageCoordinates sourceCoords = pyramidLevel.forwardNNF.getMapping(offsetTargetCoords);
                ImageCoordinates offsetSourceCoords{sourceCoords.row - rowOffset, sourceCoords.col - colOffset};
                // only add to the average if the pixel we are looking at actually exists in the source

@@ -102,6 +102,8 @@ private:
       ImageCoordinates codomainNeighbor1 = nnf.getMapping(domainNeighbor1);
       // get the patch in the codomain that we might want to map the current (row, col) domain patch to
       // NOTE: the -offset below is from the ebsynth implementation, and is not part of the original patchmatch algorithm
+      // This modification seems to reduce blurriness when we average the contents of the NNF into a final image
+      // and makes the total error of the NNF decrease slightly faster
       newPatch1.row = codomainNeighbor1.row - offset;
       newPatch1.col = codomainNeighbor1.col;
       // the blacklist tells us if the codomain index newPatch1 is available.
