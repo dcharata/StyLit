@@ -37,7 +37,7 @@ public:
   bool patchMatch(const Configuration &configuration, NNF &nnf,
                   const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int numIterations,
                   int level, bool makeReverseNNF, bool initRandom, const NNF *const blacklist = nullptr) {
-    implementationOfPatchMatch(configuration, nnf, pyramid, level, numIterations, makeReverseNNF, initRandom, blacklist);
+    implementationOfPatchMatch(configuration, nnf, pyramid, numIterations, level, makeReverseNNF, initRandom, blacklist);
   }
 
 protected:
@@ -52,14 +52,6 @@ protected:
    * @param level the level of the pyramid for which an NNF is being generated
    * @param makeReverseNNF indicates whether a reverse or forward nnf is
    *        being generated const NNF *const blacklist = nullptr);
-
-protected:
-  /**
-   * @brief implementationOfPatchMatch Runs PatchMatch to improve the specified
-   * NNF. If a blacklist is specified, coordinates that map to valid coordinates
-   * in blacklist should not be mapped to.
-   * @param configuration the configuration StyLit is running
-   * @param nnf the NNF that should be improved with PatchMatch
    * @param blacklist This optional NNF goes in the opposite direction of NNF.
    * Source coordinates that correspond to valid mappings in blacklist should
    * not be mapped to. This is used in the iterative creation of NNFs via

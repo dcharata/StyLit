@@ -6,6 +6,7 @@
 #include "Algorithm/PyramidLevel.h"
 #include "Algorithm/ChannelWeights.h"
 #include "ErrorCalculatorCPU.h"
+#include <iostream>
 
 int randi(int min, int max) {
   return (std::rand() % (max - min)) + min;
@@ -27,6 +28,16 @@ class PatchMatcherCPU : public PatchMatcher<T, numGuideChannels, numStyleChannel
 public:
   PatchMatcherCPU() = default;
   ~PatchMatcherCPU() = default;
+
+  void randomlyInitializeNNF(NNF &nnf) {
+    for (int col = 0; col < nnf.sourceDimensions.cols; col++) {
+      for (int row = 0; row < nnf.sourceDimensions.rows; row++) {
+        ImageCoordinates from{row, col};
+        ImageCoordinates to{randi(0, nnf.targetDimensions.rows), randi(0, nnf.targetDimensions.col)};
+        nnf.setMapping(from, to);
+      }
+    }
+  }
 
 private:
   const int NUM_PATCHMATCH_ITERATIONS = 6;
@@ -50,7 +61,7 @@ private:
                                   const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int numIterations,
                                   int level, bool makeReverseNNF, bool initRandom, const NNF *const blacklist = nullptr) {
 
-    PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel = pyramid.levels[level];
+    const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel = pyramid.levels[level];
 
     int numNNFRows = nnf.sourceDimensions.rows;
     int numNNFCols = nnf.sourceDimensions.cols;
@@ -66,8 +77,8 @@ private:
       bool iterationIsOdd = i % 2 == 1 ? true : false;
       for (int col = 0; col < numNNFCols; col++) {
         for (int row = 0; row < numNNFRows; row++) {
-          propagationStep(configuration, row, col, makeReverseNNF, iterationIsOdd, nnf, level, blacklist);
-          searchStep(configuration, row, col, makeReverseNNF, nnf, level, blacklist);
+          propagationStep(configuration, row, col, makeReverseNNF, iterationIsOdd, nnf, pyramidLevel, guideWeights, styleWeights, blacklist);
+          searchStep(configuration, row, col, makeReverseNNF, nnf, pyramidLevel, guideWeights, styleWeights, blacklist);
         }
       }
     }
@@ -87,7 +98,7 @@ private:
     ImageCoordinates newPatch1{-1, -1};
     ImageCoordinates newPatch2{-1, -1};
     ImageCoordinates domainNeighbor1{row + offset, col};
-    if (nnf.sourceDimensions.within(domainNeighbor1)) {
+    if (domainNeighbor1.within(nnf.sourceDimensions)) {
       ImageCoordinates codomainNeighbor1 = nnf.getMapping(domainNeighbor1);
       // get the patch in the codomain that we might want to map the current (row, col) domain patch to
       // NOTE: the -offset below is from the ebsynth implementation, and is not part of the original patchmatch algorithm
@@ -97,7 +108,7 @@ private:
       // if the corresponding element in the blacklist is (-1,-1), then this new patch is available
       bool newPatch1Available = (blacklist == nullptr) || (blacklist->getMapping(newPatch1).row == -1 &&
                                                            blacklist->getMapping(newPatch1).col == -1);
-      if (nnf.targetDimensions.within(newPatch1)) {
+      if (newPatch1.within(nnf.targetDimensions)) {
         if (newPatch1Available) {
           if (makeReverseNNF) {
             errorCalc.calculateError(configuration, pyramidLevel, currentPatch, newPatch1, guideWeights, styleWeights, newPatchError1);
@@ -112,14 +123,14 @@ private:
 
     // do the exact same thing as above but with the analogous col offset
     ImageCoordinates domainNeighbor2{row, col + offset};
-    if (nnf.sourceDimensions.within(domainNeighbor2)) {
+    if (domainNeighbor2.within(nnf.sourceDimensions)) {
       ImageCoordinates codomainNeighbor2 = nnf.getMapping(domainNeighbor2);
       // NOTE: we have the same -offset that we have above
       newPatch2.row = codomainNeighbor2.row;
       newPatch2.col = codomainNeighbor2.col - offset;
       bool newPatch2Available = (blacklist == nullptr) || (blacklist->getMapping(newPatch2).row == -1 &&
                                                            blacklist->getMapping(newPatch2).col == -1);
-      if (nnf.targetDimensions.within(newPatch2)) {
+      if (newPatch2.within(nnf.targetDimensions)) {
         if (newPatch2Available) {
           if (makeReverseNNF) {
             errorCalc.calculateError(configuration, pyramidLevel, currentPatch, newPatch2, guideWeights, styleWeights, newPatchError2);
@@ -179,7 +190,7 @@ private:
       int col_offset = int(w * pow(RANDOM_SEARCH_ALPHA, i) * rand_uniform());
       int row_offset = int(w * pow(RANDOM_SEARCH_ALPHA, i) * rand_uniform());
       ImageCoordinates newCodomainPatch{currentCodomainPatch.row + row_offset, currentCodomainPatch.col + col_offset};
-      if (nnf.targetDimensions.within(newCodomainPatch)) {
+      if (newCodomainPatch.within(nnf.targetDimensions)) {
         bool newCodomainPatchAvailable = (blacklist == nullptr) || (blacklist->getMapping(newCodomainPatch).row == -1 &&
                                                                     blacklist->getMapping(newCodomainPatch).col == -1);
         if (newCodomainPatchAvailable) { // it is only worth to check whether we should move to this new patch if it is not on the blacklist
@@ -199,16 +210,6 @@ private:
       }
 
       i++;
-    }
-  }
-
-  void randomlyInitializeNNF(NNF &nnf) {
-    for (int col = 0; col < nnf.sourceDimensions.cols; col++) {
-      for (int row = 0; row < nnf.sourceDimensions.rows; row++) {
-        ImageCoordinates from{row, col};
-        ImageCoordinates to{randi(0, nnf.targetDimensions.rows), randi(0, nnf.targetDimensions.col)};
-        nnf.setMapping(from, to);
-      }
     }
   }
 

@@ -68,7 +68,7 @@ private:
       for (int col = 0; col < nnfError.nnf.sourceDimensions.cols; col++) {
         for (int row = 0; row < nnfError.nnf.sourceDimensions.cols; row++) {
           // not sure how the error image is initialized, so I added this so that there won't be any out of bounds errors
-          assert(nnfError.error.dimensions.within(ImageDimensions{row, col}));
+          assert((ImageDimensions{row, col}).within(nnfError.error.dimensions));
           float patchError;
           ImageCoordinates currentPatch{row, col};
           patchError = errorCalc.calculateError(configuration, pyramidLevel, currentPatch, nnfError.nnf.getMapping(currentPatch), patchError);

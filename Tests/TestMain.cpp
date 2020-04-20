@@ -3,6 +3,7 @@
 #include "TestImageIO.h"
 #include "TestImageIOHelpers.h"
 #include "TestImageIOWrite.h"
+#include "TestPatchMatch.h"
 #include "UnitTest.h"
 
 #include <stdio.h>
@@ -21,11 +22,12 @@ int TestMain::run() {
   TestImageIO testImageIO;
   TestImageIOHelpers testImageIOHelpers;
   TestImageIOWrite testImageIOWrite;
+  TestPatchMatch testPatchMatch;
 
   // All tests in unitTests are run.
-  const int numTests = 3;
+  const int numTests = 4;
   UnitTest *unitTests[] = {&testImageIO, &testImageIOWrite,
-                           &testImageIOHelpers};
+                           &testImageIOHelpers, &testPatchMatch};
 
   // Runs the tests and counts how many succeed.
   int numPasses = 0;

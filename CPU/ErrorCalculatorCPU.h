@@ -59,13 +59,9 @@ private:
                                               const ChannelWeights<numGuideChannels> &guideWeights,
                                               const ChannelWeights<numStyleChannels> &styleWeights, float &error) {
     error = 0;
-    Image<T, numGuideChannels> &A = pyramidLevel.guide.source;
-    Image<T, numStyleChannels> &A_prime = pyramidLevel.style.target;
-    Image<T, numGuideChannels> &B = pyramidLevel.guide.target;
-    Image<T, numStyleChannels> &B_prime = pyramidLevel.style.target;
     ImageCoordinates min = ImageCoordinates{0,0};
-    ImageCoordinates A_max = A.dimensions;
-    ImageCoordinates B_max = B.dimensions;
+    ImageCoordinates A_max = pyramidLevel.guide.source.dimensions;
+    ImageCoordinates B_max = pyramidLevel.guide.target.dimensions;
     int centerRowSource = sourceCoordinates.row;
     int centerColSource = sourceCoordinates.col;
     int centerRowTarget = targetCoordinates.row;
@@ -76,11 +72,11 @@ private:
       for (int rowOffset = -PATCH_SIZE / 2; rowOffset <= PATCH_SIZE / 2; rowOffset++) {
         ImageCoordinates sourceCoords = clamp(ImageCoordinates{centerRowSource + rowOffset, centerColSource + colOffset}, min, A_max);
         ImageCoordinates targetCoords = clamp(ImageCoordinates{centerRowTarget + rowOffset, centerColTarget + colOffset}, min, B_max);
-        FeatureVector<T, numGuideChannels> guideDiff = A(sourceCoords.row, sourceCoords.col)
-                                                       - B(targetCoords.row, targetCoords.col);
+        FeatureVector<T, numGuideChannels> guideDiff = pyramidLevel.guide.source(sourceCoords.row, sourceCoords.col) // A
+                                                       - pyramidLevel.guide.target(targetCoords.row, targetCoords.col); // B
         error += (guideDiff.array().square() * guideWeights.array()).matrix().sum();
-        FeatureVector<T, numStyleChannels> styleDiff = A_prime(sourceCoords.row, sourceCoords.col)
-                                                       - B_prime(targetCoords.row, targetCoords.col);
+        FeatureVector<T, numStyleChannels> styleDiff = pyramidLevel.style.source(sourceCoords.row, sourceCoords.col) // A'
+                                                       - pyramidLevel.style.target(targetCoords.row, targetCoords.col); // B'
         error += (styleDiff.array().square() * styleWeights.array()).matrix().sum();
       }
     }

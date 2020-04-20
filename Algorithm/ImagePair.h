@@ -8,7 +8,7 @@
  * The image pairs used in StyLit are the guides (A/B) and the styles (A'/B').
  */
 template <typename T, unsigned int numChannels> struct ImagePair {
-  ImagePair(ImageDimensions dims) : source(dims), target(dims)
+  ImagePair(ImageDimensions sourceDims, ImageDimensions targetDims) : source(sourceDims), target(targetDims)
   {
   }
 
