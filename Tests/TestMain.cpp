@@ -1,5 +1,6 @@
 #include "TestMain.h"
 
+#include "TestDownscalerCPU.h"
 #include "TestImageIO.h"
 #include "TestImageIOHelpers.h"
 #include "TestImageIOWrite.h"
@@ -18,14 +19,15 @@ int TestMain::run() {
   // This is the list of tests.
   // Instantiate your new unit test here. Don't forget to add it to unitTests
   // below as well.
+  TestDownscalerCPU testDownscalerCPU;
   TestImageIO testImageIO;
   TestImageIOHelpers testImageIOHelpers;
   TestImageIOWrite testImageIOWrite;
 
   // All tests in unitTests are run.
-  const int numTests = 3;
-  UnitTest *unitTests[] = {&testImageIO, &testImageIOWrite,
-                           &testImageIOHelpers};
+  const int numTests = 4;
+  UnitTest *unitTests[] = {&testImageIO, &testImageIOWrite, &testImageIOHelpers,
+                           &testDownscalerCPU};
 
   // Runs the tests and counts how many succeed.
   int numPasses = 0;

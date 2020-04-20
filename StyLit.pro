@@ -23,6 +23,7 @@ SOURCES += \
     Algorithm/PatchMatcher.cpp \
     Configuration/Configuration.cpp \
     Configuration/ConfigurationParser.cpp \
+    Tests/TestDownscalerCPU.cpp \
     Tests/TestImageIO.cpp \
     Tests/TestImageIOHelpers.cpp \
     Tests/TestImageIOWrite.cpp \
@@ -53,6 +54,9 @@ HEADERS += \
     Algorithm/StyLitCoordinator.h \
     Configuration/Configuration.h \
     Configuration/ConfigurationParser.h \
+    Tests/TestDownscaler.h \
+    Tests/TestDownscalerCPU.h \
+    Tests/TestDownscalerWithImage.h \
     Tests/TestImageIO.h \
     Tests/TestImageIOHelpers.h \
     Tests/TestImageIOWrite.h \
