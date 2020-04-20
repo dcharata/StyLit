@@ -33,7 +33,7 @@ public:
    * @return true if error budget calculation succeeds; otherwise false
    */
   bool calculateErrorBudget(const Configuration &configuration,
-                            const NNFError &error, float errorBudget);
+                            NNFError &error, float errorBudget);
 
 protected:
   /**
@@ -47,7 +47,7 @@ protected:
    */
   bool
   implementationOfCalculateErrorBudget(const Configuration &configuration,
-                                       const NNFError &error,
+                                       NNFError &error,
                                        float errorBudget);
 
 };
