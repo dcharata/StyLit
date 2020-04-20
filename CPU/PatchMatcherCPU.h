@@ -47,7 +47,7 @@ private:
    * @return true if patch matching succeeds; otherwise false
    */
   bool implementationOfPatchMatch(const Configuration &configuration, NNF &nnf,
-                                  const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid,
+                                  const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int numIterations,
                                   int level, bool makeReverseNNF, bool initRandom, const NNF *const blacklist = nullptr) {
 
     PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel = pyramid.levels[level];
@@ -62,7 +62,7 @@ private:
       randomlyInitializeNNF(nnf);
     }
 
-    for (int i = 0; i < NUM_PATCHMATCH_ITERATIONS; i++) {
+    for (int i = 0; i < numIterations; i++) {
       bool iterationIsOdd = i % 2 == 1 ? true : false;
       for (int col = 0; col < numNNFCols; col++) {
         for (int row = 0; row < numNNFRows; row++) {

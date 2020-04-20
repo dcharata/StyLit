@@ -11,6 +11,11 @@
 template <typename T, unsigned int numGuideChannels,
           unsigned int numStyleChannels>
 struct PyramidLevel {
+  PyramidLevel(ImageDimensions sourceDims, ImageDimensions targetDims)
+      : forwardNNF(targetDims, sourceDims), reverseNNF(sourceDims, targetDims)
+  {
+  }
+
   ImagePair<T, numGuideChannels> guide;
   ImagePair<T, numStyleChannels> style;
   NNF forwardNNF; // this is the target sized array of source indices
