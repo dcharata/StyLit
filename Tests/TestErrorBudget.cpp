@@ -41,8 +41,15 @@ void generate_datasamples(
     }
 
     if (shuffle==true) {
-        // sort the data samples into accending order
-        std::random_shuffle( vecerror.begin(), vecerror.end() );
+        // Fisher-Yates shuffle
+        // https://www.techiedelight.com/shuffle-given-array-elements-fisher-yates-shuffle/
+        for(int i=0; i<num_samples; i++) {
+            // generate a random number j such that i<=j <n and
+            // swap the element present at index j with the element
+            // present at current index i
+            int j = i + std::rand() % (num_samples - i);
+            std::swap(vecerror[i], vecerror[j]);
+        }
     }
 
     // convert to data_samples
