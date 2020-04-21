@@ -29,7 +29,7 @@ public:
   bool downscale(const Configuration &configuration,
                  const Image<T, numChannels> &full,
                  Image<T, numChannels> &half) {
-    Q_ASSERT(half.dimensions.halfTheSizeOf(full));
+    Q_ASSERT(half.dimensions.halfTheSizeOf(full.dimensions));
     return implementationOfDownscale(configuration, full, half);
   }
 
