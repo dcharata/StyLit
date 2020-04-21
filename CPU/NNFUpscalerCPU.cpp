@@ -4,7 +4,7 @@
 
 #include <QtGlobal>
 
-// Upscales NNF by 2.
+// Upscales NNF by 2 and interpolates new source indices into it.
 bool NNFUpscalerCPU::implementationOfUpscaleNNF(const Configuration &configuration,
                                 const NNF &half, NNF &full) {
 
@@ -18,8 +18,9 @@ bool NNFUpscalerCPU::implementationOfUpscaleNNF(const Configuration &configurati
             const ImageCoordinates offset{i % 2, j % 2};
             ImageCoordinates temp = half.getMapping(_coord) * 2 + offset;
 
-            const int patch_size = 5;
+            const int patch_size = configuration.patchSize;
             const ImageCoordinates coord{i, j};
+            // clamps values between a patch sized padding applied within the matrix.
             const int vi = qBound(patch_size, temp.row, full.sourceDimensions.rows - patch_size - 1);
             const int vj = qBound(patch_size, temp.col, full.sourceDimensions.cols - patch_size - 1);
             const ImageCoordinates value{vi, vj};
