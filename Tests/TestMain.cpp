@@ -1,5 +1,6 @@
 #include "TestMain.h"
 
+#include "TestNNFUpscalerCPU.h"
 #include "TestDownscalerCPU.h"
 #include "TestImageIO.h"
 #include "TestImageIOHelpers.h"
@@ -23,11 +24,12 @@ int TestMain::run() {
   TestImageIO testImageIO;
   TestImageIOHelpers testImageIOHelpers;
   TestImageIOWrite testImageIOWrite;
+  TestNNFUpscalerCPU testNNFUpscalerCPU;
 
   // All tests in unitTests are run.
-  const int numTests = 4;
+  const int numTests = 5;
   UnitTest *unitTests[] = {&testImageIO, &testImageIOWrite, &testImageIOHelpers,
-                           &testDownscalerCPU};
+                           &testDownscalerCPU, &testNNFUpscalerCPU};
 
   // Runs the tests and counts how many succeed.
   int numPasses = 0;
