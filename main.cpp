@@ -16,6 +16,7 @@ int main(int argc, char *argv[]) {
       "An implementation of StyLit for CSCI 2240.");
   parser.addHelpOption();
 
+  // test
   // Sets up the GUI argument.
   QCommandLineOption interfaceOption(QStringList() << "g"
                                                    << "gui",
