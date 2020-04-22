@@ -24,6 +24,7 @@ SOURCES += \
     Algorithm/NNFUpscaler.cpp \
     Configuration/Configuration.cpp \
     Configuration/ConfigurationParser.cpp \
+    Tests/TestDownscalerCPU.cpp \
     Tests/TestImageIO.cpp \
     Tests/TestImageIOHelpers.cpp \
     Tests/TestImageIOWrite.cpp \
@@ -34,7 +35,8 @@ SOURCES += \
     Utilities/ImageFormatTools.cpp \
     Utilities/ImageIO.cpp \
     main.cpp \
-    MainWindow.cpp
+    MainWindow.cpp \
+    Tests/TestImageResize.cpp
 
 HEADERS += \
     Algorithm/ChannelWeights.h \
@@ -62,6 +64,9 @@ HEADERS += \
     CPU/PatchMatcherCPU.h \
     CPU/NNFGeneratorCPU.h \
     CPU/StyLitCoordinatorCPU.h \
+    Tests/TestDownscaler.h \
+    Tests/TestDownscalerCPU.h \
+    Tests/TestDownscalerWithImage.h \
     Tests/TestImageIO.h \
     Tests/TestImageIOHelpers.h \
     Tests/TestImageIOWrite.h \
@@ -73,7 +78,9 @@ HEADERS += \
     Utilities/ImageFormat.h \
     Utilities/ImageFormatTools.h \
     MainWindow.h \
-    Utilities/ImageIO.h
+    Utilities/ImageIO.h \
+    CPU/DownscalerCPU.h \
+    Tests/TestImageResize.h
 
 FORMS += \
     MainWindow.ui

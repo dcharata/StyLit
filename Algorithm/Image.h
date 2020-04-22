@@ -31,6 +31,17 @@ public:
     return data[dimensions.cols * row + col];
   }
 
+  /**
+   * @brief getConstPixel Returns a const reference to the feature vector at the
+   * given coordinates.
+   * @param row the row
+   * @param col the column
+   * @return a const reference to the feature vector at the given coordinates
+   */
+  const FeatureVector<T, numChannels> &getConstPixel(int row, int col) const {
+    return data[dimensions.cols * row + col];
+  }
+
   // the image's dimensions
   const ImageDimensions dimensions;
 

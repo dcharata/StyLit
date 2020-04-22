@@ -66,6 +66,15 @@ private:
    */
   bool parseImageFormatArray(const std::vector<QString> &strings,
                              std::vector<ImageFormat> &imageFormats);
+
+  /**
+   * @brief parseInt Parses an integer.
+   * @param source a JSON value that contains the integer
+   * @param destination an integer that is populated with the value
+   * @return true if parsing succeeds, i.e. a positive integer was parsed; false
+   * if it fails (e.g. because the source is empty or not an integer)
+   */
+  bool parsePositiveInt(const QJsonValue &source, int &destination);
 };
 
 #endif // CONFIGURATIONPARSER_H
