@@ -73,11 +73,11 @@ private:
       for (int rowOffset = -PATCH_SIZE / 2; rowOffset <= PATCH_SIZE / 2; rowOffset++) {
         ImageCoordinates sourceCoords = clamp(ImageCoordinates{centerRowSource + rowOffset, centerColSource + colOffset}, min, A_max);
         ImageCoordinates targetCoords = clamp(ImageCoordinates{centerRowTarget + rowOffset, centerColTarget + colOffset}, min, B_max);
-        FeatureVector<T, numGuideChannels> guideDiff = pyramidLevel.guide.source(sourceCoords.row, sourceCoords.col) // A
-                                                       - pyramidLevel.guide.target(targetCoords.row, targetCoords.col); // B
+        FeatureVector<T, numGuideChannels> guideDiff = pyramidLevel.guide.source.getConstPixel(sourceCoords.row, sourceCoords.col) // A
+                                                       - pyramidLevel.guide.target.getConstPixel(targetCoords.row, targetCoords.col); // B
         error += (guideDiff.array().square() * guideWeights.array()).matrix().sum();
-        FeatureVector<T, numStyleChannels> styleDiff = pyramidLevel.style.source(sourceCoords.row, sourceCoords.col) // A'
-                                                       - pyramidLevel.style.target(targetCoords.row, targetCoords.col); // B'
+        FeatureVector<T, numStyleChannels> styleDiff = pyramidLevel.style.source.getConstPixel(sourceCoords.row, sourceCoords.col) // A'
+                                                       - pyramidLevel.style.target.getConstPixel(targetCoords.row, targetCoords.col); // B'
         error += (styleDiff.array().square() * styleWeights.array()).matrix().sum();
       }
     }

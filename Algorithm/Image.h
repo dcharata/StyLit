@@ -27,7 +27,7 @@ public:
    * @param col the column
    * @return a reference to the feature vector at the given coordinates
    */
-  FeatureVector<T, numChannels> &operator()(int row, int col) const {
+  FeatureVector<T, numChannels> &operator()(int row, int col) {
     return data[dimensions.cols * row + col];
   }
 
