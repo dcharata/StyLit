@@ -4,7 +4,7 @@
 
 #include <QtGlobal>
 
-
+// Upscales NNF by 2.
 bool NNFUpscalerCPU::implementationOfUpscaleNNF(const Configuration &configuration,
                                 const NNF &half, NNF &full) {
 
@@ -18,7 +18,6 @@ bool NNFUpscalerCPU::implementationOfUpscaleNNF(const Configuration &configurati
             const ImageCoordinates offset{i % 2, j % 2};
             ImageCoordinates temp = half.getMapping(_coord) * 2 + offset;
 
-            // 5 is the patch size
             const int patch_size = 5;
             const ImageCoordinates coord{i, j};
             const int vi = qBound(patch_size, temp.row, full.sourceDimensions.rows - patch_size - 1);
