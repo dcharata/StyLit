@@ -40,7 +40,6 @@ public:
   }
 
 private:
-  const int NUM_PATCHMATCH_ITERATIONS = 6;
   const float RANDOM_SEARCH_ALPHA = .5;
 
   /**

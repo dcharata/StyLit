@@ -27,9 +27,9 @@ int TestMain::run() {
   TestPatchMatch testPatchMatch;
 
   // All tests in unitTests are run.
-  const int numTests = 5;
+  const int numTests = 4;
   UnitTest *unitTests[] = {&testImageIO, &testImageIOWrite, &testImageIOHelpers,
-                           &testDownscalerCPU, &testPatchMatch};
+                           &testPatchMatch};
 
   // Runs the tests and counts how many succeed.
   int numPasses = 0;

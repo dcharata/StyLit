@@ -2,6 +2,7 @@
 #define NNFAPPLICATORCPU_H
 
 #include "Algorithm/NNFApplicator.h"
+#include "Configuration/Configuration.h"
 #include <iostream>
 
 struct Configuration;
@@ -21,8 +22,6 @@ public:
 
 private:
 
-  const int PATCH_SIZE = 5;
-
   /**
    * @brief implementationOfApplyNNF Generates a stylized target image by
    *        averaging the forward NNF of the pyramid level
@@ -35,6 +34,9 @@ private:
                                 PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel) {
     int targetCols = pyramidLevel.style.target.dimensions.cols;
     int targetRows = pyramidLevel.style.target.dimensions.rows;
+
+    const int PATCH_SIZE = configuration.patchSize;
+
     for (int col = 0; col < targetCols; col++) {
       for (int row = 0; row < targetRows; row++) {
         // create a final pixel value and keep track of the weight added

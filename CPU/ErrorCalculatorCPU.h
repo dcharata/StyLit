@@ -3,8 +3,7 @@
 
 #include "Algorithm/ErrorCalculator.h"
 #include "Algorithm/ChannelWeights.h"
-
-struct Configuration;
+#include "Configuration/Configuration.h"
 
 ImageCoordinates clamp(ImageCoordinates c, ImageCoordinates min, ImageCoordinates max) {
   ImageCoordinates ret;
@@ -40,7 +39,6 @@ public:
   virtual ~ErrorCalculatorCPU() = default;
 
 private:
-  const int PATCH_SIZE = 5;
 
   /**
    * @brief implementationOfCalculateError Calculates the error between the
@@ -66,6 +64,9 @@ private:
     int centerColSource = sourceCoordinates.col;
     int centerRowTarget = targetCoordinates.row;
     int centerColTarget = targetCoordinates.col;
+
+    const int PATCH_SIZE = configuration.patchSize;
+
     // go through all of the feature vectors from the guide and style in the patch and subtract the
     // source from the target. Add (source - target)^2 * weight to the total error.
     for (int colOffset = -PATCH_SIZE / 2; colOffset <= PATCH_SIZE / 2; colOffset++) {

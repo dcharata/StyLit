@@ -16,9 +16,12 @@ bool TestPatchMatch::run() {
   // run patchmatch and make sure that the error gets lower with each iteration
   // run patchmatch where source and target are similar, output image and see if image looks like target
 
+  Configuration configuration;
+  configuration.patchSize = 5;
+
   {
     QString path1("./Examples/brown1.png");
-    QString path2("./Examples/brown1.png");
+    QString path2("./Examples/brown2.png");
     QImage sourceImage(path1);
     ImageDimensions sourceDims{sourceImage.height(), sourceImage.width()};
     QImage targetImage(path2);
@@ -42,20 +45,20 @@ bool TestPatchMatch::run() {
       for (int row = 0; row < pyramid.levels[0].forwardNNF.sourceDimensions.rows; row++) {
         float error = 0;
         ImageCoordinates coords = {row, col};
-        errorCalc.calculateError(Configuration(), pyramid.levels[0], pyramid.levels[0].forwardNNF.getMapping(coords),
+        errorCalc.calculateError(configuration, pyramid.levels[0], pyramid.levels[0].forwardNNF.getMapping(coords),
                                  coords, guideWeights, styleWeights, error);
         totalError += error;
       }
     }
     std::cout << "Error: " << totalError << std::endl;
     for (int i = 0; i < 2; i++) {
-      patchMatcher.patchMatch(Configuration(), pyramid.levels[0].forwardNNF, pyramid, 2, 0, false, false);
+      patchMatcher.patchMatch(configuration, pyramid.levels[0].forwardNNF, pyramid, 2, 0, false, false);
       float totalError = 0;
       for (int col = 0; col < pyramid.levels[0].forwardNNF.sourceDimensions.cols; col++) {
         for (int row = 0; row < pyramid.levels[0].forwardNNF.sourceDimensions.rows; row++) {
           float error = 0;
           ImageCoordinates coords = {row, col};
-          errorCalc.calculateError(Configuration(), pyramid.levels[0], pyramid.levels[0].forwardNNF.getMapping(coords),
+          errorCalc.calculateError(configuration, pyramid.levels[0], pyramid.levels[0].forwardNNF.getMapping(coords),
                                    coords, guideWeights, styleWeights, error);
           totalError += error;
         }
@@ -64,7 +67,7 @@ bool TestPatchMatch::run() {
     }
 
     NNFApplicatorCPU<float, 3, 3> imageMaker;
-    imageMaker.applyNNF(Configuration(), pyramid.levels[0]);
+    imageMaker.applyNNF(configuration, pyramid.levels[0]);
     ImageIO::writeImage("./Examples/patchMatchTest1Output.png", pyramid.levels[0].style.target, ImageFormat::RGB, 0);
 
   }
@@ -92,10 +95,10 @@ bool TestPatchMatch::run() {
     ErrorCalculatorCPU<float, 3, 3> errorCalc;
     patchMatcher.randomlyInitializeNNF(pyramid.levels[0].forwardNNF);
 
-    patchMatcher.patchMatch(Configuration(), pyramid.levels[0].forwardNNF, pyramid, 6, 0, false, false);
+    patchMatcher.patchMatch(configuration, pyramid.levels[0].forwardNNF, pyramid, 6, 0, false, false);
 
     NNFApplicatorCPU<float, 3, 3> imageMaker;
-    imageMaker.applyNNF(Configuration(), pyramid.levels[0]);
+    imageMaker.applyNNF(configuration, pyramid.levels[0]);
     ImageIO::writeImage("./Examples/patchMatchTest2Output.png", pyramid.levels[0].style.target, ImageFormat::RGB, 0);
   }
 
@@ -133,20 +136,20 @@ bool TestPatchMatch::run() {
       }
     }
 
-    patchMatcher.patchMatch(Configuration(), pyramid.levels[0].forwardNNF, pyramid, 6, 0, false, false, &blacklist);
+    patchMatcher.patchMatch(configuration, pyramid.levels[0].forwardNNF, pyramid, 6, 0, false, false, &blacklist);
 
     int invalidMappings = 0;
     for (int col = 0; col < pyramid.levels[0].forwardNNF.sourceDimensions.cols; col++) {
       for (int row = 0; row < pyramid.levels[0].forwardNNF.sourceDimensions.rows; row++) {
         if (pyramid.levels[0].forwardNNF.getMapping(ImageCoordinates{row,col}).row < .5 * pyramid.levels[0].forwardNNF.sourceDimensions.rows) {
           invalidMappings++;
-          std::cout << invalidMappings << std::endl;
         }
       }
     }
+    std::cout << "Total invalid mappings (patches on blacklist that were still mapped to): " << invalidMappings << std::endl;
 
     NNFApplicatorCPU<float, 3, 3> imageMaker;
-    imageMaker.applyNNF(Configuration(), pyramid.levels[0]);
+    imageMaker.applyNNF(configuration, pyramid.levels[0]);
     ImageIO::writeImage("./Examples/patchMatchTest3Output.png", pyramid.levels[0].style.target, ImageFormat::RGB, 0);
   }
 
