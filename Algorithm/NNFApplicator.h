@@ -26,9 +26,8 @@ public:
    *        we are generating the stylized target image
    * @return true if stylized target image generation succeeds; otherwise false
    */
-  bool applyNNF(
-      const Configuration &configuration,
-      PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel) {
+  bool applyNNF(const Configuration &configuration,
+                PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel) {
     return implementationOfApplyNNF(configuration, pyramidLevel);
   }
 
