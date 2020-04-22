@@ -1,6 +1,7 @@
 #include "Configuration.h"
 
 #include <iostream>
+#include <stdio.h>
 
 #include "Utilities/ImageFormatTools.h"
 
@@ -50,4 +51,8 @@ void Configuration::print() {
     cout << ImageFormatTools::imageFormatToString(imageFormat) << endl;
   }
   cout << endl;
+
+  printf("Patch size: %d\n", patchSize);
+  printf("Number of PatchMatch iterations: %d\n", numPatchMatchIterations);
+  printf("Number of pyramid levels: %d\n", numPyramidLevels);
 }
