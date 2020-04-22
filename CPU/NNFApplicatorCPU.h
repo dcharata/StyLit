@@ -31,9 +31,9 @@ private:
    * @return true if stylized target image generation succeeds; otherwise false
    */
   bool implementationOfApplyNNF(const Configuration &configuration,
-                                PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel) {
-    int targetCols = pyramidLevel.style.target.dimensions.cols;
-    int targetRows = pyramidLevel.style.target.dimensions.rows;
+                                const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel) {
+    const int targetCols = pyramidLevel.style.target.dimensions.cols;
+    const int targetRows = pyramidLevel.style.target.dimensions.rows;
 
     const int PATCH_SIZE = configuration.patchSize;
 
@@ -63,7 +63,7 @@ private:
             }
           }
         }
-        pyramidLevel.style.target.data[row * targetCols + col] = finalPix / sumWeight;
+        pyramidLevel.style.target(row * targetCols + col) = finalPix / sumWeight;
       }
     }
   }
