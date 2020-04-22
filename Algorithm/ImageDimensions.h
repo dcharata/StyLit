@@ -12,6 +12,15 @@
  * bounds) more clear. Feel free to change this if you find it confusing though.
  */
 struct ImageDimensions {
+  /**
+   * @brief ImageDimensions Initializes the ImageDimensions to be invalid. This
+   * can be useful when the ImageDimensions are used as ImageCoordinates, e.g.
+   * to create an invalid NNF mapping.
+   */
+  ImageDimensions();
+
+  ImageDimensions(int rows, int cols);
+
   // the number of rows in the image (i.e. the image's height)
   union {
     int rows;

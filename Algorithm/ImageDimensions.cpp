@@ -1,5 +1,9 @@
 #include "ImageDimensions.h"
 
+ImageDimensions::ImageDimensions() : rows(-1), cols(-1) {}
+
+ImageDimensions::ImageDimensions(int rows, int cols) : rows(rows), cols(cols) {}
+
 int ImageDimensions::area() const { return rows * cols; }
 
 bool ImageDimensions::within(const ImageDimensions &dimensions) const {
