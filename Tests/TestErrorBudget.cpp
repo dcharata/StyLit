@@ -2,8 +2,6 @@
 
 #include <vector>
 #include <iostream>
-//#define DLIB_NO_GUI_SUPPORT
-#include <dlib/optimization.h>
 
 #include "Algorithm/NNF.h"
 #include "Algorithm/NNFError.h"
@@ -11,26 +9,24 @@
 #include "Algorithm/ErrorBudgetCalculator.h"
 #include "Algorithm/ErrorBudgetCalculator.cpp"
 
-using namespace dlib;
-
 // ----------------------------------------------------------------------------------------
 // unit test for the knee point finding functions
-void generate_datasamples(
+void generate_dummydata(
         int num_samples,
-        std::vector<std::pair<input_vector, double>>& data_samples,
-        parameter_vector params,
+        Eigen::MatrixXf& measuredValues,
+        Eigen::VectorXf params,
         bool addnoise, bool sort, bool shuffle) {
 
     // create an error vector
-    double rand_scale = 1.f;
-    double x_scale = 1.f / num_samples;
-    std::vector<double> vecerror;
-    for (double i=0.f; i<num_samples; i++) {
+    float rand_scale = 1.f;
+    float x_scale = 1.f / num_samples;
+    std::vector<float> vecerror;
+    for (float i=0.f; i<num_samples; i++) {
         // hyperbolic function value
-        double value = model(i*x_scale, params);
+        float value = powf(params(0) - i*x_scale * params(1), -1);
         if (addnoise==true) {
             // add random noise
-            value += rand_scale * (static_cast <double> (std::rand()) / static_cast <double> (RAND_MAX));
+            value += rand_scale * (static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX));
         }
         vecerror.push_back(value);
     }
@@ -54,94 +50,54 @@ void generate_datasamples(
 
     // convert to data_samples
     for (int i=0; i<num_samples; i++) {
-        data_samples.push_back(std::make_pair(i*x_scale, vecerror[i]));
+        measuredValues(i, 0) = i*x_scale;
+        measuredValues(i, 1) = vecerror[i];
     }
 }
 
-void generate_errorimage(NNFError &nnferror, parameter_vector params, bool addnoise, bool shuffle) {
-    std::vector<std::pair<input_vector, double> > data_samples;
+void generate_errorimage(NNFError &nnferror, Eigen::VectorXf params, bool addnoise, bool shuffle) {
+
     int height = nnferror.error.dimensions.rows;
     int width = nnferror.error.dimensions.cols;
-    int num_samples = height * width;
+    int num_pixels = height * width;
+    Eigen::MatrixXf measuredValues(num_pixels, 2);
     bool sort = false;
-    generate_datasamples(num_samples, data_samples, params, addnoise, sort, shuffle);
+    generate_dummydata(num_pixels, measuredValues, params, addnoise, sort, shuffle);
 
     for (int row=0; row<height; row++) {
         for (int col=0; col<width; col++) {
             int i = row * width + col;
-            nnferror.error(row, col)[0] = (float)data_samples[i].second;
+            nnferror.error(row, col)[0] = measuredValues(i,1);
         }
     }
 }
 
-void test_hyperbolic_derivative(
-        const std::pair<input_vector, double>& data,
-        const parameter_vector params) {
-    // Let's make sure that our derivative function defined above matches
-    // the approximate derivative computed using central differences (via derivative()).
-    // If this value is big then it means we probably typed the derivative function incorrectly.
-    std::cout << "derivative error: " <<
-                 length(residual_derivative(data, params) -
-                   derivative(residual)(data, params)) << std::endl;
-}
-
 void test_hyperbolic_fitting() {
-    std::vector<std::pair<input_vector, double> > data_samples;
-    parameter_vector gt_params = {2.f, 2.f}; // a, b
-    std::cout << "ground-truth parameters: " << trans(gt_params) << std::endl;
-
-    int num_samples = 10000;
+    int num_pixels = 10000;
+    int n = 2;
+    Eigen::MatrixXf measuredValues(num_pixels, 2);
+    Eigen::VectorXf gt_params(n);
+    gt_params(0) = 2.f;
+    gt_params(1) = 2.f;
     bool addnoise = true;
     bool sort = false;
     bool shuffle = false;
-    generate_datasamples(num_samples, data_samples, gt_params, addnoise, sort, shuffle);
+    generate_dummydata(num_pixels, measuredValues, gt_params, addnoise, sort, shuffle);
 
-//    test_hyperbolic_derivative(data_samples[0], gt_params);
+    Eigen::VectorXf params(n);
+    params(0) = 1.f; // a
+    params(1) = 1.f; // b
 
-    // optimization - 3 different methods
-    // to be determined with real error data
-    // ref: http://dlib.net/least_squares_ex.cpp.html
-    parameter_vector params;
+    LMFunctor functor;
+    functor.measuredValues = measuredValues;
+    functor.m = num_pixels;
+    functor.n = n;
 
-    // Use the Levenberg-Marquardt method to determine the parameters which
-    // minimize the sum of all squared residuals.
-    std::cout << "Use Levenberg-Marquardt" << std::endl;
-    params = 1.f; // initilization
-    solve_least_squares_lm(objective_delta_stop_strategy(1e-7).be_verbose(),
-                           residual,
-                           residual_derivative,
-                           data_samples,
-                           params);
-    std::cout << "estimated parameters: " << trans(params);
-    std::cout << "solution error: " << length(params - gt_params) << std::endl;
-    std::cout << std::endl;
-
-    // If we didn't create the residual_derivative function then we could
-    // have used this method which numerically approximates the derivatives.
-    std::cout << "Use Levenberg-Marquardt, approximate derivatives" << std::endl;
-    params = 1.f; // initilization
-    solve_least_squares_lm(objective_delta_stop_strategy(1e-7).be_verbose(),
-                           residual,
-                           derivative(residual),
-                           data_samples,
-                           params);
-    std::cout << "estimated parameters: " << trans(params);;
-    std::cout << "solution error: " << length(params - gt_params) << std::endl;
-    std::cout << std::endl;
-
-    // This version of the solver uses a method which is appropriate for problems
-    // where the residuals don't go to zero at the solution.  So in these cases
-    // it may provide a better answer.
-    std::cout << "Use Levenberg-Marquardt/quasi-newton hybrid" << std::endl;
-    params = 1.f; // initilization
-    solve_least_squares(objective_delta_stop_strategy(1e-7).be_verbose(),
-                           residual,
-                           residual_derivative,
-                           data_samples,
-                           params);
-    std::cout << "estimated parameters: " << trans(params);
-    std::cout << "solution error: " << length(params - gt_params) << std::endl;
-    std::cout << std::endl;
+    Eigen::LevenbergMarquardt<LMFunctor, float> lm(functor);
+    int status = lm.minimize(params);
+    std::cout << "LM optimization status: " << status << std::endl;
+    std::cout << "estimated parameters: " << "\ta: " << params(0) << "\tb: " << params(1) << std::endl;
+    std::cout << "ground-truth parameters: " << "\ta: " << gt_params(0) << "\t\tb: " << gt_params(1) << std::endl;
 }
 
 
@@ -153,32 +109,34 @@ bool TestErrorBudget::run()
     std::cout << std::endl;
 
     // curve fitting
-//    test_hyperbolic_fitting();
+    test_hyperbolic_fitting();
 
-    // error budget
-    // Generate dummy nnferror data
-    int height = 600;
-    int width = 800;
-    const NNF nnf(ImageDimensions(height, width), ImageDimensions(height, width));
-    NNFError nnferror = {nnf};
-    float errorBudget = 0.f;
+//    // error budget
+//    // Generate dummy nnferror data
+//    int height = 600;
+//    int width = 800;
+//    const NNF nnf(ImageDimensions(height, width), ImageDimensions(height, width));
+//    NNFError nnferror = {nnf};
+//    float errorBudget = 0.f;
 
-    // set gt hyperbolic function parameter
-    parameter_vector gt_params = {2.f, 2.f}; // a, b
-    std::cout << "ground-truth parameters: " << trans(gt_params) << std::endl;
-    bool addnoise = true;
-    bool shuffle = true;
-    generate_errorimage(nnferror, gt_params, addnoise, shuffle);
-    Configuration configuration;
-    ErrorBudgetCalculator calc;
-    calc.calculateErrorBudget(configuration, nnferror, errorBudget);
+//    // set gt hyperbolic function parameter
+//    Eigen::VectorXf gt_params;
+//    gt_params(0) = 2.f;
+//    gt_params(1) = 2.f;
+//    std::cout << "ground-truth parameters: " << "\ta: " << gt_params(0) << "\tb: " << gt_params(1) << std::endl;
+//    bool addnoise = true;
+//    bool shuffle = true;
+//    generate_errorimage(nnferror, gt_params, addnoise, shuffle);
+//    Configuration configuration;
+//    ErrorBudgetCalculator calc;
+//    calc.calculateErrorBudget(configuration, nnferror, errorBudget);
 
     return true;
 }
 
 // NOTES:
-/* not sure if the objective of the first solver should be 0 in the end of optimization
- * should test the solvers on real data and pick one
+/* use numerical jacobian of errors
+ * estimated parameter has a larger error that using dlib
  * the nnferror error image is set to sourceDimensions at the moment (in NNFError.cpp)
- * the optimization is probably not real time for a large error image.
+ * the iterative optimization is probably not real time for a large error image.
 */

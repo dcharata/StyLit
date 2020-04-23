@@ -1,8 +1,16 @@
 #ifndef ERRORBUDGETCALCULATOR_H
 #define ERRORBUDGETCALCULATOR_H
 
+//#define DLIB_NO_GUI_SUPPORT
+#include <dlib/optimization.h>
+
+using namespace dlib;
+
 struct Configuration;
 struct NNFError;
+
+typedef double input_vector;
+typedef matrix<double,2,1> parameter_vector;
 
 /**
  * @brief The KneePointFinder class This fits a hyperbolic function to a sorted
