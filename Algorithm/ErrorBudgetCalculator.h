@@ -24,8 +24,8 @@ public:
    * @param errorBudget the resulting error budget
    * @return true if error budget calculation succeeds; otherwise false
    */
-  bool calculateErrorBudget(const Configuration &configuration,
-                            NNFError &error, float errorBudget);
+  bool calculateErrorBudget(const Configuration &configuration, NNFError &error,
+                            float errorBudget);
 
 protected:
   /**
@@ -37,11 +37,8 @@ protected:
    * @param errorBudget the resulting error budget
    * @return true if error budget calculation succeeds; otherwise false
    */
-  bool
-  implementationOfCalculateErrorBudget(const Configuration &configuration,
-                                       NNFError &error,
-                                       float errorBudget);
-
+  bool implementationOfCalculateErrorBudget(const Configuration &configuration,
+                                            NNFError &error, float errorBudget);
 };
 
 #endif // ERRORBUDGETCALCULATOR_H

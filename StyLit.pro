@@ -22,6 +22,7 @@ SOURCES += \
     Algorithm/NNFError.cpp \
     Algorithm/NNFUpscaler.cpp \
     Algorithm/PatchMatcher.cpp \
+    CPU/ErrorBudgetCalculator.cpp \
     Configuration/Configuration.cpp \
     Configuration/ConfigurationParser.cpp \
     Tests/TestErrorBudget.cpp \

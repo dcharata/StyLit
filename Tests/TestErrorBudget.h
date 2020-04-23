@@ -3,11 +3,10 @@
 
 #include "UnitTest.h"
 
-class TestErrorBudget: public UnitTest
-{
+class TestErrorBudget : public UnitTest {
 public:
-    TestErrorBudget() = default;
-    bool run() override;
+  TestErrorBudget() = default;
+  bool run() override;
 };
 
 #endif // TESTERRORBUDGET_H
