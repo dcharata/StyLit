@@ -108,6 +108,37 @@ bool ConfigurationParser::parseSettings(const QJsonValue &settings,
     return false;
   }
 
+  // Parses the patch size.
+  QJsonValue patchSize = settingsObject.value(QString("patchSize"));
+  if (!parsePositiveInt(patchSize, configuration.patchSize) ||
+      configuration.patchSize < 1) {
+    cerr << "Patch size must be an integer greater than 0." << endl;
+    return false;
+  }
+
+  // Parses the number of PatchMatch iterations.
+  QJsonValue numPatchMatchIterations =
+      settingsObject.value(QString("numPatchMatchIterations"));
+  if (!parsePositiveInt(numPatchMatchIterations,
+                        configuration.numPatchMatchIterations) ||
+      configuration.numPatchMatchIterations < 1) {
+    cerr << "The number of PatchMatch iterations must be an integer greater "
+            "than 0."
+         << endl;
+    return false;
+  }
+
+  // Parses the number of pyramid levels.
+  QJsonValue numPyramidLevels =
+      settingsObject.value(QString("numPyramidLevels"));
+  if (!parsePositiveInt(numPyramidLevels, configuration.numPyramidLevels) ||
+      configuration.numPyramidLevels < 1) {
+    cerr << "The number of pyramid levels must be an integer greater "
+            "than 0."
+         << endl;
+    return false;
+  }
+
   return true;
 }
 
@@ -225,5 +256,18 @@ bool ConfigurationParser::parseStringArray(const QJsonValue &source,
     // Adds the entry to the destination if it looks OK.
     destination.push_back(entry.toString());
   }
+  return true;
+}
+
+bool ConfigurationParser::parsePositiveInt(const QJsonValue &source,
+                                           int &destination) {
+  const int value = source.toInt(-1);
+  if (value < 0) {
+    cerr << "Expected positive integer. Make sure the integer is not formatted "
+            "as a string."
+         << endl;
+    return false;
+  }
+  destination = value;
   return true;
 }

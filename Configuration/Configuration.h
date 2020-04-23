@@ -29,6 +29,15 @@ struct Configuration {
 
   // how style images are interpreted (see ImageFormat.h)
   std::vector<ImageFormat> styleImageFormats;
+
+  // the patch size (a patch consists of patchSize * patchSize pixels)
+  int patchSize = 0;
+
+  // the number of PatchMatch iterations
+  int numPatchMatchIterations = 0;
+
+  // the number of pyramid levels used for StyLit
+  int numPyramidLevels = 0;
 };
 
 #endif // CONFIGURATION_H

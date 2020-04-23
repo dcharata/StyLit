@@ -25,12 +25,19 @@ SOURCES += \
     Configuration/Configuration.cpp \
     Configuration/ConfigurationParser.cpp \
     Tests/TestErrorBudget.cpp \
+    Tests/TestDownscalerCPU.cpp \
     Tests/TestImageIO.cpp \
+    Tests/TestImageIOHelpers.cpp \
+    Tests/TestImageIOWrite.cpp \
     Tests/TestMain.cpp \
     Utilities/FloatTools.cpp \
     Utilities/ImageFormatTools.cpp \
+    Utilities/ImageIO.cpp \
     main.cpp \
-    MainWindow.cpp
+    MainWindow.cpp \
+    CPU/NNFUpscalerCPU.cpp\
+    Tests/TestImageResize.cpp \
+    Tests/TestNNFUpscalerCPU.cpp
 
 HEADERS += \
     Algorithm/ChannelWeights.h \
@@ -52,14 +59,24 @@ HEADERS += \
     Configuration/Configuration.h \
     Configuration/ConfigurationParser.h \
     Tests/TestErrorBudget.h \
+    MainWindow.h \
+    CPU/NNFUpscalerCPU.h \
+    Tests/TestDownscaler.h \
+    Tests/TestDownscalerCPU.h \
+    Tests/TestDownscalerWithImage.h \
     Tests/TestImageIO.h \
+    Tests/TestImageIOHelpers.h \
+    Tests/TestImageIOWrite.h \
     Tests/TestMain.h \
     Tests/UnitTest.h \
     Utilities/FloatTools.h \
     Utilities/ImageFormat.h \
     Utilities/ImageFormatTools.h \
     MainWindow.h \
-    Utilities/ImageIO.h
+    Utilities/ImageIO.h \
+    CPU/DownscalerCPU.h \
+    Tests/TestImageResize.h \
+    Tests/TestNNFUpscalerCPU.h
 
 FORMS += \
     MainWindow.ui
