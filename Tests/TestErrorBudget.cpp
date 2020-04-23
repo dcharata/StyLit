@@ -77,14 +77,14 @@ void generate_errorimage(NNFError &nnferror, Eigen::VectorXd params,
 }
 
 void test_hyperbolic_fitting(int num_pixels) {
-  int n = 2;
+  const int n = 2;
   Eigen::MatrixXd measuredValues(num_pixels, 2);
   Eigen::VectorXd gt_params(n);
   gt_params(0) = 2.f;
   gt_params(1) = 2.f;
-  bool addnoise = false;
-  bool sort = false;
-  bool shuffle = false;
+  const bool addnoise = false;
+  const bool sort = false;
+  const bool shuffle = false;
   generate_dummydata(num_pixels, measuredValues, gt_params, addnoise, sort,
                      shuffle);
 
@@ -116,7 +116,7 @@ bool TestErrorBudget::run() {
 
   // Test curve fitting without noise
   std::cout << "1 - hyperbolic function fitting " << std::endl;
-  int num_pixels = 100;
+  const int num_pixels = 100;
   std::cout << "num_samples: " << num_pixels << std::endl;
   // runtime
   auto start = high_resolution_clock::now();
@@ -129,8 +129,8 @@ bool TestErrorBudget::run() {
   // Test error budget
   // generate dummy nnferror data
   std::cout << "2 - error budget calculation " << std::endl;
-  int height = 600;
-  int width = 800;
+  const int height = 600;
+  const int width = 800;
   std::cout << "num_pixels: height " << height << " * width " << width
             << std::endl;
   const NNF nnf(ImageDimensions(height, width), ImageDimensions(height, width));
@@ -141,8 +141,8 @@ bool TestErrorBudget::run() {
   Eigen::VectorXd gt_params(2);
   gt_params(0) = 2.f;
   gt_params(1) = 2.f;
-  bool addnoise = true;
-  bool shuffle = true;
+  const bool addnoise = true;
+  const bool shuffle = true;
   generate_errorimage(nnferror, gt_params, addnoise, shuffle);
   Configuration configuration;
   ErrorBudgetCalculator calc;

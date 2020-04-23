@@ -22,8 +22,8 @@ struct LMFunctor {
     // 'fvec' has dimensions m x 1
     // It will contain the error for each data point.
 
-    double aParam = x(0);
-    double bParam = x(1);
+    const double aParam = x(0);
+    const double bParam = x(1);
 
     for (int i = 0; i < values(); i++) {
       double xValue = measuredValues(i, 0);
@@ -43,8 +43,7 @@ struct LMFunctor {
     // It will contain the jacobian of the errors, calculated numerically in
     // this case.
 
-    double epsilon;
-    epsilon = 1e-6f;
+    const double epsilon = 1e-6f;
 
     // numerical Jacobian
     for (int in = 0; in < x.size(); in++) {
