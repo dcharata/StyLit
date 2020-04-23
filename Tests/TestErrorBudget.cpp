@@ -13,20 +13,20 @@
 // unit test for the knee point finding functions
 void generate_dummydata(
         int num_samples,
-        Eigen::MatrixXf& measuredValues,
-        Eigen::VectorXf params,
+        Eigen::MatrixXd& measuredValues,
+        Eigen::VectorXd params,
         bool addnoise, bool sort, bool shuffle) {
 
     // create an error vector
-    float rand_scale = 1.f;
-    float x_scale = 1.f / num_samples;
-    std::vector<float> vecerror;
-    for (float i=0.f; i<num_samples; i++) {
+    double rand_scale = 1;
+    double x_scale = 1 / (double)num_samples;
+    std::vector<double> vecerror;
+    for (int i=0; i<num_samples; i++) {
         // hyperbolic function value
-        float value = powf(params(0) - i*x_scale * params(1), -1);
+        double value = powf(params(0) - i*x_scale * params(1), -1);
         if (addnoise==true) {
             // add random noise
-            value += rand_scale * (static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX));
+            value += rand_scale * (static_cast <double> (std::rand()) / static_cast <double> (RAND_MAX));
         }
         vecerror.push_back(value);
     }
@@ -55,12 +55,12 @@ void generate_dummydata(
     }
 }
 
-void generate_errorimage(NNFError &nnferror, Eigen::VectorXf params, bool addnoise, bool shuffle) {
+void generate_errorimage(NNFError &nnferror, Eigen::VectorXd params, bool addnoise, bool shuffle) {
 
     int height = nnferror.error.dimensions.rows;
     int width = nnferror.error.dimensions.cols;
     int num_pixels = height * width;
-    Eigen::MatrixXf measuredValues(num_pixels, 2);
+    Eigen::MatrixXd measuredValues(num_pixels, 2);
     bool sort = false;
     generate_dummydata(num_pixels, measuredValues, params, addnoise, sort, shuffle);
 
@@ -72,32 +72,33 @@ void generate_errorimage(NNFError &nnferror, Eigen::VectorXf params, bool addnoi
     }
 }
 
-void test_hyperbolic_fitting() {
-    int num_pixels = 10000;
+void test_hyperbolic_fitting(int num_pixels) {
     int n = 2;
-    Eigen::MatrixXf measuredValues(num_pixels, 2);
-    Eigen::VectorXf gt_params(n);
+    Eigen::MatrixXd measuredValues(num_pixels, 2);
+    Eigen::VectorXd gt_params(n);
     gt_params(0) = 2.f;
     gt_params(1) = 2.f;
-    bool addnoise = true;
+    bool addnoise = false;
     bool sort = false;
     bool shuffle = false;
     generate_dummydata(num_pixels, measuredValues, gt_params, addnoise, sort, shuffle);
 
-    Eigen::VectorXf params(n);
-    params(0) = 1.f; // a
-    params(1) = 1.f; // b
+    // initilization
+    Eigen::VectorXd params(n);
+    params(0) = 1.0; // a
+    params(1) = 1.0; // b
 
     LMFunctor functor;
     functor.measuredValues = measuredValues;
     functor.m = num_pixels;
     functor.n = n;
 
-    Eigen::LevenbergMarquardt<LMFunctor, float> lm(functor);
+    Eigen::LevenbergMarquardt<LMFunctor, double> lm(functor);
     int status = lm.minimize(params);
     std::cout << "LM optimization status: " << status << std::endl;
+    std::cout << "LM optimization iterations: " << lm.iter << std::endl;
     std::cout << "estimated parameters: " << "\ta: " << params(0) << "\tb: " << params(1) << std::endl;
-    std::cout << "ground-truth parameters: " << "\ta: " << gt_params(0) << "\t\tb: " << gt_params(1) << std::endl;
+    std::cout << "ground-truth parameters: " << "\ta: " << gt_params(0) << "\tb: " << gt_params(1) << std::endl;
 }
 
 
@@ -105,38 +106,43 @@ void test_hyperbolic_fitting() {
 
 bool TestErrorBudget::run()
 {
-    std::cout << "Testing error budget... " << std::endl;
+    std::cout << "Testing error budget calculation... " << std::endl;
     std::cout << std::endl;
 
-    // curve fitting
-    test_hyperbolic_fitting();
+    // Test curve fitting without noise
+    std::cout << "1 - hyperbolic function fitting " << std::endl;
+    int num_pixels = 100;
+    std::cout<< "num_samples: " << num_pixels << std::endl;
+    test_hyperbolic_fitting(num_pixels);
+    std::cout << std::endl;
 
-//    // error budget
-//    // Generate dummy nnferror data
-//    int height = 600;
-//    int width = 800;
-//    const NNF nnf(ImageDimensions(height, width), ImageDimensions(height, width));
-//    NNFError nnferror = {nnf};
-//    float errorBudget = 0.f;
+    // Test error budget
+    // generate dummy nnferror data
+    std::cout << "2 - error budget calculation " << std::endl;
+    int height = 600;
+    int width = 800;
+    std::cout << "num_pixels: height " << height << " * width " << width << std::endl;
+    const NNF nnf(ImageDimensions(height, width), ImageDimensions(height, width));
+    NNFError nnferror = {nnf};
+    float errorBudget = 0.f;
 
-//    // set gt hyperbolic function parameter
-//    Eigen::VectorXf gt_params;
-//    gt_params(0) = 2.f;
-//    gt_params(1) = 2.f;
-//    std::cout << "ground-truth parameters: " << "\ta: " << gt_params(0) << "\tb: " << gt_params(1) << std::endl;
-//    bool addnoise = true;
-//    bool shuffle = true;
-//    generate_errorimage(nnferror, gt_params, addnoise, shuffle);
-//    Configuration configuration;
-//    ErrorBudgetCalculator calc;
-//    calc.calculateErrorBudget(configuration, nnferror, errorBudget);
+    // set gt hyperbolic function parameter
+    Eigen::VectorXd gt_params(2);
+    gt_params(0) = 2.f;
+    gt_params(1) = 2.f;
+    bool addnoise = true;
+    bool shuffle = true;
+    generate_errorimage(nnferror, gt_params, addnoise, shuffle);
+    Configuration configuration;
+    ErrorBudgetCalculator calc;
+    calc.calculateErrorBudget(configuration, nnferror, errorBudget);
+    std::cout << std::endl;
 
     return true;
 }
 
 // NOTES:
 /* use numerical jacobian of errors
- * estimated parameter has a larger error that using dlib
  * the nnferror error image is set to sourceDimensions at the moment (in NNFError.cpp)
  * the iterative optimization is probably not real time for a large error image.
 */
