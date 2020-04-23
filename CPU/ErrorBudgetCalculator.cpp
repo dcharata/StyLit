@@ -103,7 +103,7 @@ bool ErrorBudgetCalculator::calculateErrorBudget(
 }
 
 bool ErrorBudgetCalculator::implementationOfCalculateErrorBudget(
-    const Configuration &configuration, NNFError &nnferror, float errorBudget) {
+    const Configuration &, NNFError &nnferror, float errorBudget) {
   // we may not need configuration?
 
   // read from the error image
