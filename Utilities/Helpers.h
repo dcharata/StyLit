@@ -2,7 +2,7 @@
 #define HELPERS_H
 
 #include <QFileInfo>
-#include<QDebug>
+#include <QDebug>
 #include <QMessageLogger>
 
 namespace Helpers {
@@ -14,6 +14,5 @@ namespace Helpers {
 bool fileExists(const QString &path);
 
 }; // namespace Helpers
-
 
 #endif // HELPERS_H
