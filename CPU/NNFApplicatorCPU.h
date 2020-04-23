@@ -31,7 +31,7 @@ private:
    * @return true if stylized target image generation succeeds; otherwise false
    */
   bool implementationOfApplyNNF(const Configuration &configuration,
-                                const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel) {
+                                PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel) {
     const int targetCols = pyramidLevel.style.target.dimensions.cols;
     const int targetRows = pyramidLevel.style.target.dimensions.rows;
 
@@ -57,13 +57,13 @@ private:
               ImageCoordinates offsetSourceCoords{sourceCoords.row - rowOffset, sourceCoords.col - colOffset};
               // only add to the average if the pixel we are looking at actually exists in the source
               if (offsetSourceCoords.within(pyramidLevel.style.source.dimensions)) {
-                finalPix += pyramidLevel.style.source(offsetSourceCoords.row, offsetSourceCoords.col);
+                finalPix += pyramidLevel.style.source.getConstPixel(offsetSourceCoords.row, offsetSourceCoords.col);
                 sumWeight += 1.0;
               }
             }
           }
         }
-        pyramidLevel.style.target(row * targetCols + col) = finalPix / sumWeight;
+        pyramidLevel.style.target(row, col) = finalPix / sumWeight;
       }
     }
   }

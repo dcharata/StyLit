@@ -23,6 +23,7 @@ bool TestPatchMatch::run() {
     QString path1("./Examples/brown1.png");
     QString path2("./Examples/brown2.png");
     QImage sourceImage(path1);
+
     ImageDimensions sourceDims{sourceImage.height(), sourceImage.width()};
     QImage targetImage(path2);
     ImageDimensions targetDims{targetImage.height(), targetImage.width()};

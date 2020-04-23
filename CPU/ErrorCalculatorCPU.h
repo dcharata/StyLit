@@ -36,9 +36,9 @@ private:
                                               const ChannelWeights<numGuideChannels> &guideWeights,
                                               const ChannelWeights<numStyleChannels> &styleWeights, float &error) {
     error = 0;
-    const ImageCoordinates min = ImageCoordinates{0,0};
-    const ImageCoordinates A_max = pyramidLevel.guide.source.dimensions;
-    const ImageCoordinates B_max = pyramidLevel.guide.target.dimensions;
+    ImageCoordinates min = ImageCoordinates{0,0};
+    ImageCoordinates A_max = pyramidLevel.guide.source.dimensions;
+    ImageCoordinates B_max = pyramidLevel.guide.target.dimensions;
     const int centerRowSource = sourceCoordinates.row;
     const int centerColSource = sourceCoordinates.col;
     const int centerRowTarget = targetCoordinates.row;
@@ -50,8 +50,10 @@ private:
     // source from the target. Add (source - target)^2 * weight to the total error.
     for (int colOffset = -PATCH_SIZE / 2; colOffset <= PATCH_SIZE / 2; colOffset++) {
       for (int rowOffset = -PATCH_SIZE / 2; rowOffset <= PATCH_SIZE / 2; rowOffset++) {
-        ImageCoordinates sourceCoords = qBound(min, ImageCoordinates{centerRowSource + rowOffset, centerColSource + colOffset}, A_max);
-        ImageCoordinates targetCoords = qBound(min, ImageCoordinates{centerRowTarget + rowOffset, centerColTarget + colOffset}, B_max);
+        ImageCoordinates sourceCoords = ImageCoordinates{qBound(min.row, centerRowSource + rowOffset, A_max.row - 1),
+                                                         qBound(min.col, centerColSource + colOffset, A_max.col - 1)};
+        ImageCoordinates targetCoords = ImageCoordinates{qBound(min.row, centerRowTarget + rowOffset, B_max.row - 1),
+                                                         qBound(min.col, centerColTarget + colOffset, B_max.col - 1)};
         FeatureVector<T, numGuideChannels> guideDiff = pyramidLevel.guide.source.getConstPixel(sourceCoords.row, sourceCoords.col) // A
                                                        - pyramidLevel.guide.target.getConstPixel(targetCoords.row, targetCoords.col); // B
         error += (guideDiff.array().square() * guideWeights.array()).matrix().sum();
