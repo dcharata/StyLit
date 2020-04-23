@@ -2,12 +2,15 @@
 
 #include <vector>
 #include <iostream>
+#include <chrono>
 
 #include "Algorithm/NNF.h"
 #include "Algorithm/NNFError.h"
 #include "Configuration/Configuration.h"
 #include "Algorithm/ErrorBudgetCalculator.h"
 #include "Algorithm/ErrorBudgetCalculator.cpp"
+
+using namespace std::chrono;
 
 // ----------------------------------------------------------------------------------------
 // unit test for the knee point finding functions
@@ -113,7 +116,12 @@ bool TestErrorBudget::run()
     std::cout << "1 - hyperbolic function fitting " << std::endl;
     int num_pixels = 100;
     std::cout<< "num_samples: " << num_pixels << std::endl;
+    // runtime
+    auto start = high_resolution_clock::now();
     test_hyperbolic_fitting(num_pixels);
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(stop - start);
+    std::cout << "runtime: " << duration.count() << " milliseconds" << std::endl;
     std::cout << std::endl;
 
     // Test error budget
@@ -135,7 +143,12 @@ bool TestErrorBudget::run()
     generate_errorimage(nnferror, gt_params, addnoise, shuffle);
     Configuration configuration;
     ErrorBudgetCalculator calc;
+    // runtime
+    start = high_resolution_clock::now();
     calc.calculateErrorBudget(configuration, nnferror, errorBudget);
+    stop = high_resolution_clock::now();
+    duration = duration_cast<milliseconds>(stop - start);
+    std::cout << "runtime: " << duration.count() << " milliseconds" << std::endl;
     std::cout << std::endl;
 
     return true;
@@ -143,6 +156,7 @@ bool TestErrorBudget::run()
 
 // NOTES:
 /* use numerical jacobian of errors
+ * eigen lib optimization seems slower than dlib
  * the nnferror error image is set to sourceDimensions at the moment (in NNFError.cpp)
  * the iterative optimization is probably not real time for a large error image.
 */

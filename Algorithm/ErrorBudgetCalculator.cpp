@@ -8,41 +8,7 @@
 #include "NNFError.h"
 
 // ----------------------------------------------------------------------------------------
-// hyperbolic function fitting
-
-//double model(const input_vector& x, const parameter_vector& params) {
-//    // the hyperbolic function model
-//    // We will use this function to generate data.  It represents a function of 1 variable
-//    // and 2 parameters.   The least squares procedure will be used to infer the values of
-//    // the 2 parameters based on a set of input/output pairs.
-//    const double a = params(0);
-//    const double b = params(1);
-//    return powf(a-b*x, -1);
-//}
-
-//double residual(const std::pair<input_vector, double>& data,
-//               const parameter_vector& params) {
-//    // This function is the "residual" for a least squares problem.   It takes an input/output
-//    // pair and compares it to the output of our model and returns the amount of error.  The idea
-//    // is to find the set of parameters which makes the residual small on all the data pairs.
-//    return model(data.first, params) - data.second;
-//}
-
-//parameter_vector residual_derivative (const std::pair<input_vector, double>& data,
-//                          const parameter_vector& params) {
-//    // This function is the derivative of the residual() function with respect to the parameters.
-//    parameter_vector der;
-
-//    const double a = params(0);
-//    const double b = params(1);
-
-//    double temp = powf(a - b * data.first, -2);
-//    der(0) = -1.f * temp; // da
-//    der(1) = data.first * temp; // db
-
-//    return der;
-//}
-
+// hyperbolic function
 struct LMFunctor
 {
     // 'm' pairs of (x, f(x))
@@ -175,7 +141,7 @@ bool ErrorBudgetCalculator::implementationOfCalculateErrorBudget(
     // minimize the sum of all squared residuals.
     // f(ind) = (a-b*ind)^(-1)
     int n = 2; // number of parameters
-    // 'x' is vector of length 'n' containing the initial values for the parameters.
+    // 'params' is vector of length 'n' containing the initial values for the parameters.
     Eigen::VectorXd params(n);
     // initialization
     params(0) = 1.f; // a
