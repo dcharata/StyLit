@@ -35,7 +35,8 @@ SOURCES += \
     MainWindow.cpp \
     CPU/NNFUpscalerCPU.cpp\
     Tests/TestImageResize.cpp \
-    Tests/TestNNFUpscalerCPU.cpp
+    Tests/TestNNFUpscalerCPU.cpp \
+    Utilities/Helpers.cpp
 
 HEADERS += \
     Algorithm/ChannelWeights.h \
@@ -73,7 +74,8 @@ HEADERS += \
     Utilities/ImageIO.h \
     CPU/DownscalerCPU.h \
     Tests/TestImageResize.h \
-    Tests/TestNNFUpscalerCPU.h
+    Tests/TestNNFUpscalerCPU.h \
+    Utilities/Helpers.h
 
 FORMS += \
     MainWindow.ui
