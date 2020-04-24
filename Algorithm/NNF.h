@@ -41,6 +41,11 @@ public:
    */
   void setMapping(const ImageCoordinates &from, const ImageCoordinates &to);
 
+  /**
+   * @brief initializes a blacklist so that all of its elements are (-1,-1)
+   */
+  void setToInitializedBlacklist();
+
   // the source image's size
   const ImageDimensions sourceDimensions;
 

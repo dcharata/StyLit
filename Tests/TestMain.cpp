@@ -6,6 +6,7 @@
 #include "TestErrorBudget.h"
 #include "TestImageIOHelpers.h"
 #include "TestImageIOWrite.h"
+#include "TestPatchMatch.h"
 #include "UnitTest.h"
 
 #include <stdio.h>
@@ -26,13 +27,14 @@ int TestMain::run() {
   TestImageIO testImageIO;
   TestImageIOHelpers testImageIOHelpers;
   TestImageIOWrite testImageIOWrite;
+  TestPatchMatch testPatchMatch;
   TestNNFUpscalerCPU testNNFUpscalerCPU;
   TestErrorBudget testErrorBudget;
 
   // All tests in unitTests are run.
-  const int numTests = 6;
-  UnitTest *unitTests[] = {&testImageIO, &testImageIOWrite, &testImageIOHelpers,
-                           &testDownscalerCPU, &testNNFUpscalerCPU, 
+  const int numTests = 7;
+  UnitTest *unitTests[] = {&testImageIO, &testImageIOWrite, &testImageIOHelpers, 
+                           &testPatchMatch, &testDownscalerCPU, &testNNFUpscalerCPU,
                            &testErrorBudget};
 
   // Runs the tests and counts how many succeed.
