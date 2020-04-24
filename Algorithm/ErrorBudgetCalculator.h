@@ -1,8 +1,11 @@
 #ifndef ERRORBUDGETCALCULATOR_H
 #define ERRORBUDGETCALCULATOR_H
 
+#include <vector>
+
 struct Configuration;
 struct NNFError;
+
 
 /**
  * @brief The KneePointFinder class This fits a hyperbolic function to a sorted
@@ -25,7 +28,11 @@ public:
    * @return true if error budget calculation succeeds; otherwise false
    */
   bool calculateErrorBudget(const Configuration &configuration,
-                            const NNFError &error, float errorBudget);
+                            std::vector<std::pair<int, float>> &vecerror,
+                            const NNFError &error,
+                            float &errorBudget) {
+    return implementationOfCalculateErrorBudget(configuration, vecerror, error, errorBudget);
+  }
 
 protected:
   /**
@@ -37,10 +44,10 @@ protected:
    * @param errorBudget the resulting error budget
    * @return true if error budget calculation succeeds; otherwise false
    */
-  virtual bool
-  implementationOfCalculateErrorBudget(const Configuration &configuration,
-                                       const NNFError &error,
-                                       float errorBudget) = 0;
+  virtual bool implementationOfCalculateErrorBudget(const Configuration &configuration,
+                                            std::vector<std::pair<int, float>> &vecerror,
+                                            const NNFError &error,
+                                            float &errorBudget) = 0;
 };
 
 #endif // ERRORBUDGETCALCULATOR_H

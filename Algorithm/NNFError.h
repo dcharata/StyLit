@@ -2,6 +2,7 @@
 #define NNFERROR_H
 
 #include "Image.h"
+#include "NNF.h"
 
 class NNF;
 

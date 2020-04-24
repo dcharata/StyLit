@@ -16,12 +16,14 @@ DEFINES += QT_DEPRECATED_WARNINGS
 DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000
 
 SOURCES += \
-    Algorithm/ErrorBudgetCalculator.cpp \
     Algorithm/ImageDimensions.cpp \
     Algorithm/NNF.cpp \
+    Algorithm/NNFError.cpp \
     Algorithm/NNFUpscaler.cpp \
+    CPU/ErrorBudgetCalculatorCPU.cpp \
     Configuration/Configuration.cpp \
     Configuration/ConfigurationParser.cpp \
+    Tests/TestErrorBudget.cpp \
     Tests/TestDownscalerCPU.cpp \
     Tests/TestImageIO.cpp \
     Tests/TestImageIOHelpers.cpp \
@@ -56,10 +58,12 @@ HEADERS += \
     Algorithm/Pyramid.h \
     Algorithm/PyramidLevel.h \
     Algorithm/StyLitCoordinator.h \
+    CPU/ErrorBudgetCalculatorCPU.h \
     CPU/ErrorCalculatorCPU.h \
     CPU/NNFApplicatorCPU.h \
     Configuration/Configuration.h \
     Configuration/ConfigurationParser.h \
+    Tests/TestErrorBudget.h \
     MainWindow.h \
     CPU/PatchMatcherCPU.h \
     CPU/NNFGeneratorCPU.h \
