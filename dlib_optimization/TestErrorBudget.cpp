@@ -11,7 +11,11 @@
 #include "Algorithm/ErrorBudgetCalculator.h"
 #include "Algorithm/ErrorBudgetCalculator.cpp"
 
-using namespace dlib;
+using namespace dlib; // from David: don't put using namespace into header files, since that will make it show up in unexpected places
+
+// also from David: 
+// - use clang-format
+// - make local vars const when possible
 
 // ----------------------------------------------------------------------------------------
 // unit test for the knee point finding functions
