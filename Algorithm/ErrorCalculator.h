@@ -3,6 +3,7 @@
 
 #include "ImageDimensions.h"
 #include "PyramidLevel.h"
+#include "ChannelWeights.h"
 
 struct Configuration;
 
@@ -33,7 +34,9 @@ public:
       const Configuration &configuration,
       const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel,
       const ImageCoordinates &sourceCoordinates,
-      const ImageCoordinates &targetCoordinates, float &error) {
+      const ImageCoordinates &targetCoordinates,
+      const ChannelWeights<numGuideChannels> &guideWeights,
+      const ChannelWeights<numStyleChannels> &styleWeights, float &error) {
     Q_ASSERT(pyramidLevel.guide.source.dimensions ==
              pyramidLevel.style.source.dimensions);
     Q_ASSERT(pyramidLevel.guide.target.dimensions ==
@@ -42,6 +45,7 @@ public:
     Q_ASSERT(targetCoordinates.within(pyramidLevel.guide.target.dimensions));
     return implementationOfCalculateError(configuration, pyramidLevel,
                                           sourceCoordinates, targetCoordinates,
+                                          guideWeights, styleWeights,
                                           error);
   }
 
@@ -60,7 +64,9 @@ protected:
       const Configuration &configuration,
       const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel,
       const ImageCoordinates &sourceCoordinates,
-      const ImageCoordinates &targetCoordinates, float &error) = 0;
+      const ImageCoordinates &targetCoordinates,
+      const ChannelWeights<numGuideChannels> &guideWeights,
+      const ChannelWeights<numStyleChannels> &styleWeights, float &error) = 0;
 };
 
 #endif // ERRORCALCULATOR_H

@@ -20,7 +20,6 @@ SOURCES += \
     Algorithm/ImageDimensions.cpp \
     Algorithm/NNF.cpp \
     Algorithm/NNFUpscaler.cpp \
-    Algorithm/PatchMatcher.cpp \
     Configuration/Configuration.cpp \
     Configuration/ConfigurationParser.cpp \
     Tests/TestDownscalerCPU.cpp \
@@ -28,6 +27,8 @@ SOURCES += \
     Tests/TestImageIOHelpers.cpp \
     Tests/TestImageIOWrite.cpp \
     Tests/TestMain.cpp \
+    Tests/TestNNFGenerator.cpp \
+    Tests/TestPatchMatch.cpp \
     Utilities/FloatTools.cpp \
     Utilities/ImageFormatTools.cpp \
     Utilities/ImageIO.cpp \
@@ -47,6 +48,7 @@ HEADERS += \
     Algorithm/ImageDimensions.h \
     Algorithm/ImagePair.h \
     Algorithm/NNF.h \
+    Algorithm/NNFApplicator.h \
     Algorithm/NNFError.h \
     Algorithm/NNFGenerator.h \
     Algorithm/NNFUpscaler.h \
@@ -54,9 +56,14 @@ HEADERS += \
     Algorithm/Pyramid.h \
     Algorithm/PyramidLevel.h \
     Algorithm/StyLitCoordinator.h \
+    CPU/ErrorCalculatorCPU.h \
+    CPU/NNFApplicatorCPU.h \
     Configuration/Configuration.h \
     Configuration/ConfigurationParser.h \
     MainWindow.h \
+    CPU/PatchMatcherCPU.h \
+    CPU/NNFGeneratorCPU.h \
+    CPU/StyLitCoordinatorCPU.h \
     CPU/NNFUpscalerCPU.h \
     Tests/TestDownscaler.h \
     Tests/TestDownscalerCPU.h \
@@ -65,6 +72,8 @@ HEADERS += \
     Tests/TestImageIOHelpers.h \
     Tests/TestImageIOWrite.h \
     Tests/TestMain.h \
+    Tests/TestNNFGenerator.h \
+    Tests/TestPatchMatch.h \
     Tests/UnitTest.h \
     Utilities/FloatTools.h \
     Utilities/ImageFormat.h \
