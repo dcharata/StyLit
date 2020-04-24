@@ -74,3 +74,5 @@ Thumbs.db
 *.dll
 *.exe
 
+# Test output
+patchMatchTest*Output.png
