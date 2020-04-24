@@ -7,6 +7,7 @@
 #include "Algorithm/ChannelWeights.h"
 #include "ErrorCalculatorCPU.h"
 #include <iostream>
+#include <limits>
 
 int randi(int min, int max) {
   return (std::rand() % (max - min)) + min;
@@ -139,7 +140,7 @@ private:
             errorCalc.calculateError(configuration, pyramidLevel, newPatch1, currentPatch, guideWeights, styleWeights, newPatchError1);
           }
         } else {
-          newPatchError1 = MAXFLOAT; // if newPatch1 is not available, automatically set the energy to MAXFLOAT
+          newPatchError1 = std::numeric_limits<float>::max(); // if newPatch1 is not available, automatically set the energy to MAXFLOAT
         }
       }
     }
@@ -161,7 +162,7 @@ private:
             errorCalc.calculateError(configuration, pyramidLevel, newPatch2, currentPatch, guideWeights, styleWeights, newPatchError2);
           }
         } else {
-          newPatchError2 = MAXFLOAT;
+          newPatchError2 = std::numeric_limits<float>::max();
         }
       }
     }
