@@ -3,6 +3,7 @@
 #include "Configuration/Configuration.h"
 #include "Configuration/ConfigurationParser.h"
 #include "Tests/TestMain.h"
+#include "CPU/StyLitCoordinatorCPU.h"
 
 #include <QApplication>
 #include <QCommandLineParser>
@@ -63,11 +64,22 @@ int main(int argc, char *argv[]) {
   }
   configuration.print();
 
+  // Run StyLit
+  const unsigned int numGuideChannels = 6;
+  const unsigned int numStyleChannels = 3;
+  StyLitCoordinatorCPU<float, numGuideChannels, numStyleChannels> stylitFloat;
+  bool status = stylitFloat.runStyLit(configuration);
+
   // If necessary, shows the UI.
   MainWindow w;
   if (parser.isSet(interfaceOption)) {
     w.show();
     return a.exec();
   }
-  return 0;
+
+  // Exit
+  if (status==true)
+    return 0;
+  else
+    return -1;
 }

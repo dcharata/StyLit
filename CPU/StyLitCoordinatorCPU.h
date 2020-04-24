@@ -17,7 +17,7 @@ public:
    * called from here.
    * @return true if StyLit ran successfully; otherwise false
    */
-  bool runStyLit(const Configuration &configuration);
+  virtual bool runStyLit(const Configuration &configuration) override;
 };
 
 #endif // STYLITCOORDINATORCPU_H

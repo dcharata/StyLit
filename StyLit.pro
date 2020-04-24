@@ -21,6 +21,7 @@ SOURCES += \
     Algorithm/NNFError.cpp \
     Algorithm/NNFUpscaler.cpp \
     CPU/ErrorBudgetCalculatorCPU.cpp \
+    CPU/StyLitCoordinatorCPU.cpp \
     Configuration/Configuration.cpp \
     Configuration/ConfigurationParser.cpp \
     Tests/TestErrorBudget.cpp \
