@@ -20,7 +20,7 @@ SOURCES += \
     Algorithm/NNF.cpp \
     Algorithm/NNFError.cpp \
     Algorithm/NNFUpscaler.cpp \
-    CPU/ErrorBudgetCalculator.cpp \
+    CPU/ErrorBudgetCalculatorCPU.cpp \
     Configuration/Configuration.cpp \
     Configuration/ConfigurationParser.cpp \
     Tests/TestErrorBudget.cpp \
@@ -58,6 +58,7 @@ HEADERS += \
     Algorithm/Pyramid.h \
     Algorithm/PyramidLevel.h \
     Algorithm/StyLitCoordinator.h \
+    CPU/ErrorBudgetCalculatorCPU.h \
     CPU/ErrorCalculatorCPU.h \
     CPU/NNFApplicatorCPU.h \
     Configuration/Configuration.h \

@@ -4,10 +4,9 @@
 #include <iostream>
 #include <vector>
 
-#include "Algorithm/ErrorBudgetCalculator.h"
 #include "Algorithm/NNF.h"
 #include "Algorithm/NNFError.h"
-#include "CPU/ErrorBudgetCalculator.cpp"
+#include "CPU/ErrorBudgetCalculatorCPU.cpp"
 #include "Configuration/Configuration.h"
 
 using namespace std::chrono;
@@ -107,8 +106,8 @@ bool test_hyperbolic_fitting(int num_pixels) {
   std::cout << "ground-truth parameters: "
             << "\ta: " << gt_params(0) << "\tb: " << gt_params(1) << std::endl;
 
-  double adiffpercentage = fabsf64(gt_params(0) - params(0)) / gt_params(0);
-  double bdiffpercentage = fabsf64(gt_params(1) - params(1)) / gt_params(1);
+  double adiffpercentage = fabsf(gt_params(0) - params(0)) / gt_params(0);
+  double bdiffpercentage = fabsf(gt_params(1) - params(1)) / gt_params(1);
 
   if (adiffpercentage < 0.1 && bdiffpercentage < 0.1) {
     std::cout << "status: passed" << std::endl;
@@ -156,10 +155,11 @@ bool TestErrorBudget::run() {
   const bool shuffle = true;
   generate_errorimage(nnferror, gt_params, addnoise, shuffle);
   Configuration configuration;
-  ErrorBudgetCalculator calc;
+  ErrorBudgetCalculatorCPU calc;
   // runtime
   start = high_resolution_clock::now();
-  calc.calculateErrorBudget(configuration, nnferror, errorBudget);
+  std::vector<std::pair<int, float>> vecerror;
+  calc.calculateErrorBudget(configuration, vecerror, nnferror, errorBudget);
   stop = high_resolution_clock::now();
   duration = duration_cast<milliseconds>(stop - start);
   std::cout << "runtime: " << duration.count() << " milliseconds" << std::endl;

@@ -1,4 +1,4 @@
-#include "Algorithm/ErrorBudgetCalculator.h"
+#include "ErrorBudgetCalculatorCPU.h"
 
 #include <Eigen/Eigen>
 #include <iostream>
@@ -89,32 +89,24 @@ struct LMFunctor {
   int inputs() const { return n; }
 };
 
-bool comparator(const std::pair<std::pair<int, int>, double> lhs,
-                const std::pair<std::pair<int, int>, float> rhs) {
+bool comparator(const std::pair<int, float> lhs,
+                const std::pair<int, float> rhs) {
   return lhs.second < rhs.second;
 }
 
 // ----------------------------------------------------------------------------------------
 
-bool ErrorBudgetCalculator::calculateErrorBudget(
-    const Configuration &configuration, NNFError &error, float errorBudget) {
-  return implementationOfCalculateErrorBudget(configuration, error,
-                                              errorBudget);
-}
-
-bool ErrorBudgetCalculator::implementationOfCalculateErrorBudget(
-    const Configuration &, NNFError &nnferror, float errorBudget) {
+bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(const Configuration &config, std::vector<std::pair<int, float>> &vecerror,
+                                                                    const NNFError &nnferror, float &errorBudget) {
   // we may not need configuration?
 
   // read from the error image
-  std::vector<std::pair<std::pair<int, int>, float>> vecerror;
   int height = nnferror.error.dimensions.rows;
   int width = nnferror.error.dimensions.cols;
   int num_pixels = height * width;
   for (int row = 0; row < height; row++) {
     for (int col = 0; col < width; col++) {
-      vecerror.push_back(std::make_pair(
-          std::make_pair(row, col), nnferror.error.data[row * width + col][0]));
+      vecerror.push_back(std::make_pair(row * width + col, nnferror.error.getConstPixel(row,col)[0]));
     }
   }
 
@@ -131,8 +123,6 @@ bool ErrorBudgetCalculator::implementationOfCalculateErrorBudget(
       int i = row * width + col;
       measuredValues(i, 0) = i * x_scale;
       measuredValues(i, 1) = (double)vecerror[i].second;
-      nnferror.errorIndex(vecerror[i].first.first,
-                          vecerror[i].first.second)[0] = i;
     }
   }
 

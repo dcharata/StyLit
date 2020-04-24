@@ -18,9 +18,6 @@ struct NNFError {
 
   // where the errors reside
   Image<float, 1> error;
-
-  // sorted error index
-  Image<int, 1> errorIndex;
 };
 
 #endif // NNFERROR_H
