@@ -76,7 +76,7 @@ void generate_errorimage(NNFError &nnferror, Eigen::VectorXd params,
   }
 }
 
-void test_hyperbolic_fitting(int num_pixels) {
+bool test_hyperbolic_fitting(int num_pixels) {
   const int n = 2;
   Eigen::MatrixXd measuredValues(num_pixels, 2);
   Eigen::VectorXd gt_params(n);
@@ -106,6 +106,17 @@ void test_hyperbolic_fitting(int num_pixels) {
             << "\ta: " << params(0) << "\tb: " << params(1) << std::endl;
   std::cout << "ground-truth parameters: "
             << "\ta: " << gt_params(0) << "\tb: " << gt_params(1) << std::endl;
+
+  double adiffpercentage = fabsf64(gt_params(0) - params(0)) / gt_params(0);
+  double bdiffpercentage = fabsf64(gt_params(1) - params(1)) / gt_params(1);
+
+  if (adiffpercentage < 0.1 && bdiffpercentage < 0.1) {
+    std::cout << "status: passed" << std::endl;
+    return true;
+  } else {
+    std::cout << "status: failed" << std::endl;
+    return false;
+  }
 }
 
 // ----------------------------------------------------------------------------------------
@@ -120,7 +131,7 @@ bool TestErrorBudget::run() {
   std::cout << "num_samples: " << num_pixels << std::endl;
   // runtime
   auto start = high_resolution_clock::now();
-  test_hyperbolic_fitting(num_pixels);
+  bool test_status = test_hyperbolic_fitting(num_pixels);
   auto stop = high_resolution_clock::now();
   auto duration = duration_cast<milliseconds>(stop - start);
   std::cout << "runtime: " << duration.count() << " milliseconds" << std::endl;
@@ -154,7 +165,7 @@ bool TestErrorBudget::run() {
   std::cout << "runtime: " << duration.count() << " milliseconds" << std::endl;
   std::cout << std::endl;
 
-  return true;
+  return test_status;
 }
 
 // NOTES:

@@ -157,6 +157,8 @@ bool ErrorBudgetCalculator::implementationOfCalculateErrorBudget(
 
   Eigen::LevenbergMarquardt<LMFunctor, double> lm(functor);
   int status = lm.minimize(params);
+
+  // ----- start: for unit test - SHOULD REMOVE ------
   std::cout << "LM optimization status: " << status << std::endl;
   std::cout << "LM optimization iterations: " << lm.iter << std::endl;
   std::cout << "estimated parameters: "
@@ -168,18 +170,22 @@ bool ErrorBudgetCalculator::implementationOfCalculateErrorBudget(
   std::cout << "ground-truth parameters: "
             << "\ta: " << gt_params(0) << "\t\tb: " << gt_params(1)
             << std::endl;
+  // ----- end: for unit test - SHOULD REMOVE ------
 
   // calculate the knee point
   double a = params(0);
   double b = params(1);
   int kneepoint = (int)sqrtf(1.f / b) + a / b;
   errorBudget = (float)vecerror[kneepoint].second;
+
+  // ----- start: for unit test - SHOULD REMOVE ------
   std::cout << "estimated knee point: " << kneepoint << std::endl;
   std::cout << "estimated error budget: " << errorBudget << std::endl;
 
   std::cout << "Note: should comment out these logs in "
                "ErrorBudgetCalculator.cpp in runtime)"
             << std::endl;
+  // ----- end: for unit test - SHOULD REMOVE ------
 
   return true;
 }

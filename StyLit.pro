@@ -16,7 +16,6 @@ DEFINES += QT_DEPRECATED_WARNINGS
 DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000
 
 SOURCES += \
-    Algorithm/ErrorBudgetCalculator.cpp \
     Algorithm/ImageDimensions.cpp \
     Algorithm/NNF.cpp \
     Algorithm/NNFError.cpp \
