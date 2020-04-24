@@ -72,7 +72,7 @@ private:
           float patchError;
           ImageCoordinates currentPatch{row, col};
           patchError = errorCalc.calculateError(configuration, pyramidLevel, currentPatch, nnfError.nnf.getMapping(currentPatch), patchError);
-          nnfError.error.data[row * nnfError.nnf.sourceDimensions.cols + col] = FeatureVector<float, 1>(patchError);
+          nnfError.error(row, col) = FeatureVector<float, 1>(patchError);
         }
       }
 

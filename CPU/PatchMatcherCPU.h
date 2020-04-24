@@ -50,9 +50,12 @@ private:
    * @param nnf the NNF that should be improved with PatchMatch, size of domain images,
    *        maps to indices in codomain images
    * @param pyramid the image pyramid
+   * @param numIterations number of iterations that patchmatch is run
    * @param level the level of the pyramid for which an NNF is being generated
    * @param makeReverseNNF indicates whether a reverse or forward nnf is
    *        being generated
+   * @param initRandom indicates whether the NNF should have patchmatch run on it as is, or
+   *        whether it should be randomly initialized
    * @param blacklist Another NNF of pixels that should not be mapped to.
    * @return true if patch matching succeeds; otherwise false
    */
@@ -62,11 +65,11 @@ private:
 
     const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel = pyramid.levels[level];
 
-    int numNNFRows = nnf.sourceDimensions.rows;
-    int numNNFCols = nnf.sourceDimensions.cols;
+    const int numNNFRows = nnf.sourceDimensions.rows;
+    const int numNNFCols = nnf.sourceDimensions.cols;
 
-    ChannelWeights<numGuideChannels> guideWeights = pyramid.guideWeights;
-    ChannelWeights<numStyleChannels> styleWeights = pyramid.styleWeights;
+    const ChannelWeights<numGuideChannels> guideWeights = pyramid.guideWeights;
+    const ChannelWeights<numStyleChannels> styleWeights = pyramid.styleWeights;
 
     if (initRandom) {
       randomlyInitializeNNF(nnf);
@@ -85,18 +88,37 @@ private:
     return true;
   }
 
+  /**
+   * @brief propagationStep This runs the propagation step of patchmatch. It propagates
+   * information throughout the NNF by having each element of the NNF consider mapping
+   * to a patch in the codomain that is close to the element's neighbor's mappings.
+   * @param configuration the configuration StyLit is running
+   * @param row the row of the element of the NNF that is being mutated
+   * @param col the col of the element of the NNF that is being mutated
+   * @param makeReverseNNF indicates whether a reverse or forward nnf is
+   *        being generated
+   * @param iterationIsOdd indicates whether the iteration of patchmatch is odd or not
+   * @param nnf the NNF that should be improved with PatchMatch, size of domain images,
+   *        maps to indices in codomain images
+   * @param pyramid the image pyramid
+   * @param level the level of the pyramid for which an NNF is being generated
+   * @param guideWeights the guideweights of the pyramid
+   * @param styleWeights the styleweights of the pyramid
+   * @param blacklist Another NNF of pixels that should not be mapped to.
+   * @return true if patch matching succeeds; otherwise false
+   */
   void propagationStep(const Configuration &configuration, int row, int col, bool makeReverseNNF, bool iterationIsOdd,
                        NNF &nnf, const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel,
-                       ChannelWeights<numGuideChannels> &guideWeights, ChannelWeights<numStyleChannels> &styleWeights,
+                       const ChannelWeights<numGuideChannels> &guideWeights, const ChannelWeights<numStyleChannels> &styleWeights,
                        const NNF *const blacklist = nullptr) {
     ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels> errorCalc = ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels>();
     float newPatchError1 = -1.0; // we know if a patch was out of bounds if its error remains -1, so don't consider it the end of this method
     float newPatchError2 = -1.0;
     int offset = iterationIsOdd ? -1 : 1;
-    ImageCoordinates currentPatch{row, col};
+    const ImageCoordinates currentPatch{row, col};
     ImageCoordinates newPatch1{-1, -1};
     ImageCoordinates newPatch2{-1, -1};
-    ImageCoordinates domainNeighbor1{row + offset, col};
+    const ImageCoordinates domainNeighbor1{row + offset, col};
     if (domainNeighbor1.within(nnf.sourceDimensions)) { // if the neighbor in the nnf domain actually exists
       ImageCoordinates codomainNeighbor1 = nnf.getMapping(domainNeighbor1);
       // get the patch in the codomain that we might want to map the current (row, col) domain patch to
@@ -123,7 +145,7 @@ private:
     }
 
     // do the exact same thing as above but with the analogous col offset
-    ImageCoordinates domainNeighbor2{row, col + offset};
+    const ImageCoordinates domainNeighbor2{row, col + offset};
     if (domainNeighbor2.within(nnf.sourceDimensions)) { // if the neighbor in te nnf domain actually exists
       ImageCoordinates codomainNeighbor2 = nnf.getMapping(domainNeighbor2);
       // NOTE: we have the same -offset that we have above
@@ -170,15 +192,32 @@ private:
     }
   }
 
+  /**
+   * @brief searchStep This runs the search step of patchmatch. It has an element of the
+   * NNF search for a better mapping by repeatedly randomly searching in a radius of
+   * decreasing size.
+   * @param row the row of the element of the NNF that is being mutated
+   * @param col the col of the element of the NNF that is being mutated
+   * @param makeReverseNNF indicates whether a reverse or forward nnf is
+   *        being generated
+   * @param nnf the NNF that should be improved with PatchMatch, size of domain images,
+   *        maps to indices in codomain images
+   * @param pyramid the image pyramid
+   * @param level the level of the pyramid for which an NNF is being generated
+   * @param guideWeights the guideweights of the pyramid
+   * @param styleWeights the styleweights of the pyramid
+   * @param blacklist Another NNF of pixels that should not be mapped to.
+   * @return true if patch matching succeeds; otherwise false
+   */
   void searchStep(const Configuration &configuration, int row, int col, bool makeReverseNNF,
                   NNF &nnf, const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel,
-                  ChannelWeights<numGuideChannels> guideWeights, ChannelWeights<numStyleChannels> styleWeights,
+                  const ChannelWeights<numGuideChannels> guideWeights, const ChannelWeights<numStyleChannels> styleWeights,
                   const NNF *const blacklist = nullptr) {
     // NOTE: maximum search radius is the largest dimension of the images. We should tune this later on.
     ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels> errorCalc = ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels>();
-    int w = std::max(std::max(nnf.sourceDimensions.cols, nnf.sourceDimensions.rows),
-                     std::max(nnf.targetDimensions.cols, nnf.targetDimensions.rows));
-    ImageCoordinates currentPatch{row, col};
+    const int w = std::max(std::max(nnf.sourceDimensions.cols, nnf.sourceDimensions.rows),
+                           std::max(nnf.targetDimensions.cols, nnf.targetDimensions.rows));
+    const ImageCoordinates currentPatch{row, col};
     ImageCoordinates currentCodomainPatch = nnf.getMapping(currentPatch);
     float currentError;
     if (makeReverseNNF) {
@@ -188,9 +227,9 @@ private:
     }
     int i = 0;
     while (w * pow(RANDOM_SEARCH_ALPHA, i) > 1.0) {
-      int col_offset = int(w * pow(RANDOM_SEARCH_ALPHA, i) * rand_uniform());
-      int row_offset = int(w * pow(RANDOM_SEARCH_ALPHA, i) * rand_uniform());
-      ImageCoordinates newCodomainPatch{currentCodomainPatch.row + row_offset, currentCodomainPatch.col + col_offset};
+      const int col_offset = int(w * pow(RANDOM_SEARCH_ALPHA, i) * rand_uniform());
+      const int row_offset = int(w * pow(RANDOM_SEARCH_ALPHA, i) * rand_uniform());
+      const ImageCoordinates newCodomainPatch{currentCodomainPatch.row + row_offset, currentCodomainPatch.col + col_offset};
       if (newCodomainPatch.within(nnf.targetDimensions)) { // if this new codomain patch is within the codomain dimensions of the nnf
         bool newCodomainPatchAvailable = (blacklist == nullptr) || (blacklist->getMapping(newCodomainPatch).row == -1 &&
                                                                     blacklist->getMapping(newCodomainPatch).col == -1);

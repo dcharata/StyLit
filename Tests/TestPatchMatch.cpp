@@ -20,16 +20,16 @@ bool TestPatchMatch::run() {
   configuration.patchSize = 5;
 
   {
-    QString path1("./Examples/brown1.png");
-    QString path2("./Examples/brown2.png");
+    const QString path1("./Examples/brown1.png");
+    const QString path2("./Examples/brown2.png");
     QImage sourceImage(path1);
 
-    ImageDimensions sourceDims{sourceImage.height(), sourceImage.width()};
-    QImage targetImage(path2);
-    ImageDimensions targetDims{targetImage.height(), targetImage.width()};
+    const ImageDimensions sourceDims{sourceImage.height(), sourceImage.width()};
+    const QImage targetImage(path2);
+    const ImageDimensions targetDims{targetImage.height(), targetImage.width()};
     Pyramid<float, 3, 3> pyramid;
-    ChannelWeights<3> guideWeights(1.0,1.0,1.0);
-    ChannelWeights<3> styleWeights(1.0,1.0,1.0);
+    const ChannelWeights<3> guideWeights(1.0,1.0,1.0);
+    const ChannelWeights<3> styleWeights(1.0,1.0,1.0);
     pyramid.guideWeights = guideWeights;
     pyramid.styleWeights = styleWeights;
     pyramid.levels.push_back(PyramidLevel<float, 3, 3>(sourceDims, targetDims));
@@ -75,15 +75,15 @@ bool TestPatchMatch::run() {
 
   // test whether patchmatch can copy an image using patches from a similar image
   {
-    QString path1("./Examples/up1.png");
-    QString path2("./Examples/up2.png");
-    QImage sourceImage(path1);
-    ImageDimensions sourceDims{sourceImage.height(), sourceImage.width()};
-    QImage targetImage(path2);
-    ImageDimensions targetDims{targetImage.height(), targetImage.width()};
+    const QString path1("./Examples/up1.png");
+    const QString path2("./Examples/up2.png");
+    const QImage sourceImage(path1);
+    const ImageDimensions sourceDims{sourceImage.height(), sourceImage.width()};
+    const QImage targetImage(path2);
+    const ImageDimensions targetDims{targetImage.height(), targetImage.width()};
     Pyramid<float, 3, 3> pyramid;
-    ChannelWeights<3> guideWeights(1.0,1.0,1.0);
-    ChannelWeights<3> styleWeights(1.0,1.0,1.0);
+    const ChannelWeights<3> guideWeights(1.0,1.0,1.0);
+    const ChannelWeights<3> styleWeights(1.0,1.0,1.0);
     pyramid.guideWeights = guideWeights;
     pyramid.styleWeights = styleWeights;
     pyramid.levels.push_back(PyramidLevel<float, 3, 3>(sourceDims, targetDims));
@@ -107,15 +107,15 @@ bool TestPatchMatch::run() {
   // test blacklisting
   // the entire brown1 image will be constructed from the bottom half of the image.
   {
-    QString path1("./Examples/brown1.png");
-    QString path2("./Examples/brown1.png");
-    QImage sourceImage(path1);
-    ImageDimensions sourceDims{sourceImage.height(), sourceImage.width()};
-    QImage targetImage(path2);
-    ImageDimensions targetDims{targetImage.height(), targetImage.width()};
+    const QString path1("./Examples/brown1.png");
+    const QString path2("./Examples/brown1.png");
+    const QImage sourceImage(path1);
+    const ImageDimensions sourceDims{sourceImage.height(), sourceImage.width()};
+    const QImage targetImage(path2);
+    const ImageDimensions targetDims{targetImage.height(), targetImage.width()};
     Pyramid<float, 3, 3> pyramid;
-    ChannelWeights<3> guideWeights(1.0,1.0,1.0);
-    ChannelWeights<3> styleWeights(1.0,1.0,1.0);
+    const ChannelWeights<3> guideWeights(1.0,1.0,1.0);
+    const ChannelWeights<3> styleWeights(1.0,1.0,1.0);
     pyramid.guideWeights = guideWeights;
     pyramid.styleWeights = styleWeights;
     pyramid.levels.push_back(PyramidLevel<float, 3, 3>(sourceDims, targetDims));
