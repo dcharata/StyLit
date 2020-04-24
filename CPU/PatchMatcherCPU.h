@@ -9,13 +9,6 @@
 #include <iostream>
 #include <limits>
 
-int randi(int min, int max) {
-  return (std::rand() % (max - min)) + min;
-}
-
-float rand_uniform() {
-  return (float(std::rand()) / float(INT_MAX)) * 2.0 - 1.0;
-}
 
 class NNF;
 
@@ -38,6 +31,15 @@ public:
         nnf.setMapping(from, to);
       }
     }
+  }
+
+  // TODO: inline functions?
+  int randi(int min, int max) {
+    return (std::rand() % (max - min)) + min;
+  }
+
+  float rand_uniform() {
+    return (float(std::rand()) / float(INT_MAX)) * 2.0 - 1.0;
   }
 
 private:
