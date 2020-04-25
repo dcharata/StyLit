@@ -159,7 +159,7 @@ bool TestErrorBudget::run() {
   // runtime
   start = high_resolution_clock::now();
   std::vector<std::pair<int, float>> vecerror;
-  calc.calculateErrorBudget(configuration, vecerror, nnferror, errorBudget);
+  calc.calculateErrorBudget(configuration, vecerror, nnferror, 1, errorBudget);
   stop = high_resolution_clock::now();
   duration = duration_cast<milliseconds>(stop - start);
   std::cout << "runtime: " << duration.count() << " milliseconds" << std::endl;

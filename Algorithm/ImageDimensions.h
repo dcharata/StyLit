@@ -55,6 +55,8 @@ struct ImageDimensions {
    * @return true if so; otherwise false
    */
   bool halfTheSizeOf(const ImageDimensions &dimensions) const;
+
+  static const ImageDimensions FREE_PATCH;
 };
 
 typedef ImageDimensions ImageCoordinates;

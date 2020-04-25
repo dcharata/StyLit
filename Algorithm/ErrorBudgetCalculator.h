@@ -5,6 +5,7 @@
 
 struct Configuration;
 struct NNFError;
+struct NNF;
 
 
 /**
@@ -30,8 +31,10 @@ public:
   bool calculateErrorBudget(const Configuration &configuration,
                             std::vector<std::pair<int, float>> &vecerror,
                             const NNFError &error,
-                            float &errorBudget) {
-    return implementationOfCalculateErrorBudget(configuration, vecerror, error, errorBudget);
+                            const float totalError,
+                            float &errorBudget,
+                            const NNF *const blacklist = nullptr) {
+    return implementationOfCalculateErrorBudget(configuration, vecerror, error, totalError, errorBudget, blacklist);
   }
 
 protected:
@@ -47,7 +50,9 @@ protected:
   virtual bool implementationOfCalculateErrorBudget(const Configuration &configuration,
                                             std::vector<std::pair<int, float>> &vecerror,
                                             const NNFError &error,
-                                            float &errorBudget) = 0;
+                                            const float totalError,
+                                            float &errorBudget,
+                                            const NNF *const blacklist = nullptr) = 0;
 };
 
 #endif // ERRORBUDGETCALCULATOR_H

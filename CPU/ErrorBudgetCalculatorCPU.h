@@ -2,6 +2,7 @@
 #define ERRORBUDGETCALCULATORCPU_H
 
 #include "Algorithm/ErrorBudgetCalculator.h"
+#include "Algorithm/NNF.h"
 
 /**
  * @brief Implementation of Kneepoint finder class for CPU
@@ -24,7 +25,9 @@ private:
   bool implementationOfCalculateErrorBudget(const Configuration &configuration,
                                             std::vector<std::pair<int, float>> &vecerror,
                                             const NNFError &error,
-                                            float &errorBudget) override;
+                                            const float totalError,
+                                            float &errorBudget,
+                                            const NNF *const blacklist = nullptr) override;
 };
 
 #endif // ERRORBUDGETCALCULATORCPU_H

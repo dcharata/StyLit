@@ -1,5 +1,7 @@
 #include "ImageDimensions.h"
 
+const ImageDimensions ImageDimensions::FREE_PATCH = ImageDimensions{-1,-1};
+
 ImageDimensions::ImageDimensions() : rows(-1), cols(-1) {}
 
 ImageDimensions::ImageDimensions(int rows, int cols) : rows(rows), cols(cols) {}
