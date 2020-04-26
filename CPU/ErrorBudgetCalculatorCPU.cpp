@@ -120,20 +120,25 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(const Config
   // sort the error vector
   sort(vecerror.begin(), vecerror.end(), &comparator);
 
+  float maxError = vecerror[vecerror.size() - 1].second;
+  float meanError = totalError / vecerror.size();
+
+  std::cout << "Mean error" << meanError << std::endl;
+
+  std::cout << "Max error: " << vecerror[vecerror.size() - 1].second << std::endl;
+
   // convert to eigen matrix
   // ref:
   // https://medium.com/@sarvagya.vaish/levenberg-marquardt-optimization-part-2-5a71f7db27a0
   Eigen::MatrixXd measuredValues(vecerror.size(), 2); // pairs of (x, f(x))
-  double last_val = 0;
-  double x_scale = 1.f / (height * width);
+  double x_scale = 1.f / double(height * width);
   for (int i = 0; i < vecerror.size(); i++) {
     // normalize the x axis
     measuredValues(i, 0) = float(i) * x_scale;
 
-    // we are fitting a hyperbolic function to the integral of the errors
     // divide by total error to normalize the y axis
-    measuredValues(i, 1) = (last_val + (double)vecerror[i].second) / totalError;
-    last_val += (double)vecerror[i].second;
+    //measuredValues(i, 1) = (double)vecerror[i].second / double(totalError);
+    measuredValues(i, 1) = (double)vecerror[i].second / double(meanError);
   }
 
   // fit the hyperbolic function
@@ -177,18 +182,28 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(const Config
   // calculate the knee point
   double a = params(0);
   double b = params(1);
-  double kneepoint = (sqrtf(1.f / b) + a / b);
+
+  std::cout << "Value of a: " << a << std::endl;
+  std::cout << "Value of b: " << b << std::endl;
+
+  double kneepoint;
+  if (b < 0) {
+    kneepoint = (sqrtf(1.f / b) + a / b);
+  } else {
+    kneepoint = (-sqrtf(1.f / b) + a / b); // this is the case that should normally happen
+  }
 
   // get the kneepoint index
   // we need to multply by the number of pixels to undo the normalization
-  int kneepointIndex = std::min<int>(int(kneepoint * num_pixels), vecerror.size() - 1);
+  int kneepointIndex = std::max<int>(0, std::min<int>(int(kneepoint * num_pixels), vecerror.size() - 1));
   std::cout << "Kneepoint index: " << kneepointIndex << std::endl;
 
   // the integral of the errors we can tolerate is in the measuredValues at the kneepoint index
   // we need to multiply by the total error to undo the normalization
   std::cout << "Total error" << totalError << std::endl;
   std::cout << "Measured value" << measuredValues(kneepointIndex, 1) << std::endl;
-  errorBudget = (float)measuredValues(kneepointIndex, 1) * totalError;
+  //errorBudget = measuredValues(kneepointIndex, 1) * totalError;
+  errorBudget = measuredValues(kneepointIndex, 1) * meanError;
 
   /*
   // ----- start: for unit test - SHOULD REMOVE ------

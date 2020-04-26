@@ -17,10 +17,11 @@ bool TestNNFGenerator::run() {
   {
     Configuration configuration;
     configuration.patchSize = 5;
+    configuration.numPatchMatchIterations = 6;
 
     {
-      const QString path1("./Examples/test1.png");
-      const QString path2("./Examples/test2.png");
+      const QString path1("./Examples/brown1.png");
+      const QString path2("./Examples/brown2.png");
       QImage sourceImage(path1);
       const ImageDimensions sourceDims{sourceImage.height(), sourceImage.width()};
       const QImage targetImage(path2);

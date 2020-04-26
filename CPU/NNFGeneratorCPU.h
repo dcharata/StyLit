@@ -25,7 +25,7 @@ public:
 
 private:
 
-  float NNF_GENERATION_STOPPING_CRITERION = .95;
+  float NNF_GENERATION_STOPPING_CRITERION = .80;
 
   /**
    * @brief implementationOfGenerateNNF Generates a forward NNF by repeatedly
@@ -63,10 +63,10 @@ private:
       std::cout << "*************************" << std::endl;
 
       if (firstIteration) {
-        patchMatcher.patchMatch(configuration, pyramidLevel.reverseNNF, pyramid, 6, level, true, true, nullptr);
+        patchMatcher.patchMatch(configuration, pyramidLevel.reverseNNF, pyramid, configuration.numPatchMatchIterations, level, true, true, nullptr);
         firstIteration = false;
       } else {
-        patchMatcher.patchMatch(configuration, pyramidLevel.reverseNNF, pyramid, 6, level, true, true, &blacklist);
+        patchMatcher.patchMatch(configuration, pyramidLevel.reverseNNF, pyramid, configuration.numPatchMatchIterations, level, true, true, &blacklist);
       }
 
       // fill up the error image of the nnfError struct
@@ -98,33 +98,34 @@ private:
       std::cout << "Budget: " << budget << std::endl;
 
       // fill up the forward NNF using the reverse NNF until we hit the error budget
-      float errorIntegral = 0;
+      float pastError = 0;
       int i = 0;
       const int width = nnfError.nnf.sourceDimensions.cols;
       int notFreeCount = 0;
-      while (errorIntegral < budget && i < sortedCoordinates.size()) {
+      while (pastError < budget && i < sortedCoordinates.size()) {
         ImageCoordinates coords{sortedCoordinates[i].first / width, sortedCoordinates[i].first % width};
         // if coords does not map to a blacklisted pixel, then we can create this mapping in the forward NNF
         ImageCoordinates blacklistVal = blacklist.getMapping(pyramidLevel.reverseNNF.getMapping(coords));
         if (blacklistVal == ImageCoordinates::FREE_PATCH) {
           pyramidLevel.forwardNNF.setMapping(pyramidLevel.reverseNNF.getMapping(coords), coords);
           blacklist.setMapping(pyramidLevel.reverseNNF.getMapping(coords), coords);
-          errorIntegral += sortedCoordinates[i].second;
+          pastError = sortedCoordinates[i].second;
           patchesFilled++;
         } else {
           notFreeCount++;
         }
         i++;
       }
-      std::cout << "Final error integral:" << errorIntegral << std::endl;
+      std::cout << "Final past error: " << pastError << std::endl;
       std::cout << "Not free count: " << notFreeCount << std::endl;
+      std::cout << "i = " << i << " is out of " << sortedCoordinates.size() << std::endl;
     }
 
     // if the level's forward NNf is not completely full, make a new forward NNF from patchmatch and
     // use that to fill up the holes in the level's forward NNF
     if (patchesFilled < forwardNNFSize) {
       NNF forwardNNFFinal = NNF(pyramidLevel.guide.target.dimensions, pyramidLevel.guide.source.dimensions);
-      patchMatcher.patchMatch(configuration, forwardNNFFinal, pyramid, 6, level, false, true);
+      patchMatcher.patchMatch(configuration, forwardNNFFinal, pyramid, configuration.numPatchMatchIterations, level, false, true);
       for (int col = 0; col < forwardNNFFinal.sourceDimensions.cols; col++) {
         for (int row = 0; row < forwardNNFFinal.sourceDimensions.rows; row++) {
           ImageCoordinates currentPatch{row, col};

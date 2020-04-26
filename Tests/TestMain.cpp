@@ -34,10 +34,14 @@ int TestMain::run() {
   TestNNFGenerator testNNFGenerator;
 
   // All tests in unitTests are run.
+  /*
   const int numTests = 7;
   UnitTest *unitTests[] = {&testImageIO, &testImageIOWrite, &testImageIOHelpers, 
                            &testDownscalerCPU, &testNNFUpscalerCPU,
                            &testErrorBudget, &testNNFGenerator};
+  */
+  const int numTests = 1;
+  UnitTest *unitTests[] = {&testNNFGenerator};
 
   // Runs the tests and counts how many succeed.
   int numPasses = 0;
