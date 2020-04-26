@@ -76,16 +76,16 @@ private:
         for (int row = 0; row < nnfError.nnf.sourceDimensions.rows; row++) {
           assert((ImageDimensions{row, col}).within(nnfError.error.dimensions));
           ImageCoordinates blacklistVal = blacklist.getMapping(pyramidLevel.reverseNNF.getMapping(ImageDimensions{row,col}));
-          if (blacklistVal == ImageCoordinates::FREE_PATCH) { // we only need to add the errors of valid mappings to the total error
+          //if (blacklistVal == ImageCoordinates::FREE_PATCH) { // we only need to add the errors of valid mappings to the total error
             float patchError = 0;
             ImageCoordinates currentPatch{row, col};
             errorCalc.calculateError(configuration, pyramidLevel, currentPatch, nnfError.nnf.getMapping(currentPatch),
                                      pyramid.guideWeights, pyramid.styleWeights, patchError);
             nnfError.error(row, col) = FeatureVector<float, 1>(patchError);
             totalError += patchError;
-          } else { // if the mapping is invalid, just fill the error image with max float
-            nnfError.error(row, col) = FeatureVector<float, 1>(std::numeric_limits<float>::max());
-          }
+          //} else { // if the mapping is invalid, just fill the error image with max float
+            //nnfError.error(row, col) = FeatureVector<float, 1>(std::numeric_limits<float>::max());
+          //}
         }
       }
       std::cout << "Total error: " << totalError << std::endl;
@@ -93,7 +93,8 @@ private:
       // get the error budget
       float budget;
       std::vector<std::pair<int, float>> sortedCoordinates;
-      budgetCalc.calculateErrorBudget(configuration, sortedCoordinates, nnfError, totalError, budget, &blacklist);
+      //budgetCalc.calculateErrorBudget(configuration, sortedCoordinates, nnfError, totalError, budget, &blacklist);
+      budgetCalc.calculateErrorBudget(configuration, sortedCoordinates, nnfError, totalError, budget, nullptr);
 
       std::cout << "Budget: " << budget << std::endl;
 

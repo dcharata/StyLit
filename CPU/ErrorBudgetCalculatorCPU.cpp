@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "Algorithm/NNFError.h"
+#include "Configuration/Configuration.h"
 
 #include <limits>
 
@@ -122,6 +123,7 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(const Config
 
   float maxError = vecerror[vecerror.size() - 1].second;
   float meanError = totalError / vecerror.size();
+  float patchSizeSquared = config.patchSize * config.patchSize;
 
   std::cout << "Mean error" << meanError << std::endl;
 
@@ -137,8 +139,9 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(const Config
     measuredValues(i, 0) = float(i) * x_scale;
 
     // divide by total error to normalize the y axis
+    measuredValues(i, 1) = (double)vecerror[i].second / patchSizeSquared;
+    //measuredValues(i, 1) = (double)vecerror[i].second / double(meanError);
     //measuredValues(i, 1) = (double)vecerror[i].second / double(totalError);
-    measuredValues(i, 1) = (double)vecerror[i].second / double(meanError);
   }
 
   // fit the hyperbolic function
@@ -189,6 +192,7 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(const Config
   double kneepoint;
   if (b < 0) {
     kneepoint = (sqrtf(1.f / b) + a / b);
+    std::cout << "the b term in the function-fitting step is negative, which shouldn't happen" << std::endl;
   } else {
     kneepoint = (-sqrtf(1.f / b) + a / b); // this is the case that should normally happen
   }
@@ -203,7 +207,8 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(const Config
   std::cout << "Total error" << totalError << std::endl;
   std::cout << "Measured value" << measuredValues(kneepointIndex, 1) << std::endl;
   //errorBudget = measuredValues(kneepointIndex, 1) * totalError;
-  errorBudget = measuredValues(kneepointIndex, 1) * meanError;
+  errorBudget = measuredValues(kneepointIndex, 1) * patchSizeSquared;
+  //errorBudget = measuredValues(kneepointIndex, 1) * meanError;
 
   /*
   // ----- start: for unit test - SHOULD REMOVE ------
