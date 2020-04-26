@@ -9,14 +9,6 @@
 #include <iostream>
 #include <limits>
 
-int randi(int min, int max) {
-  return (std::rand() % (max - min)) + min;
-}
-
-float rand_uniform() {
-  return (float(std::rand()) / float(INT_MAX)) * 2.0 - 1.0;
-}
-
 class NNF;
 
 /**
@@ -129,10 +121,9 @@ private:
       newPatch1.row = codomainNeighbor1.row - offset;
       newPatch1.col = codomainNeighbor1.col;
       // the blacklist tells us if the codomain index newPatch1 is available.
-      // if the corresponding element in the blacklist is (-1,-1), then this new patch is available
-      bool newPatch1Available = (blacklist == nullptr) || (blacklist->getMapping(newPatch1).row == -1 &&
-                                                           blacklist->getMapping(newPatch1).col == -1);
       if (newPatch1.within(nnf.targetDimensions)) { // if new codomain patch is in the codomain dimensions
+        // if the corresponding element in the blacklist is (-1,-1), then this new patch is available
+        bool newPatch1Available = (blacklist == nullptr) || (blacklist->getMapping(newPatch1) == ImageCoordinates::FREE_PATCH);
         if (newPatch1Available) {
           if (makeReverseNNF) {
             errorCalc.calculateError(configuration, pyramidLevel, currentPatch, newPatch1, guideWeights, styleWeights, newPatchError1);
@@ -152,9 +143,8 @@ private:
       // NOTE: we have the same -offset that we have above
       newPatch2.row = codomainNeighbor2.row;
       newPatch2.col = codomainNeighbor2.col - offset;
-      bool newPatch2Available = (blacklist == nullptr) || (blacklist->getMapping(newPatch2).row == -1 &&
-                                                           blacklist->getMapping(newPatch2).col == -1);
       if (newPatch2.within(nnf.targetDimensions)) { // if the new codomain patch is in the codomain dimensions
+        bool newPatch2Available = (blacklist == nullptr) || (blacklist->getMapping(newPatch2) == ImageCoordinates::FREE_PATCH);
         if (newPatch2Available) {
           if (makeReverseNNF) {
             errorCalc.calculateError(configuration, pyramidLevel, currentPatch, newPatch2, guideWeights, styleWeights, newPatchError2);
@@ -232,8 +222,7 @@ private:
       const int row_offset = int(w * pow(RANDOM_SEARCH_ALPHA, i) * rand_uniform());
       const ImageCoordinates newCodomainPatch{currentCodomainPatch.row + row_offset, currentCodomainPatch.col + col_offset};
       if (newCodomainPatch.within(nnf.targetDimensions)) { // if this new codomain patch is within the codomain dimensions of the nnf
-        bool newCodomainPatchAvailable = (blacklist == nullptr) || (blacklist->getMapping(newCodomainPatch).row == -1 &&
-                                                                    blacklist->getMapping(newCodomainPatch).col == -1);
+        bool newCodomainPatchAvailable = (blacklist == nullptr) || (blacklist->getMapping(newCodomainPatch) == ImageCoordinates::FREE_PATCH);
         if (newCodomainPatchAvailable) { // it is only worth to check whether we should move to this new patch if it is not on the blacklist
           float newError;
           if (makeReverseNNF) {
@@ -252,6 +241,14 @@ private:
 
       i++;
     }
+  }
+
+  int randi(int min, int max) {
+    return (std::rand() % (max - min)) + min;
+  }
+
+  float rand_uniform() {
+    return (float(std::rand()) / float(INT_MAX)) * 2.0 - 1.0;
   }
 
 };

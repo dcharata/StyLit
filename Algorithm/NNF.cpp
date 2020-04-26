@@ -22,6 +22,6 @@ void NNF::setMapping(const ImageCoordinates &from, const ImageCoordinates &to) {
 void NNF::setToInitializedBlacklist() {
   int size = sourceDimensions.cols * sourceDimensions.rows;
   for (int i = 0; i < size; i++) {
-    mappings[i] = {-1,-1};
+    mappings[i] = ImageCoordinates::FREE_PATCH;
   }
 }

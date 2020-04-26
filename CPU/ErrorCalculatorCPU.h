@@ -4,6 +4,7 @@
 #include "Algorithm/ErrorCalculator.h"
 #include "Algorithm/ChannelWeights.h"
 #include "Configuration/Configuration.h"
+#include <iostream>
 
 /**
  * @brief The ErrorCalculator class This is the implementation-specific error

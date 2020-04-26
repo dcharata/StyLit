@@ -4,6 +4,7 @@
 #include "ImageDimensions.h"
 #include "PyramidLevel.h"
 #include "ChannelWeights.h"
+#include <iostream>
 
 struct Configuration;
 
