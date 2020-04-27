@@ -25,7 +25,7 @@ public:
   ~NNFGeneratorCPU() = default;
 
 private:
-  float NNF_GENERATION_STOPPING_CRITERION = .80;
+  float NNF_GENERATION_STOPPING_CRITERION = 0.95f;
 
   /**
    * @brief implementationOfGenerateNNF Generates a forward NNF by repeatedly
@@ -59,8 +59,7 @@ private:
     // the source dimensions of the forward NNF are the dimesions of the target
     int patchesFilled = 0;
     bool firstIteration = true;
-    const int forwardNNFSize = pyramidLevel.forwardNNF.sourceDimensions.rows *
-                               pyramidLevel.forwardNNF.sourceDimensions.cols;
+    const int forwardNNFSize = pyramidLevel.forwardNNF.sourceDimensions.area();
 
     while (patchesFilled <
            float(forwardNNFSize) * NNF_GENERATION_STOPPING_CRITERION) {
@@ -86,7 +85,8 @@ private:
       float totalError = 0;
       for (int col = 0; col < nnfError.nnf.sourceDimensions.cols; col++) {
         for (int row = 0; row < nnfError.nnf.sourceDimensions.rows; row++) {
-          assert((ImageDimensions{row, col}).within(nnfError.error.dimensions));
+          Q_ASSERT(
+              (ImageDimensions{row, col}).within(nnfError.error.dimensions));
           // ImageCoordinates blacklistVal = blacklist.getMapping(
           //    pyramidLevel.reverseNNF.getMapping(ImageDimensions{row, col}));
           // if (blacklistVal == ImageCoordinates::FREE_PATCH) { // we only need
@@ -98,6 +98,7 @@ private:
                                    pyramid.guideWeights, pyramid.styleWeights,
                                    patchError);
           nnfError.error(row, col) = FeatureVector<float, 1>(patchError);
+
           totalError += patchError;
           //} else { // if the mapping is invalid, just fill the error image
           // with max float nnfError.error(row, col) = FeatureVector<float,

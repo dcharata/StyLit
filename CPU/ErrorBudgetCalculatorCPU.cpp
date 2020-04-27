@@ -8,6 +8,7 @@
 #include "Algorithm/NNFError.h"
 #include "Configuration/Configuration.h"
 
+#include <fstream>
 #include <limits>
 
 // ----------------------------------------------------------------------------------------
@@ -132,6 +133,13 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
 
   std::cout << "Mean error" << meanError << std::endl;
 
+  // writes the errors to CSV for graphing
+  // std::ofstream
+  // outFile("/Users/davidcharatan/Documents/StyLitBin/errors.csv");
+  // for (const auto &e : vecerror)
+  // outFile << e.second << ", ";
+  // outFile << std::endl;
+
   std::cout << "Max error: " << vecerror[vecerror.size() - 1].second
             << std::endl;
 
@@ -170,7 +178,7 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
   functor.n = n;
 
   Eigen::LevenbergMarquardt<LMFunctor, double> lm(functor);
-  // int status = lm.minimize(params);
+  lm.minimize(params); // TODO: Use the status for something.
 
   /*
   // ----- start: for unit test - SHOULD REMOVE ------

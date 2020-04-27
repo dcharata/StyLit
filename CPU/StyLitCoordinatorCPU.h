@@ -5,7 +5,9 @@
 #include "Algorithm/PyramidLevel.h"
 #include "Algorithm/StyLitCoordinator.h"
 #include "DownscalerCPU.h"
+#include "NNFApplicatorCPU.h"
 #include "NNFGeneratorCPU.h"
+#include "NNFUpscalerCPU.h"
 #include "Utilities/ImageIO.h"
 
 #include <QString>
@@ -107,13 +109,46 @@ public:
     }
     printTime("Done downscaling A, B and A'.");
 
+    // Sets B' in the lowest level to be mid-gray.
+    Image<float, numStyleChannels> &bPrimeCoarsest =
+        pyramid.levels[pyramid.levels.size() - 1].style.target;
+    for (int row = 0; row < bPrimeCoarsest.dimensions.rows; row++) {
+      for (int col = 0; col < bPrimeCoarsest.dimensions.cols; col++) {
+        bPrimeCoarsest(row, col) =
+            FeatureVector<float, numStyleChannels>::Ones() * 0.5f;
+      }
+    }
+
     // Generates NNFs from the coarsest to the finest level.
     NNFGeneratorCPU<float, numGuideChannels, numStyleChannels> generator;
+    NNFUpscalerCPU nnfUpscaler;
+    NNFApplicatorCPU<float, numGuideChannels, numStyleChannels> nnfApplicator;
     for (int level = int(pyramid.levels.size()) - 1; level >= 0; level--) {
-      // For now, we're only generating an NNF for the lowest pyramid level.
-      if (level == int(pyramid.levels.size()) - 1) {
-        generator.generateNNF(configuration, pyramid, level);
+      PyramidLevel<float, numGuideChannels, numStyleChannels> &pyramidLevel =
+          pyramid.levels[level];
+
+      // Generates the NNF.
+      generator.generateNNF(configuration, pyramid, level);
+      printTime("Done with generating NNF.");
+      if (level) {
+        // If not at the lowest level, upscales the NNF and applies it to make
+        // the next-finest B'.
+        PyramidLevel<float, numGuideChannels, numStyleChannels>
+            &nextFinestPyramidLevel = pyramid.levels[level - 1];
+        nnfUpscaler.upscaleNNF(configuration, pyramidLevel.forwardNNF,
+                               nextFinestPyramidLevel.forwardNNF);
+        printTime("Done upscaling NNF.");
+        nnfApplicator.applyNNF(configuration, nextFinestPyramidLevel);
+        printTime("Done applying NNF.");
       }
+
+      // Saves an image.
+      QString location = "/Users/davidcharatan/Documents/StyLitBin/RESULT";
+      location += QString::number(level);
+      location += ".png";
+      ImageIO::writeImage<numStyleChannels>(location, pyramidLevel.style.target,
+                                            ImageFormat::RGB, 0);
+
       printTime("Done with pyramid level.");
     }
 
