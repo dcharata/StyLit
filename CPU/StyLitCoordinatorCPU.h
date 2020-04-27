@@ -109,6 +109,16 @@ public:
     }
     printTime("Done downscaling A, B and A'.");
 
+    // get an NNFApplicator
+    NNFApplicatorCPU<float, numGuideChannels, numStyleChannels> nnfApplicator;
+
+    // Sets B' in the lowest level to be initialized from A' and a randomly
+    // initialized NNF
+    PatchMatcherCPU<float, numGuideChannels, numStyleChannels> patchMatcher;
+    patchMatcher.randomlyInitializeNNF(pyramid.levels[int(pyramid.levels.size()) - 1].forwardNNF);
+    nnfApplicator.applyNNF(configuration, pyramid.levels[int(pyramid.levels.size()) - 1]);
+
+    /*
     // Sets B' in the lowest level to be mid-gray.
     Image<float, numStyleChannels> &bPrimeCoarsest =
         pyramid.levels[pyramid.levels.size() - 1].style.target;
@@ -118,32 +128,37 @@ public:
             FeatureVector<float, numStyleChannels>::Ones() * 0.5f;
       }
     }
+    */
 
     // Generates NNFs from the coarsest to the finest level.
     NNFGeneratorCPU<float, numGuideChannels, numStyleChannels> generator;
     NNFUpscalerCPU nnfUpscaler;
-    NNFApplicatorCPU<float, numGuideChannels, numStyleChannels> nnfApplicator;
+    //NNFApplicatorCPU<float, numGuideChannels, numStyleChannels> nnfApplicator;
+
+    const int NUM_OPTIMIZATION_ITERATIONS = 1;
     for (int level = int(pyramid.levels.size()) - 1; level >= 0; level--) {
       PyramidLevel<float, numGuideChannels, numStyleChannels> &pyramidLevel =
           pyramid.levels[level];
 
-      // Generates the NNF.
-      generator.generateNNF(configuration, pyramid, level);
-      printTime("Done with generating NNF.");
-      if (level) {
-        // If not at the lowest level, upscales the NNF and applies it to make
+      if (level < int(pyramid.levels.size()) - 1) {
+        // If not at the coarsest level, upscales the NNF and applies it to make
         // the next-finest B'.
         PyramidLevel<float, numGuideChannels, numStyleChannels>
-            &nextFinestPyramidLevel = pyramid.levels[level - 1];
-        nnfUpscaler.upscaleNNF(configuration, pyramidLevel.forwardNNF,
-                               nextFinestPyramidLevel.forwardNNF);
-        printTime("Done upscaling NNF.");
-        nnfApplicator.applyNNF(configuration, nextFinestPyramidLevel);
+            &previousPyramidLevel = pyramid.levels[level + 1];
+        nnfUpscaler.upscaleNNF(configuration, previousPyramidLevel.forwardNNF,
+                               pyramidLevel.forwardNNF);
+        nnfApplicator.applyNNF(configuration, pyramidLevel);
+      }
+
+      for (int i = 0; i < NUM_OPTIMIZATION_ITERATIONS; i++) {
+        generator.generateNNF(configuration, pyramid, level);
+        printTime("Done with generating NNF.");
+        nnfApplicator.applyNNF(configuration, pyramidLevel);
         printTime("Done applying NNF.");
       }
 
       // Saves an image.
-      QString location = QString(PROJECT_PATH) + QString("Results/result.png");
+      QString location = QString(PROJECT_PATH) + QString("Results/result");
       location += QString::number(level);
       location += ".png";
       ImageIO::writeImage<numStyleChannels>(location, pyramidLevel.style.target,

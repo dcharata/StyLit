@@ -140,8 +140,7 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
   // outFile << e.second << ", ";
   // outFile << std::endl;
 
-  std::cout << "Max error: " << vecerror[vecerror.size() - 1].second
-            << std::endl;
+  std::cout << "Max error: " << vecerror[vecerror.size() - 1].second << std::endl;
 
   // convert to eigen matrix
   // ref:
@@ -153,8 +152,8 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
     measuredValues(i, 0) = float(i) * x_scale;
 
     // divide by total error to normalize the y axis
-    measuredValues(i, 1) = (double)vecerror[i].second / patchSizeSquared;
-    // measuredValues(i, 1) = (double)vecerror[i].second / double(meanError);
+    //measuredValues(i, 1) = (double)vecerror[i].second / patchSizeSquared;
+    measuredValues(i, 1) = (double)vecerror[i].second / double(meanError);
     // measuredValues(i, 1) = (double)vecerror[i].second / double(totalError);
   }
 
@@ -227,8 +226,8 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
   std::cout << "Measured value" << measuredValues(kneepointIndex, 1)
             << std::endl;
   // errorBudget = measuredValues(kneepointIndex, 1) * totalError;
-  errorBudget = measuredValues(kneepointIndex, 1) * patchSizeSquared;
-  // errorBudget = measuredValues(kneepointIndex, 1) * meanError;
+  // errorBudget = measuredValues(kneepointIndex, 1) * patchSizeSquared;
+  errorBudget = measuredValues(kneepointIndex, 1) * meanError;
 
   /*
   // ----- start: for unit test - SHOULD REMOVE ------

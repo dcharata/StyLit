@@ -66,14 +66,14 @@ private:
                                                     sourceCoords.col) // A
             - pyramidLevel.guide.target.getConstPixel(targetCoords.row,
                                                       targetCoords.col); // B
-        error += guideDiff.cwiseProduct(guideDiff).sum();
+        error += guideWeights.cwiseProduct(guideDiff.cwiseProduct(guideDiff)).sum();
         FeatureVector<T, numStyleChannels> styleDiff =
             pyramidLevel.style.source.getConstPixel(sourceCoords.row,
                                                     sourceCoords.col) // A'
             - pyramidLevel.style.target.getConstPixel(targetCoords.row,
                                                       targetCoords.col); // B'
 
-        error += styleDiff.cwiseProduct(styleDiff).sum();
+        error += styleWeights.cwiseProduct(styleDiff.cwiseProduct(styleDiff)).sum();
       }
     }
     return true;
