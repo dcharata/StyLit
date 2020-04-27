@@ -99,9 +99,10 @@ bool comparator(const std::pair<int, float> lhs,
 
 // ----------------------------------------------------------------------------------------
 
-bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(const Configuration &config, std::vector<std::pair<int, float>> &vecerror,
-                                                                    const NNFError &nnferror, const float totalError, float &errorBudget,
-                                                                    const NNF *const blacklist) {
+bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
+    const Configuration &config, std::vector<std::pair<int, float>> &vecerror,
+    const NNFError &nnferror, const float totalError, float &errorBudget,
+    const NNF *const blacklist) {
   // we may not need configuration?
 
   // read from the error image
@@ -110,10 +111,14 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(const Config
   const int num_pixels = height * width;
   for (int row = 0; row < height; row++) {
     for (int col = 0; col < width; col++) {
-      ImageCoordinates codomainPatch = nnferror.nnf.getMapping(ImageCoordinates{row, col});
-      bool validMapping = (blacklist == nullptr) || (blacklist->getMapping(codomainPatch) == ImageCoordinates::FREE_PATCH);
+      ImageCoordinates codomainPatch =
+          nnferror.nnf.getMapping(ImageCoordinates{row, col});
+      bool validMapping =
+          (blacklist == nullptr) || (blacklist->getMapping(codomainPatch) ==
+                                     ImageCoordinates::FREE_PATCH);
       if (validMapping) {
-        vecerror.push_back(std::make_pair(row * width + col, nnferror.error.getConstPixel(row, col)[0]));
+        vecerror.push_back(std::make_pair(
+            row * width + col, nnferror.error.getConstPixel(row, col)[0]));
       }
     }
   }
@@ -121,27 +126,28 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(const Config
   // sort the error vector
   sort(vecerror.begin(), vecerror.end(), &comparator);
 
-  float maxError = vecerror[vecerror.size() - 1].second;
+  // float maxError = vecerror[vecerror.size() - 1].second;
   float meanError = totalError / vecerror.size();
   float patchSizeSquared = config.patchSize * config.patchSize;
 
   std::cout << "Mean error" << meanError << std::endl;
 
-  std::cout << "Max error: " << vecerror[vecerror.size() - 1].second << std::endl;
+  std::cout << "Max error: " << vecerror[vecerror.size() - 1].second
+            << std::endl;
 
   // convert to eigen matrix
   // ref:
   // https://medium.com/@sarvagya.vaish/levenberg-marquardt-optimization-part-2-5a71f7db27a0
   Eigen::MatrixXd measuredValues(vecerror.size(), 2); // pairs of (x, f(x))
   double x_scale = 1.f / double(height * width);
-  for (int i = 0; i < vecerror.size(); i++) {
+  for (unsigned int i = 0; i < vecerror.size(); i++) {
     // normalize the x axis
     measuredValues(i, 0) = float(i) * x_scale;
 
     // divide by total error to normalize the y axis
     measuredValues(i, 1) = (double)vecerror[i].second / patchSizeSquared;
-    //measuredValues(i, 1) = (double)vecerror[i].second / double(meanError);
-    //measuredValues(i, 1) = (double)vecerror[i].second / double(totalError);
+    // measuredValues(i, 1) = (double)vecerror[i].second / double(meanError);
+    // measuredValues(i, 1) = (double)vecerror[i].second / double(totalError);
   }
 
   // fit the hyperbolic function
@@ -160,11 +166,11 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(const Config
   // Create a LevenbergMarquardt object and pass it the functor.
   LMFunctor functor;
   functor.measuredValues = measuredValues;
-  functor.m = vecerror.size(); //num_pixels;
+  functor.m = vecerror.size(); // num_pixels;
   functor.n = n;
 
   Eigen::LevenbergMarquardt<LMFunctor, double> lm(functor);
-  int status = lm.minimize(params);
+  // int status = lm.minimize(params);
 
   /*
   // ----- start: for unit test - SHOULD REMOVE ------
@@ -192,23 +198,29 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(const Config
   double kneepoint;
   if (b < 0) {
     kneepoint = (sqrtf(1.f / b) + a / b);
-    std::cout << "the b term in the function-fitting step is negative, which shouldn't happen" << std::endl;
+    std::cout << "the b term in the function-fitting step is negative, which "
+                 "shouldn't happen"
+              << std::endl;
   } else {
-    kneepoint = (-sqrtf(1.f / b) + a / b); // this is the case that should normally happen
+    kneepoint = (-sqrtf(1.f / b) +
+                 a / b); // this is the case that should normally happen
   }
 
   // get the kneepoint index
   // we need to multply by the number of pixels to undo the normalization
-  int kneepointIndex = std::max<int>(0, std::min<int>(int(kneepoint * num_pixels), vecerror.size() - 1));
+  int kneepointIndex = std::max<int>(
+      0, std::min<int>(int(kneepoint * num_pixels), vecerror.size() - 1));
   std::cout << "Kneepoint index: " << kneepointIndex << std::endl;
 
-  // the integral of the errors we can tolerate is in the measuredValues at the kneepoint index
-  // we need to multiply by the total error to undo the normalization
+  // the integral of the errors we can tolerate is in the measuredValues at the
+  // kneepoint index we need to multiply by the total error to undo the
+  // normalization
   std::cout << "Total error" << totalError << std::endl;
-  std::cout << "Measured value" << measuredValues(kneepointIndex, 1) << std::endl;
-  //errorBudget = measuredValues(kneepointIndex, 1) * totalError;
+  std::cout << "Measured value" << measuredValues(kneepointIndex, 1)
+            << std::endl;
+  // errorBudget = measuredValues(kneepointIndex, 1) * totalError;
   errorBudget = measuredValues(kneepointIndex, 1) * patchSizeSquared;
-  //errorBudget = measuredValues(kneepointIndex, 1) * meanError;
+  // errorBudget = measuredValues(kneepointIndex, 1) * meanError;
 
   /*
   // ----- start: for unit test - SHOULD REMOVE ------

@@ -1,13 +1,13 @@
 #ifndef NNFGENERATORCPU_H
 #define NNFGENERATORCPU_H
 
+#include "Algorithm/FeatureVector.h"
+#include "Algorithm/NNFError.h"
 #include "Algorithm/NNFGenerator.h"
 #include "Algorithm/PyramidLevel.h"
-#include "PatchMatcherCPU.h"
-#include "Algorithm/NNFError.h"
-#include "ErrorCalculatorCPU.h"
-#include "Algorithm/FeatureVector.h"
 #include "ErrorBudgetCalculatorCPU.h"
+#include "ErrorCalculatorCPU.h"
+#include "PatchMatcherCPU.h"
 #include <iostream>
 
 struct Configuration;
@@ -18,13 +18,13 @@ struct Configuration;
  */
 template <typename T, unsigned int numGuideChannels,
           unsigned int numStyleChannels>
-class NNFGeneratorCPU : public NNFGenerator<T, numGuideChannels, numStyleChannels> {
+class NNFGeneratorCPU
+    : public NNFGenerator<T, numGuideChannels, numStyleChannels> {
 public:
   NNFGeneratorCPU() = default;
   ~NNFGeneratorCPU() = default;
 
 private:
-
   float NNF_GENERATION_STOPPING_CRITERION = .80;
 
   /**
@@ -36,37 +36,49 @@ private:
    * @param configuration the configuration StyLit is running
    * @param pyramid the image pyramid. The forward nnf of this level should be
    *        initialized.
-   * @param level the level of the pyramid for which the forward NNF is being generated
+   * @param level the level of the pyramid for which the forward NNF is being
+   * generated
    * @return true if NNF generation succeeds; otherwise false
    */
-  bool implementationOfGenerateNNF(const Configuration &configuration,
-                                   Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int level) {
-
-    PatchMatcherCPU<T, numGuideChannels, numStyleChannels> patchMatcher = PatchMatcherCPU<T, numGuideChannels, numStyleChannels>();
-    PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel = pyramid.levels[level];
-    ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels> errorCalc = ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels>();
+  bool implementationOfGenerateNNF(
+      const Configuration &configuration,
+      Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int level) {
+    PatchMatcherCPU<T, numGuideChannels, numStyleChannels> patchMatcher =
+        PatchMatcherCPU<T, numGuideChannels, numStyleChannels>();
+    PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel =
+        pyramid.levels[level];
+    ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels> errorCalc =
+        ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels>();
     ErrorBudgetCalculatorCPU budgetCalc = ErrorBudgetCalculatorCPU();
 
     // create and initialize the blacklist
-    NNF blacklist = NNF(pyramidLevel.guide.target.dimensions, pyramidLevel.guide.source.dimensions);
+    NNF blacklist = NNF(pyramidLevel.guide.target.dimensions,
+                        pyramidLevel.guide.source.dimensions);
     blacklist.setToInitializedBlacklist();
 
     // the source dimensions of the forward NNF are the dimesions of the target
     int patchesFilled = 0;
     bool firstIteration = true;
-    const int forwardNNFSize = pyramidLevel.forwardNNF.sourceDimensions.rows * pyramidLevel.forwardNNF.sourceDimensions.cols;
+    const int forwardNNFSize = pyramidLevel.forwardNNF.sourceDimensions.rows *
+                               pyramidLevel.forwardNNF.sourceDimensions.cols;
 
-    while (patchesFilled < float(forwardNNFSize) * NNF_GENERATION_STOPPING_CRITERION) {
+    while (patchesFilled <
+           float(forwardNNFSize) * NNF_GENERATION_STOPPING_CRITERION) {
 
       std::cout << "*************************" << std::endl;
-      std::cout << "Fraction of patches filled: " << patchesFilled << " / " << float(forwardNNFSize) << std::endl;
+      std::cout << "Fraction of patches filled: " << patchesFilled << " / "
+                << float(forwardNNFSize) << std::endl;
       std::cout << "*************************" << std::endl;
 
       if (firstIteration) {
-        patchMatcher.patchMatch(configuration, pyramidLevel.reverseNNF, pyramid, configuration.numPatchMatchIterations, level, true, true, nullptr);
+        patchMatcher.patchMatch(configuration, pyramidLevel.reverseNNF, pyramid,
+                                configuration.numPatchMatchIterations, level,
+                                true, true, nullptr);
         firstIteration = false;
       } else {
-        patchMatcher.patchMatch(configuration, pyramidLevel.reverseNNF, pyramid, configuration.numPatchMatchIterations, level, true, true, &blacklist);
+        patchMatcher.patchMatch(configuration, pyramidLevel.reverseNNF, pyramid,
+                                configuration.numPatchMatchIterations, level,
+                                true, true, &blacklist);
       }
 
       // fill up the error image of the nnfError struct
@@ -75,16 +87,21 @@ private:
       for (int col = 0; col < nnfError.nnf.sourceDimensions.cols; col++) {
         for (int row = 0; row < nnfError.nnf.sourceDimensions.rows; row++) {
           assert((ImageDimensions{row, col}).within(nnfError.error.dimensions));
-          ImageCoordinates blacklistVal = blacklist.getMapping(pyramidLevel.reverseNNF.getMapping(ImageDimensions{row,col}));
-          //if (blacklistVal == ImageCoordinates::FREE_PATCH) { // we only need to add the errors of valid mappings to the total error
-            float patchError = 0;
-            ImageCoordinates currentPatch{row, col};
-            errorCalc.calculateError(configuration, pyramidLevel, currentPatch, nnfError.nnf.getMapping(currentPatch),
-                                     pyramid.guideWeights, pyramid.styleWeights, patchError);
-            nnfError.error(row, col) = FeatureVector<float, 1>(patchError);
-            totalError += patchError;
-          //} else { // if the mapping is invalid, just fill the error image with max float
-            //nnfError.error(row, col) = FeatureVector<float, 1>(std::numeric_limits<float>::max());
+          // ImageCoordinates blacklistVal = blacklist.getMapping(
+          //    pyramidLevel.reverseNNF.getMapping(ImageDimensions{row, col}));
+          // if (blacklistVal == ImageCoordinates::FREE_PATCH) { // we only need
+          // to add the errors of valid mappings to the total error
+          float patchError = 0;
+          ImageCoordinates currentPatch{row, col};
+          errorCalc.calculateError(configuration, pyramidLevel, currentPatch,
+                                   nnfError.nnf.getMapping(currentPatch),
+                                   pyramid.guideWeights, pyramid.styleWeights,
+                                   patchError);
+          nnfError.error(row, col) = FeatureVector<float, 1>(patchError);
+          totalError += patchError;
+          //} else { // if the mapping is invalid, just fill the error image
+          // with max float nnfError.error(row, col) = FeatureVector<float,
+          // 1>(std::numeric_limits<float>::max());
           //}
         }
       }
@@ -93,23 +110,31 @@ private:
       // get the error budget
       float budget;
       std::vector<std::pair<int, float>> sortedCoordinates;
-      //budgetCalc.calculateErrorBudget(configuration, sortedCoordinates, nnfError, totalError, budget, &blacklist);
-      budgetCalc.calculateErrorBudget(configuration, sortedCoordinates, nnfError, totalError, budget, nullptr);
+      // budgetCalc.calculateErrorBudget(configuration, sortedCoordinates,
+      // nnfError, totalError, budget, &blacklist);
+      budgetCalc.calculateErrorBudget(configuration, sortedCoordinates,
+                                      nnfError, totalError, budget, nullptr);
 
       std::cout << "Budget: " << budget << std::endl;
 
-      // fill up the forward NNF using the reverse NNF until we hit the error budget
+      // fill up the forward NNF using the reverse NNF until we hit the error
+      // budget
       float pastError = 0;
       int i = 0;
       const int width = nnfError.nnf.sourceDimensions.cols;
       int notFreeCount = 0;
-      while (pastError < budget && i < sortedCoordinates.size()) {
-        ImageCoordinates coords{sortedCoordinates[i].first / width, sortedCoordinates[i].first % width};
-        // if coords does not map to a blacklisted pixel, then we can create this mapping in the forward NNF
-        ImageCoordinates blacklistVal = blacklist.getMapping(pyramidLevel.reverseNNF.getMapping(coords));
+      while (pastError < budget && i < int(sortedCoordinates.size())) {
+        ImageCoordinates coords{sortedCoordinates[i].first / width,
+                                sortedCoordinates[i].first % width};
+        // if coords does not map to a blacklisted pixel, then we can create
+        // this mapping in the forward NNF
+        ImageCoordinates blacklistVal =
+            blacklist.getMapping(pyramidLevel.reverseNNF.getMapping(coords));
         if (blacklistVal == ImageCoordinates::FREE_PATCH) {
-          pyramidLevel.forwardNNF.setMapping(pyramidLevel.reverseNNF.getMapping(coords), coords);
-          blacklist.setMapping(pyramidLevel.reverseNNF.getMapping(coords), coords);
+          pyramidLevel.forwardNNF.setMapping(
+              pyramidLevel.reverseNNF.getMapping(coords), coords);
+          blacklist.setMapping(pyramidLevel.reverseNNF.getMapping(coords),
+                               coords);
           pastError = sortedCoordinates[i].second;
           patchesFilled++;
         } else {
@@ -119,20 +144,26 @@ private:
       }
       std::cout << "Final past error: " << pastError << std::endl;
       std::cout << "Not free count: " << notFreeCount << std::endl;
-      std::cout << "i = " << i << " is out of " << sortedCoordinates.size() << std::endl;
+      std::cout << "i = " << i << " is out of " << sortedCoordinates.size()
+                << std::endl;
     }
 
-    // if the level's forward NNf is not completely full, make a new forward NNF from patchmatch and
-    // use that to fill up the holes in the level's forward NNF
+    // if the level's forward NNf is not completely full, make a new forward NNF
+    // from patchmatch and use that to fill up the holes in the level's forward
+    // NNF
     if (patchesFilled < forwardNNFSize) {
-      NNF forwardNNFFinal = NNF(pyramidLevel.guide.target.dimensions, pyramidLevel.guide.source.dimensions);
-      patchMatcher.patchMatch(configuration, forwardNNFFinal, pyramid, configuration.numPatchMatchIterations, level, false, true);
+      NNF forwardNNFFinal = NNF(pyramidLevel.guide.target.dimensions,
+                                pyramidLevel.guide.source.dimensions);
+      patchMatcher.patchMatch(configuration, forwardNNFFinal, pyramid,
+                              configuration.numPatchMatchIterations, level,
+                              false, true);
       for (int col = 0; col < forwardNNFFinal.sourceDimensions.cols; col++) {
         for (int row = 0; row < forwardNNFFinal.sourceDimensions.rows; row++) {
           ImageCoordinates currentPatch{row, col};
           ImageCoordinates blacklistVal = blacklist.getMapping(currentPatch);
           if (blacklistVal == ImageCoordinates::FREE_PATCH) {
-            pyramidLevel.forwardNNF.setMapping(currentPatch, forwardNNFFinal.getMapping(currentPatch));
+            pyramidLevel.forwardNNF.setMapping(
+                currentPatch, forwardNNFFinal.getMapping(currentPatch));
           }
         }
       }
@@ -142,19 +173,21 @@ private:
   }
 
   /**
-   * @brief alternateImplementationOfGenerateNNF Generates a forward NNF by repeatedly
-   * sampling and updating another forward NNF. The forward NNF in the PyramidLevel
-   * should be updated. This might end up needed the next-coarsest PyramidLevel
-   * as an argument as well.
+   * @brief alternateImplementationOfGenerateNNF Generates a forward NNF by
+   * repeatedly sampling and updating another forward NNF. The forward NNF in
+   * the PyramidLevel should be updated. This might end up needed the
+   * next-coarsest PyramidLevel as an argument as well.
    * @param configuration the configuration StyLit is running
    * @param pyramid the image pyramid
-   * @param level the level of the pyramid for which the forward NNF is being generated
+   * @param level the level of the pyramid for which the forward NNF is being
+   * generated
    * @return true if NNF generation succeeds; otherwise false
    */
-   bool alternateImplementationOfGenerateNNF(const Configuration &configuration,
-                                             Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int level) {
-     return true;
-   }
+  bool alternateImplementationOfGenerateNNF(
+      const Configuration &, Pyramid<T, numGuideChannels, numStyleChannels> &,
+      int) {
+    return true;
+  }
 };
 
 #endif // NNFGENERATORCPU_H

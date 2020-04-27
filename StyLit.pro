@@ -23,6 +23,7 @@ SOURCES += \
     CPU/ErrorBudgetCalculatorCPU.cpp \
     Configuration/Configuration.cpp \
     Configuration/ConfigurationParser.cpp \
+    ImplementationSelector.cpp \
     Tests/TestErrorBudget.cpp \
     Tests/TestDownscalerCPU.cpp \
     Tests/TestImageIO.cpp \
@@ -63,6 +64,7 @@ HEADERS += \
     CPU/NNFApplicatorCPU.h \
     Configuration/Configuration.h \
     Configuration/ConfigurationParser.h \
+    ImplementationSelector.h \
     Tests/TestErrorBudget.h \
     MainWindow.h \
     CPU/PatchMatcherCPU.h \

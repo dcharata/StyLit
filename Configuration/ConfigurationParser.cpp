@@ -1,5 +1,7 @@
 #include "ConfigurationParser.h"
 
+#include "Utilities/ImageFormatTools.h"
+
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -139,6 +141,17 @@ bool ConfigurationParser::parseSettings(const QJsonValue &settings,
     return false;
   }
 
+  // Counts the number of channels.
+  configuration.numGuideChannels = 0;
+  configuration.numStyleChannels = 0;
+  for (const ImageFormat &guideFormat : configuration.guideImageFormats) {
+    configuration.numGuideChannels +=
+        ImageFormatTools::numChannels(guideFormat);
+  }
+  for (const ImageFormat &styleFormat : configuration.styleImageFormats) {
+    configuration.numStyleChannels +=
+        ImageFormatTools::numChannels(styleFormat);
+  }
   return true;
 }
 

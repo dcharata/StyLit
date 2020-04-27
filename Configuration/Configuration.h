@@ -24,6 +24,12 @@ struct Configuration {
   // output paths for the images in B'
   std::vector<QString> targetStyleImagePaths;
 
+  // the number of channels in A/B
+  int numGuideChannels = 0;
+
+  // the number of channels in A'/B'
+  int numStyleChannels = 0;
+
   // how guide images are interpreted (see ImageFormat.h)
   std::vector<ImageFormat> guideImageFormats;
 
