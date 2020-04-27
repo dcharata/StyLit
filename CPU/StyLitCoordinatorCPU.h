@@ -143,7 +143,7 @@ public:
       }
 
       // Saves an image.
-      QString location = "/Users/davidcharatan/Documents/StyLitBin/RESULT";
+      QString location = QString(PROJECT_PATH) + QString("Results/result.png");
       location += QString::number(level);
       location += ".png";
       ImageIO::writeImage<numStyleChannels>(location, pyramidLevel.style.target,
