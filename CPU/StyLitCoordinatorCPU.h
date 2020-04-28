@@ -58,13 +58,26 @@ public:
     printTime("Done reading A, B and A'.");
 
     // Adds the guide and style weights.
-    // For now, they're all just 1.
-    for (unsigned int i = 0; i < numGuideChannels; i++) {
-      pyramid.guideWeights[i] = 1.f;
+    unsigned int guideChannel = 0;
+    for (unsigned int i = 0; i < configuration.guideImageFormats.size(); i++) {
+      const int numChannels =
+          ImageFormatTools::numChannels(configuration.guideImageFormats[i]);
+      for (int j = 0; j < numChannels; j++) {
+        pyramid.guideWeights[guideChannel++] =
+            configuration.guideImageWeights[i];
+      }
     }
-    for (unsigned int i = 0; i < numStyleChannels; i++) {
-      pyramid.styleWeights[i] = 1.f;
+    Q_ASSERT(guideChannel == numGuideChannels);
+    unsigned int styleChannel = 0;
+    for (unsigned int i = 0; i < configuration.styleImageFormats.size(); i++) {
+      const int numChannels =
+          ImageFormatTools::numChannels(configuration.styleImageFormats[i]);
+      for (int j = 0; j < numChannels; j++) {
+        pyramid.styleWeights[styleChannel++] =
+            configuration.styleImageWeights[i];
+      }
     }
+    Q_ASSERT(styleChannel == numStyleChannels);
 
     // Downscales the pyramid levels.
     DownscalerCPU<float, numGuideChannels> guideDownscaler;
@@ -115,8 +128,10 @@ public:
     // Sets B' in the lowest level to be initialized from A' and a randomly
     // initialized NNF
     PatchMatcherCPU<float, numGuideChannels, numStyleChannels> patchMatcher;
-    patchMatcher.randomlyInitializeNNF(pyramid.levels[int(pyramid.levels.size()) - 1].forwardNNF);
-    nnfApplicator.applyNNF(configuration, pyramid.levels[int(pyramid.levels.size()) - 1]);
+    patchMatcher.randomlyInitializeNNF(
+        pyramid.levels[int(pyramid.levels.size()) - 1].forwardNNF);
+    nnfApplicator.applyNNF(configuration,
+                           pyramid.levels[int(pyramid.levels.size()) - 1]);
 
     /*
     // Sets B' in the lowest level to be mid-gray.
@@ -133,9 +148,9 @@ public:
     // Generates NNFs from the coarsest to the finest level.
     NNFGeneratorCPU<float, numGuideChannels, numStyleChannels> generator;
     NNFUpscalerCPU nnfUpscaler;
-    //NNFApplicatorCPU<float, numGuideChannels, numStyleChannels> nnfApplicator;
+    // NNFApplicatorCPU<float, numGuideChannels, numStyleChannels>
+    // nnfApplicator;
 
-    const int NUM_OPTIMIZATION_ITERATIONS = 1;
     for (int level = int(pyramid.levels.size()) - 1; level >= 0; level--) {
       PyramidLevel<float, numGuideChannels, numStyleChannels> &pyramidLevel =
           pyramid.levels[level];
@@ -150,7 +165,8 @@ public:
         nnfApplicator.applyNNF(configuration, pyramidLevel);
       }
 
-      for (int i = 0; i < NUM_OPTIMIZATION_ITERATIONS; i++) {
+      for (int i = 0;
+           i < configuration.numOptimizationIterationsPerPyramidLevel; i++) {
         generator.generateNNF(configuration, pyramid, level);
         printTime("Done with generating NNF.");
         nnfApplicator.applyNNF(configuration, pyramidLevel);
