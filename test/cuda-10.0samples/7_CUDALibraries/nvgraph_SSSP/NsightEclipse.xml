@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<!DOCTYPE entry SYSTEM "SamplesInfo.dtd">
+<entry>s
+    <name>nvgraph_SSSP</name>
+  <description><![CDATA[A CUDA Sample that demonstrates Single Source Shortest Path(SSSP) computation using NVGRAPH Library.]]></description>
+  <devicecompilation>whole</devicecompilation>
+  <includepaths>
+    <path>./</path>
+    <path>../</path>
+    <path>../../common/inc</path>
+  </includepaths>
+  <keyconcepts>
+    <concept level="basic">Graph Analytics</concept>
+    <concept level="basic">NVGRAPH Library</concept>
+  </keyconcepts>
+  <keywords>
+    <keyword>NVGRAPH</keyword>
+    <keyword>Graph Analytics</keyword>
+    <keyword>Single Source Shortest Path</keyword>
+  </keywords>
+  <libraries>
+    <library>nvgraph</library>
+  </libraries>
+  <librarypaths>
+  </librarypaths>
+  <nsight_eclipse>true</nsight_eclipse>
+  <primary_file>nvgraph_SSSP.cpp</primary_file>
+  <required_dependencies>
+    <dependency>NVGRAPH</dependency>
+  </required_dependencies>
+  <scopes>
+    <scope>1:CUDA Basic Topics</scope>
+    <scope>3:Graph Analytics</scope>
+  </scopes>
+  <sm-arch>sm30</sm-arch>
+  <sm-arch>sm35</sm-arch>
+  <sm-arch>sm37</sm-arch>
+  <sm-arch>sm50</sm-arch>
+  <sm-arch>sm52</sm-arch>
+  <sm-arch>sm60</sm-arch>
+  <sm-arch>sm61</sm-arch>
+  <sm-arch>sm70</sm-arch>
+  <sm-arch>sm75</sm-arch>
+  <supported_envs>
+    <env>
+      <arch>x86_64</arch>
+      <platform>linux</platform>
+    </env>
+    <env>
+      <platform>windows7</platform>
+    </env>
+    <env>
+      <arch>x86_64</arch>
+      <platform>macosx</platform>
+    </env>
+    <env>
+      <arch>ppc64le</arch>
+      <platform>linux</platform>
+    </env>
+  </supported_envs>
+  <supported_sm_architectures>
+    <from>3.0</from>
+  </supported_sm_architectures>
+  <title>NVGRAPH Single Source Shortest Path</title>
+  <type>exe</type>
+</entry>

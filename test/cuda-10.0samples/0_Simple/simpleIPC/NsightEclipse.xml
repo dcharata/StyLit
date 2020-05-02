@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<!DOCTYPE entry SYSTEM "SamplesInfo.dtd">
+<entry>
+  <name>simpleIPC</name>
+  <cuda_api_list>
+    <toolkit>cudaIpcGetEventHandlet</toolkit>
+    <toolkit>cudaIpcOpenMemHandle</toolkit>
+    <toolkit>cudaIpcCloseMemHandle</toolkit>
+    <toolkit>cudaFreeHost</toolkit>
+    <toolkit>cudaMemcpy</toolkit>
+  </cuda_api_list>
+  <description><![CDATA[This CUDA Runtime API sample is a very basic sample that demonstrates Inter Process Communication with one process per GPU for computation.  Requires Compute Capability 2.0 or higher and a Linux Operating System]]></description>
+  <devicecompilation>whole</devicecompilation>
+  <includepaths>
+    <path>./</path>
+    <path>../</path>
+    <path>../../common/inc</path>
+  </includepaths>
+  <keyconcepts>
+    <concept level="basic">CUDA Systems Integration</concept>
+    <concept level="basic">Peer to Peer</concept>
+    <concept level="basic">InterProcess Communication</concept>
+  </keyconcepts>
+  <keywords>
+    <keyword>GPGPU</keyword>
+  </keywords>
+  <libraries>
+  </libraries>
+  <librarypaths>
+  </librarypaths>
+  <nsight_eclipse>true</nsight_eclipse>
+  <primary_file>simpleIPC.cu</primary_file>
+  <required_dependencies>
+    <dependency>IPC</dependency>
+  </required_dependencies>
+  <scopes>
+    <scope>1:CUDA Basic Topics</scope>
+    <scope>1:CUDA Systems Integration</scope>
+  </scopes>
+  <sm-arch>sm30</sm-arch>
+  <sm-arch>sm35</sm-arch>
+  <sm-arch>sm37</sm-arch>
+  <sm-arch>sm50</sm-arch>
+  <sm-arch>sm52</sm-arch>
+  <sm-arch>sm60</sm-arch>
+  <sm-arch>sm61</sm-arch>
+  <sm-arch>sm70</sm-arch>
+  <sm-arch>sm75</sm-arch>
+  <supported_envs>
+    <env>
+      <arch>x86_64</arch>
+      <platform>linux</platform>
+    </env>
+    <env>
+      <arch>ppc64le</arch>
+      <platform>linux</platform>
+    </env>
+  </supported_envs>
+  <supported_sm_architectures>
+    <include>all</include>
+  </supported_sm_architectures>
+  <title>simpleIPC</title>
+  <type>exe</type>
+</entry>
