@@ -4,12 +4,12 @@
 #include <cuda_runtime.h>
 
 extern "C"
-    cudaError_t cuda_main();
+int vectorAddmain(void);
 
 bool TestCuda::run() {
-  cudaError_t cuerr = cuda_main();
-  if (cuerr != cudaSuccess)
-    std::cout << "CUDA Error: " << cudaGetErrorString( cuerr ) << std::endl;
+  int status = vectorAddmain();
+  if (status != 0)
+    std::cout << "CUDA Error." << std::endl;
   else
     std::cout<<"CUDA WORKING!" << std::endl;
 

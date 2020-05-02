@@ -99,21 +99,21 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 # -------------------------------------------------------------
+# CUDA settings!
 CUDA_SOURCES += GPU/vectorAdd.cu
 
 CUDA_DIR      = /usr/local/cuda-10.0
 INCLUDEPATH  += $$CUDA_DIR/include \
                 $$CUDA_DIR/samples/common/inc
 QMAKE_LIBDIR += $$CUDA_DIR/lib64
-LIBS +=  -L$$CUDA_DIR/lib64 -lcuda -lcudart 
+LIBS += -lcuda -lcudart 
 
 CUDA_ARCH     = sm_61
+# match your gpu ref:
 # https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/
 NVCCFLAGS     = --compiler-options -fno-strict-aliasing -use_fast_math --ptxas-options=-v
 
 CUDA_INC = $$join(INCLUDEPATH,' -I','-I',' ')
- 
-          
 cuda.dependency_type = TYPE_C
 cuda.depend_command = $$CUDA_DIR/bin/nvcc -O3 -M $$CUDA_INC $$NVCCFLAGS   ${QMAKE_FILE_NAME}
  
@@ -124,8 +124,6 @@ cuda.output = ${OBJECTS_DIR}${QMAKE_FILE_BASE}_cuda.o
 cuda.commands = $$CUDA_DIR/bin/nvcc -m64 -O3 -arch=$$CUDA_ARCH -c $$NVCCFLAGS \
                 $$CUDA_INC $$LIBS  ${QMAKE_FILE_NAME} -o ${QMAKE_FILE_OUT} \
                 | sed \"s/^.*: //\"
-# nvcc error printout format ever so slightly different from gcc
-# http://forums.nvidia.com/index.php?showtopic=171651
 
 # Tell Qt that we want add more stuff to the Makefile
 QMAKE_EXTRA_COMPILERS += cuda
