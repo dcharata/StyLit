@@ -2,6 +2,7 @@
 
 #include "TestNNFUpscalerCPU.h"
 #include "TestDownscalerCPU.h"
+#include "TestDownscalerCUDA.h"
 #include "TestImageIO.h"
 #include "TestErrorBudget.h"
 #include "TestImageIOHelpers.h"
@@ -26,6 +27,7 @@ int TestMain::run() {
   // below as well.
 
   TestDownscalerCPU testDownscalerCPU;
+  TestDownscalerCUDA testDownscalerCUDA;
   TestImageIO testImageIO;
   TestImageIOHelpers testImageIOHelpers;
   TestImageIOWrite testImageIOWrite;
@@ -42,8 +44,8 @@ int TestMain::run() {
                            &testDownscalerCPU, &testNNFUpscalerCPU,
                            &testErrorBudget, &testNNFGenerator};
   */
-  const int numTests = 1;
-  UnitTest *unitTests[] = {&testCuda};
+  const int numTests = 3;
+  UnitTest *unitTests[] = {&testCuda, &testDownscalerCPU, &testDownscalerCUDA};
 
   // Runs the tests and counts how many succeed.
   int numPasses = 0;

@@ -24,6 +24,7 @@ SOURCES += \
     Configuration/Configuration.cpp \
     Configuration/ConfigurationParser.cpp \
     Tests/TestCuda.cpp \
+    Tests/TestDownscalerCUDA.cpp \
     Tests/TestErrorBudget.cpp \
     Tests/TestDownscalerCPU.cpp \
     Tests/TestImageIO.cpp \
@@ -64,7 +65,10 @@ HEADERS += \
     CPU/NNFApplicatorCPU.h \
     Configuration/Configuration.h \
     Configuration/ConfigurationParser.h \
+    GPU/ConnectDownscalerCUDA.h \
+    GPU/DownscalerCUDA.h \
     Tests/TestCuda.h \
+    Tests/TestDownscalerCUDA.h \
     Tests/TestErrorBudget.h \
     MainWindow.h \
     CPU/PatchMatcherCPU.h \
@@ -100,15 +104,16 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 # -------------------------------------------------------------
 # CUDA settings!
-CUDA_SOURCES += GPU/vectorAdd.cu
+CUDA_SOURCES += GPU/vectorAdd.cu \
+                GPU/DownscalerCUDA.cu
 
-CUDA_DIR      = /usr/local/cuda-10.0
+CUDA_DIR      = /usr/local/cuda
 INCLUDEPATH  += $$CUDA_DIR/include \
                 $$CUDA_DIR/samples/common/inc
 QMAKE_LIBDIR += $$CUDA_DIR/lib64
-LIBS += -lcuda -lcudart 
+LIBS += -lcuda -lcudart
 
-CUDA_ARCH     = sm_61
+CUDA_ARCH     = sm_75
 # match your gpu ref:
 # https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/
 NVCCFLAGS     = --compiler-options -fno-strict-aliasing -use_fast_math --ptxas-options=-v
@@ -116,7 +121,7 @@ NVCCFLAGS     = --compiler-options -fno-strict-aliasing -use_fast_math --ptxas-o
 CUDA_INC = $$join(INCLUDEPATH,' -I','-I',' ')
 cuda.dependency_type = TYPE_C
 cuda.depend_command = $$CUDA_DIR/bin/nvcc -O3 -M $$CUDA_INC $$NVCCFLAGS   ${QMAKE_FILE_NAME}
- 
+
 cuda.input = CUDA_SOURCES
 DESTDIR     = $$system(pwd)
 OBJECTS_DIR = $$DESTDIR/build-StyLit-Desktop-Debug
@@ -124,6 +129,7 @@ cuda.output = ${OBJECTS_DIR}${QMAKE_FILE_BASE}_cuda.o
 cuda.commands = $$CUDA_DIR/bin/nvcc -m64 -O3 -arch=$$CUDA_ARCH -c $$NVCCFLAGS \
                 $$CUDA_INC $$LIBS  ${QMAKE_FILE_NAME} -o ${QMAKE_FILE_OUT} \
                 | sed \"s/^.*: //\"
+cuda.depend_command = $$CUDA_DIR/bin/nvcc -g -M $$CUDA_INC $$NVCCFLAGS ${QMAKE_FILE_NAME} | sed \"s/^.*: //\"
 
 # Tell Qt that we want add more stuff to the Makefile
 QMAKE_EXTRA_COMPILERS += cuda
