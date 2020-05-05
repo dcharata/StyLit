@@ -1,6 +1,0 @@
-#ifndef GLUEDOWNSCALERCUDA_H
-#define GLUEDOWNSCALERCUDA_H
-
-int glue(void);
-
-#endif // GLUEDOWNSCALERCUDA_H

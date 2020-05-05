@@ -2,16 +2,16 @@
 #define DOWNSCALERCUDA
 
 #include "Algorithm/Downscaler.h"
-#include "Algorithm/Downscaler.h"
 #include "Algorithm/Image.h"
 #include "Algorithm/ImageDimensions.h"
 #include "Configuration/Configuration.h"
 
-#include "GPU/ConnectDownscalerCUDA.h"
-
 #include <QtGlobal>
-#include <stdio.h>
 #include <memory>
+#include <stdio.h>
+
+template <typename T>
+int downscaleCUDA(const T *, T *, int, int, int, int, int);
 
 template <typename T, unsigned int numChannels>
 class DownscalerCUDA : public Downscaler<T, numChannels> {
@@ -33,8 +33,12 @@ protected:
   bool implementationOfDownscale(const Configuration &,
                                  const Image<T, numChannels> &full,
                                  Image<T, numChannels> &half) override {
-    const FeatureVector<T, numChannels> *fullData = full.data.get();
-    glue();
+    // The images are converted to T pointers before being passed to CUDA.
+    const T *fullData = reinterpret_cast<T *>(full.data.get());
+    T *halfData = reinterpret_cast<T *>(half.data.get());
+    downscaleCUDA<T>(fullData, halfData, numChannels, full.dimensions.rows,
+                     full.dimensions.cols, half.dimensions.rows,
+                     half.dimensions.cols);
     return false;
   }
 };

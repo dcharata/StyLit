@@ -1,15 +1,15 @@
 #include "TestMain.h"
 
-#include "TestNNFUpscalerCPU.h"
+#include "TestCuda.h"
 #include "TestDownscalerCPU.h"
 #include "TestDownscalerCUDA.h"
-#include "TestImageIO.h"
 #include "TestErrorBudget.h"
+#include "TestImageIO.h"
 #include "TestImageIOHelpers.h"
 #include "TestImageIOWrite.h"
-#include "TestPatchMatch.h"
 #include "TestNNFGenerator.h"
-#include "TestCuda.h"
+#include "TestNNFUpscalerCPU.h"
+#include "TestPatchMatch.h"
 #include "UnitTest.h"
 
 #include <stdio.h>
@@ -40,12 +40,12 @@ int TestMain::run() {
   // All tests in unitTests are run.
   /*
   const int numTests = 7;
-  UnitTest *unitTests[] = {&testImageIO, &testImageIOWrite, &testImageIOHelpers, 
+  UnitTest *unitTests[] = {&testImageIO, &testImageIOWrite, &testImageIOHelpers,
                            &testDownscalerCPU, &testNNFUpscalerCPU,
                            &testErrorBudget, &testNNFGenerator};
   */
-  const int numTests = 3;
-  UnitTest *unitTests[] = {&testCuda, &testDownscalerCPU, &testDownscalerCUDA};
+  const int numTests = 2;
+  UnitTest *unitTests[] = {&testCuda, &testDownscalerCUDA};
 
   // Runs the tests and counts how many succeed.
   int numPasses = 0;

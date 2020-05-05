@@ -57,6 +57,11 @@ public:
       }
     }
     const float experimentalAverage = halfSum / (halfDimensions.area() * 3.f);
+
+    ImageIO::writeImage<3>(
+        QString("/home/davidcharatan/Documents/StyLitBin/lol.png"), halfImage,
+        ImageFormat::RGB, 0);
+
     TEST_ASSERT(
         FloatTools::tolerantEquals(correctAverage, experimentalAverage, 0.01f));
     return true;

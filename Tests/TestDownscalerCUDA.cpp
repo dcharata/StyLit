@@ -7,10 +7,8 @@
 #include <iostream>
 
 bool TestDownscalerCUDA::run() {
-  TestDownscaler<DownscalerCUDA> basicTest;
+  // TestDownscaler<DownscalerCUDA> basicTest;
   TestDownscalerWithImage<DownscalerCUDA> imageTest;
-
-  std::cout << "HI" << std::endl;
-
-  return basicTest.run() && imageTest.run();
+  // return basicTest.run() && imageTest.run();
+  return imageTest.run();
 }

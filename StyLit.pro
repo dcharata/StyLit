@@ -65,7 +65,6 @@ HEADERS += \
     CPU/NNFApplicatorCPU.h \
     Configuration/Configuration.h \
     Configuration/ConfigurationParser.h \
-    GPU/ConnectDownscalerCUDA.h \
     GPU/DownscalerCUDA.h \
     Tests/TestCuda.h \
     Tests/TestDownscalerCUDA.h \
