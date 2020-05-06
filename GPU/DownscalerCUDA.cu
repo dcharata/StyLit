@@ -16,7 +16,8 @@ __device__ T interpolate(float aWeight,
                          T b, float cWeight,
                          T c, float dWeight,
                          T d) {
-  return a * aWeight + b * bWeight + c * cWeight + d * dWeight;
+  // This will in fact work for both integers and floats.
+  return (T)(a * aWeight + b * bWeight + c * cWeight + d * dWeight);
 }
 
 template<typename T>
@@ -48,26 +49,20 @@ __device__ void sampleBilinear(const T *full, float row, float col, T *result, i
 }
 
 template<typename T>
-__global__ void downscalerKernel(const T *full, T *half, int numChannels, int fullRows, int fullCols, int halfRows, int halfCols){
-  printf("lmao what kind of matrix shit is this? lol\n");
-  const float colScale = float(fullCols) / float(halfCols);
-  const float rowScale = float(fullRows) / float(halfRows);
-  for (int row = 0; row < halfRows; row++) {
-    for (int col = 0; col < halfCols; col++) {
-      const int halfStart = numChannels * (row * halfCols + col);
-      sampleBilinear<T>(full, row * rowScale + 0.5f, col * colScale + 0.5f, &half[halfStart], fullRows, fullCols, numChannels);
-    }
-  }
-  //  for (int i = 0; i < halfRows * halfCols * numChannels; i++) {
-  //    half[i] = (T)0.5;
-  //  }
+__global__ void downscalerKernel(const T *full, T *half, int numChannels, int fullRows, int fullCols, int halfRows, int halfCols, float rowScale, float colScale){
+  const int index = blockIdx.x * blockDim.x + threadIdx.x;
+  const int row = index / halfCols;
+  const int col = index % halfCols;
+  const int halfStart = numChannels * (row * halfCols + col);
+  sampleBilinear<T>(full, row * rowScale + 0.5f, col * colScale + 0.5f, &half[halfStart], fullRows, fullCols, numChannels);
 }
 
 template<typename T>
 int downscaleCUDA(const T *full, T *half, int numChannels, int fullRows, int fullCols, int halfRows, int halfCols) {
   // Allocates shared memory for the full and half images.
   const int fullSize = numChannels * fullRows * fullCols;
-  const int halfSize = numChannels * halfRows * halfCols;
+  const int numPixelsInHalf = halfRows * halfCols;
+  const int halfSize = numChannels * numPixelsInHalf;
   const int fullSizeInBytes = fullSize * sizeof(T);
   const int halfSizeInBytes = halfSize * sizeof(T);
   const T *fullManaged;
@@ -79,7 +74,11 @@ int downscaleCUDA(const T *full, T *half, int numChannels, int fullRows, int ful
   memcpy((void *)fullManaged, (void *)full, fullSizeInBytes);
   memcpy((void *)halfManaged, (void *)half, halfSizeInBytes);
 
-  downscalerKernel<T><<<1,1>>>(fullManaged, halfManaged, numChannels, fullRows, fullCols, halfRows, halfCols);
+  const int BLOCK_SIZE = 256;
+  const int numBlocks = (numPixelsInHalf + BLOCK_SIZE - 1) / BLOCK_SIZE;
+  const float colScale = float(fullCols) / float(halfCols);
+  const float rowScale = float(fullRows) / float(halfRows);
+  downscalerKernel<T><<<BLOCK_SIZE, numBlocks>>>(fullManaged, halfManaged, numChannels, fullRows, fullCols, halfRows, halfCols, rowScale, colScale);
   cudaDeviceSynchronize();
 
   // Copies the images back to host memory.
