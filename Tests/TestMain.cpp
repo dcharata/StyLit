@@ -44,8 +44,8 @@ int TestMain::run() {
                            &testDownscalerCPU, &testNNFUpscalerCPU,
                            &testErrorBudget, &testNNFGenerator};
   */
-  const int numTests = 2;
-  UnitTest *unitTests[] = {&testCuda, &testDownscalerCUDA};
+  const int numTests = 3;
+  UnitTest *unitTests[] = {&testCuda, &testDownscalerCUDA, &testDownscalerCPU};
 
   // Runs the tests and counts how many succeed.
   int numPasses = 0;

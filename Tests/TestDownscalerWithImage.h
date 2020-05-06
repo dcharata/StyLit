@@ -63,7 +63,7 @@ public:
         ImageFormat::RGB, 0);
 
     TEST_ASSERT(
-        FloatTools::tolerantEquals(correctAverage, experimentalAverage, 0.01f));
+        FloatTools::tolerantEquals(correctAverage, experimentalAverage, 0.05f));
     return true;
   }
 };
