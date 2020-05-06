@@ -54,7 +54,6 @@ __global__ void downscalerKernel(const T *full, T *half, int numChannels, int fu
   const int row = index / halfCols;
   const int col = index % halfCols;
   const int halfStart = numChannels * (row * halfCols + col);
-  //printf("I'm thread %d\n", threadIdx.x);
   sampleBilinear<T>(full, row * rowScale + 0.5f, col * colScale + 0.5f, &half[halfStart], fullRows, fullCols, numChannels);
 }
 
