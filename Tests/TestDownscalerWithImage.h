@@ -11,7 +11,9 @@
 #include "Utilities/FloatTools.h"
 #include "Utilities/ImageIO.h"
 
+#include <chrono>
 #include <iostream>
+#include <stdio.h>
 
 // This is a really whacky template thing, but it allows TestDownscaler to test
 // arbitrary downscaler implementations.
@@ -45,8 +47,13 @@ public:
     const float correctAverage = fullSum / (fullDimensions.area() * 3.f);
 
     // Downscales the image.
+    auto start = std::chrono::steady_clock::now();
     Image<float, 3> halfImage(halfDimensions);
     downscaler.downscale(configuration, fullImage, halfImage);
+    auto diff = std::chrono::steady_clock::now() - start;
+    printf("Downscaling an image (%d, %d) took %f ms.\n", fullDimensions.cols,
+           fullDimensions.rows,
+           std::chrono::duration<double, std::milli>(diff));
 
     // Calculates the half image's average and asserts its sameness.
     float halfSum = 0.f;

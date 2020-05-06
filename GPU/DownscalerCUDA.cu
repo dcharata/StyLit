@@ -71,8 +71,8 @@ int downscaleCUDA(const T *full, T *half, int numChannels, int fullRows, int ful
   cudaMallocManaged(&halfManaged, halfSize * sizeof(T *));
 
   // Copies the images to shared memory.
-  memcpy((void *)fullManaged, (void *)full, fullSizeInBytes);
-  memcpy((void *)halfManaged, (void *)half, halfSizeInBytes);
+  cudaMemcpy((void *)fullManaged, (void *)full, fullSizeInBytes, cudaMemcpyHostToDevice);
+  cudaMemcpy((void *)halfManaged, (void *)half, halfSizeInBytes, cudaMemcpyHostToDevice);
 
   const int BLOCK_SIZE = 256;
   const int numBlocks = (numPixelsInHalf + BLOCK_SIZE - 1) / BLOCK_SIZE;
@@ -82,8 +82,8 @@ int downscaleCUDA(const T *full, T *half, int numChannels, int fullRows, int ful
   cudaDeviceSynchronize();
 
   // Copies the images back to host memory.
-  memcpy((void *)full, (void *)fullManaged, fullSizeInBytes);
-  memcpy((void *)half, (void *)halfManaged, halfSizeInBytes);
+  cudaMemcpy((void *)full, (void *)fullManaged, fullSizeInBytes, cudaMemcpyDeviceToHost);
+  cudaMemcpy((void *)half, (void *)halfManaged, halfSizeInBytes, cudaMemcpyDeviceToHost);
 
   // Frees the shared memory.
   cudaFree((void *)fullManaged);
