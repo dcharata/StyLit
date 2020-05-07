@@ -51,6 +51,8 @@ private:
     // go through all of the feature vectors from the guide and style in the
     // patch and subtract the source from the target. Add (source - target)^2 *
     // weight to the total error.
+    // omp_set_num_threads(4);
+    // #pragma omp parallel for num_threads(1) collapse(2)
     for (int colOffset = -PATCH_SIZE / 2; colOffset <= PATCH_SIZE / 2;
          colOffset++) {
       for (int rowOffset = -PATCH_SIZE / 2; rowOffset <= PATCH_SIZE / 2;

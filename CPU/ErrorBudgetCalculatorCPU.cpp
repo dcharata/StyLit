@@ -7,6 +7,8 @@
 
 #include "Algorithm/NNFError.h"
 #include "Configuration/Configuration.h"
+//#include "Utilities/parasort.h"
+#include <parallel/algorithm>
 
 #include <fstream>
 #include <limits>
@@ -126,6 +128,11 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
 
   // sort the error vector
   sort(vecerror.begin(), vecerror.end(), &comparator);
+//  __gnu_parallel::sort(vecerror.begin(), vecerror.end(), &comparator);
+
+  // std::vector<std::pair<int, float>> &vecerror
+//  parasort(sz, a, 4);
+//  std::sort(std::parallel::seq, vecerror.begin(), vecerror.end());
 
   // float maxError = vecerror[vecerror.size() - 1].second;
   float meanError = totalError / vecerror.size();

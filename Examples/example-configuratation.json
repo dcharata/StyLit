@@ -12,7 +12,7 @@
       "test/original_src/examples/1/target_fullgi.png",
       "test/original_src/examples/1/target_indirb.png"
     ],
-    "sourceStyleImagePaths": ["test/original_src/examples/1/source_style.png"]
+    "sourceStyleImagePaths": ["test/original_src/examples/1/source_style_5.png"]
   },
   "outputs": {
     "targetStyleImagePaths": [
@@ -27,6 +27,6 @@
     "patchSize": 5,
     "numPatchMatchIterations": 6,
     "numPyramidLevels": 6,
-    "numOptimizationIterationsPerPyramidLevel": 6
+    "numOptimizationIterationsPerPyramidLevel": 1
   }
 }

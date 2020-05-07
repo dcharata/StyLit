@@ -67,9 +67,11 @@ private:
     if (initRandom) {
       randomlyInitializeNNF(nnf);
     }
-
+   
     for (int i = 0; i < numIterations; i++) {
       bool iterationIsOdd = i % 2 == 1 ? true : false;
+      // #pragma omp parallel for num_threads(3) collapse(2)
+      #pragma omp parallel for schedule(dynamic)
       for (int col = 0; col < numNNFCols; col++) {
         for (int row = 0; row < numNNFRows; row++) {
           propagationStep(configuration, row, col, makeReverseNNF, iterationIsOdd, nnf, pyramidLevel, guideWeights, styleWeights, blacklist);
@@ -200,6 +202,17 @@ private:
    * @param blacklist Another NNF of pixels that should not be mapped to.
    * @return true if patch matching succeeds; otherwise false
    */
+  // source: http://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
+  inline double fastPow(double a, double b) {
+  union {
+      double d;
+      int x[2];
+    } u = { a };
+    u.x[1] = (int)(b * (u.x[1] - 1072632447) + 1072632447);
+    u.x[0] = 0;
+    return u.d;
+  }
+
   void searchStep(const Configuration &configuration, int row, int col, bool makeReverseNNF,
                   NNF &nnf, const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel,
                   const ChannelWeights<numGuideChannels> guideWeights, const ChannelWeights<numStyleChannels> styleWeights,
@@ -217,9 +230,9 @@ private:
       errorCalc.calculateError(configuration, pyramidLevel, currentCodomainPatch, currentPatch, guideWeights, styleWeights, currentError);
     }
     int i = 0;
-    while (w * pow(RANDOM_SEARCH_ALPHA, i) > 1.0) {
-      const int col_offset = int(w * pow(RANDOM_SEARCH_ALPHA, i) * rand_uniform());
-      const int row_offset = int(w * pow(RANDOM_SEARCH_ALPHA, i) * rand_uniform());
+    while (w * fastPow(RANDOM_SEARCH_ALPHA, i) > 1.0) {
+      const int col_offset = int(w * fastPow(RANDOM_SEARCH_ALPHA, i) * rand_uniform());
+      const int row_offset = int(w * fastPow(RANDOM_SEARCH_ALPHA, i) * rand_uniform());
       const ImageCoordinates newCodomainPatch{currentCodomainPatch.row + row_offset, currentCodomainPatch.col + col_offset};
       if (newCodomainPatch.within(nnf.targetDimensions)) { // if this new codomain patch is within the codomain dimensions of the nnf
         bool newCodomainPatchAvailable = (blacklist == nullptr) || (blacklist->getMapping(newCodomainPatch) == ImageCoordinates::FREE_PATCH);

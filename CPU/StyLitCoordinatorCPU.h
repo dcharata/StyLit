@@ -174,7 +174,7 @@ public:
       }
 
       // Saves an image.
-      QString location = QString(PROJECT_PATH) + QString("Results/result");
+      QString location = configuration.targetStyleImagePaths[0];
       location += QString::number(level);
       location += ".png";
       ImageIO::writeImage<numStyleChannels>(location, pyramidLevel.style.target,

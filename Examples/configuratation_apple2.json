@@ -1,0 +1,30 @@
+{
+  "inputs": {
+    "sourceGuideImagePaths": [
+      "Blender/output/600x456/source_b.png",
+      "Blender/output/600x456/source_c.png",
+      "Blender/output/600x456/source_a.png"
+    ],
+    "targetGuideImagePaths": [
+      "/home/vikas/Documents/Brown_MSCS/Spring2020/InteractiveCompGraphics_2240/Final_project/StyLit/Blender/output/apple2/target_b.png",
+      "/home/vikas/Documents/Brown_MSCS/Spring2020/InteractiveCompGraphics_2240/Final_project/StyLit/Blender/output/apple2/target_c.png",
+      "/home/vikas/Documents/Brown_MSCS/Spring2020/InteractiveCompGraphics_2240/Final_project/StyLit/Blender/output/apple2/target_a.png"
+    ],
+    "sourceStyleImagePaths": ["/home/vikas/Documents/computer-vision-git/ebsynth/examples/stylit/source_style_9.png"]
+  },
+  "outputs": {
+    "targetStyleImagePaths": [
+      "/home/vikas/Documents/Brown_MSCS/Spring2020/InteractiveCompGraphics_2240/Final_project/StyLit/Blender/output/apple2/"
+    ]
+  },
+  "settings": {
+    "guideImageFormats": ["rgb", "bw", "rgb"],
+    "styleImageFormats": ["rgb"],
+    "guideImageWeights": [2, 2, 2],
+    "styleImageWeights": [1],
+    "patchSize": 5,
+    "numPatchMatchIterations": 6,
+    "numPyramidLevels": 5,
+    "numOptimizationIterationsPerPyramidLevel": 2
+  }
+}
