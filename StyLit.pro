@@ -25,6 +25,7 @@ SOURCES += \
     Configuration/ConfigurationParser.cpp \
     Tests/TestCuda.cpp \
     Tests/TestDownscalerCUDA.cpp \
+    ImplementationSelector.cpp \
     Tests/TestErrorBudget.cpp \
     Tests/TestDownscalerCPU.cpp \
     Tests/TestImageIO.cpp \
@@ -68,6 +69,7 @@ HEADERS += \
     GPU/DownscalerCUDA.h \
     Tests/TestCuda.h \
     Tests/TestDownscalerCUDA.h \
+    ImplementationSelector.h \
     Tests/TestErrorBudget.h \
     MainWindow.h \
     CPU/PatchMatcherCPU.h \
@@ -132,4 +134,6 @@ cuda.depend_command = $$CUDA_DIR/bin/nvcc -g -M $$CUDA_INC $$NVCCFLAGS ${QMAKE_F
 
 # Tell Qt that we want add more stuff to the Makefile
 QMAKE_EXTRA_COMPILERS += cuda
+# define the project file path so we can use relative paths
+DEFINES += PROJECT_PATH=\"\\\"$${_PRO_FILE_PWD_}/\\\"\"
 
