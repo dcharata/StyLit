@@ -8,7 +8,14 @@
 #include <QCommandLineParser>
 #include <iostream>
 
+#include "StyLitCUDA/StyLitCUDA.h"
+
 int main(int argc, char *argv[]) {
+  if (StyLitCUDA::sanityCheckStyLitCUDA() != 0xDEADBEEF) {
+    std::cerr << "StyLitCUDA library is not linked!" << std::endl;
+    return 1;
+  }
+
   // Parses the command line arguments.
   QApplication a(argc, argv);
   QCoreApplication::setApplicationName("StyLit Implementation");

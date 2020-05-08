@@ -95,3 +95,6 @@ FORMS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+# CUDA Stuff!
+LIBS += StyLitCUDA/Release/libStyLitCUDA.so
