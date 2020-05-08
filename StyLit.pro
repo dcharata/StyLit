@@ -34,6 +34,7 @@ SOURCES += \
     Tests/TestMain.cpp \
     Tests/TestNNFGenerator.cpp \
     Tests/TestPatchMatch.cpp \
+    Tests/TestPatchMatchCUDA.cpp \
     Utilities/FloatTools.cpp \
     Utilities/ImageFormatTools.cpp \
     Utilities/ImageIO.cpp \
@@ -67,6 +68,8 @@ HEADERS += \
     Configuration/Configuration.h \
     Configuration/ConfigurationParser.h \
     GPU/DownscalerCUDA.h \
+    GPU/InputPatchMatcherCUDA.h \
+    GPU/PatchMatcherCUDA.h \
     Tests/TestCuda.h \
     Tests/TestDownscalerCUDA.h \
     ImplementationSelector.h \
@@ -85,6 +88,7 @@ HEADERS += \
     Tests/TestMain.h \
     Tests/TestNNFGenerator.h \
     Tests/TestPatchMatch.h \
+    Tests/TestPatchMatchCUDA.h \
     Tests/UnitTest.h \
     Utilities/FloatTools.h \
     Utilities/ImageFormat.h \
@@ -106,7 +110,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 # -------------------------------------------------------------
 # CUDA settings!
 CUDA_SOURCES += GPU/vectorAdd.cu \
-                GPU/DownscalerCUDA.cu
+                GPU/DownscalerCUDA.cu \
+                GPU/PatchMatcherCUDA.cu
 
 CUDA_DIR      = /usr/local/cuda
 INCLUDEPATH  += $$CUDA_DIR/include \

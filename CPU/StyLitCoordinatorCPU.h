@@ -127,7 +127,7 @@ public:
 
     // Sets B' in the lowest level to be initialized from A' and a randomly
     // initialized NNF
-    PatchMatcherCPU<float, numGuideChannels, numStyleChannels> patchMatcher;
+    PatchMatcherCUDA<float, numGuideChannels, numStyleChannels> patchMatcher;
     patchMatcher.randomlyInitializeNNF(
         pyramid.levels[int(pyramid.levels.size()) - 1].forwardNNF);
     nnfApplicator.applyNNF(configuration,

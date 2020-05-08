@@ -6,22 +6,18 @@
  * @param max the row to sample at
  * @return [0, max)
  */
-__device__ int restrict(int value, int max) {
-  return (value >= max) ? max - 1 : value;
-}
+__device__ int restrict(int value, int max) { return (value >= max) ? max - 1 : value; }
 
-template<typename T>
-__device__ T interpolate(float aWeight,
-                         T a, float bWeight,
-                         T b, float cWeight,
-                         T c, float dWeight,
+template <typename T>
+__device__ T interpolate(float aWeight, T a, float bWeight, T b, float cWeight, T c, float dWeight,
                          T d) {
   // This will in fact work for both integers and floats.
   return (T)(a * aWeight + b * bWeight + c * cWeight + d * dWeight);
 }
 
-template<typename T>
-__device__ void sampleBilinear(const T *full, float row, float col, T *result, int fullRows, int fullCols, int numChannels) {
+template <typename T>
+__device__ void sampleBilinear(const T *full, float row, float col, T *result, int fullRows,
+                               int fullCols, int numChannels) {
   const int rowFloor = restrict(int(row), fullRows);
   const int colFloor = restrict(int(col), fullCols);
   const int rowCeil = restrict(rowFloor + 1, fullRows);
@@ -43,22 +39,26 @@ __device__ void sampleBilinear(const T *full, float row, float col, T *result, i
     const float bottomRightWeight = rowRemainderForCeil * colRemainderForCeil;
     const T bottomRight = full[numChannels * (rowCeil * fullCols + colCeil) + i];
 
-    result[i] = interpolate(topLeftWeight, topLeft, topRightWeight, topRight,
-                            bottomLeftWeight, bottomLeft, bottomRightWeight, bottomRight);
+    result[i] = interpolate(topLeftWeight, topLeft, topRightWeight, topRight, bottomLeftWeight,
+                            bottomLeft, bottomRightWeight, bottomRight);
   }
 }
 
-template<typename T>
-__global__ void downscalerKernel(const T *full, T *half, int numChannels, int fullRows, int fullCols, int halfRows, int halfCols, float rowScale, float colScale){
+template <typename T>
+__global__ void downscalerKernel(const T *full, T *half, int numChannels, int fullRows,
+                                 int fullCols, int halfRows, int halfCols, float rowScale,
+                                 float colScale) {
   const int index = blockIdx.x * blockDim.x + threadIdx.x;
   const int row = index / halfCols;
   const int col = index % halfCols;
   const int halfStart = numChannels * (row * halfCols + col);
-  sampleBilinear<T>(full, row * rowScale + 0.5f, col * colScale + 0.5f, &half[halfStart], fullRows, fullCols, numChannels);
+  sampleBilinear<T>(full, row * rowScale + 0.5f, col * colScale + 0.5f, &half[halfStart], fullRows,
+                    fullCols, numChannels);
 }
 
-template<typename T>
-int downscaleCUDA(const T *full, T *half, int numChannels, int fullRows, int fullCols, int halfRows, int halfCols) {
+template <typename T>
+int downscaleCUDA(const T *full, T *half, int numChannels, int fullRows, int fullCols, int halfRows,
+                  int halfCols) {
   // Allocates shared memory for the full and half images.
   const int fullSize = numChannels * fullRows * fullCols;
   const int numPixelsInHalf = halfRows * halfCols;
@@ -78,7 +78,8 @@ int downscaleCUDA(const T *full, T *half, int numChannels, int fullRows, int ful
   const int numBlocks = (numPixelsInHalf + BLOCK_SIZE - 1) / BLOCK_SIZE;
   const float colScale = float(fullCols) / float(halfCols);
   const float rowScale = float(fullRows) / float(halfRows);
-  downscalerKernel<T><<<numBlocks, 256>>>(fullManaged, halfManaged, numChannels, fullRows, fullCols, halfRows, halfCols, rowScale, colScale);
+  downscalerKernel<T><<<numBlocks, 256>>>(fullManaged, halfManaged, numChannels, fullRows, fullCols,
+                                          halfRows, halfCols, rowScale, colScale);
   cudaDeviceSynchronize();
 
   // Copies the images back to host memory.

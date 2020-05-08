@@ -10,6 +10,7 @@
 #include "TestNNFGenerator.h"
 #include "TestNNFUpscalerCPU.h"
 #include "TestPatchMatch.h"
+#include "TestPatchMatchCUDA.h"
 #include "UnitTest.h"
 
 #include <stdio.h>
@@ -35,6 +36,7 @@ int TestMain::run() {
   TestNNFUpscalerCPU testNNFUpscalerCPU;
   TestErrorBudget testErrorBudget;
   TestNNFGenerator testNNFGenerator;
+  TestPatchMatchCUDA testPatchMatchCUDA;
   TestCuda testCuda;
 
   // All tests in unitTests are run.
@@ -44,8 +46,9 @@ int TestMain::run() {
                            &testDownscalerCPU, &testNNFUpscalerCPU,
                            &testErrorBudget, &testNNFGenerator};
   */
-  const int numTests = 3;
-  UnitTest *unitTests[] = {&testCuda, &testDownscalerCUDA, &testDownscalerCPU};
+
+  const int numTests = 4;
+  UnitTest *unitTests[] = {&testCuda, &testDownscalerCUDA, &testDownscalerCPU, &testPatchMatchCUDA};
 
   // Runs the tests and counts how many succeed.
   int numPasses = 0;
