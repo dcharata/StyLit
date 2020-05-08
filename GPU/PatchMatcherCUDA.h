@@ -37,8 +37,8 @@ public:
 private:
   bool implementationOfPatchMatch(const Configuration &, NNF &nnf,
                                   const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid,
-                                  int numIterations, int level, bool makeReverseNNF,
-                                  bool initRandom, const NNF *const blacklist = nullptr) {
+                                  int, int level, bool makeReverseNNF, bool,
+                                  const NNF *const blacklist = nullptr) {
     // Makes sure the NNF matches makeReverseNNF.
     const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel = pyramid.levels[level];
     if (makeReverseNNF) {
@@ -49,13 +49,13 @@ private:
 
     // Extracts the data that CUDA will need.
     InputPatchMatcherCUDA<T> input;
-    input.sourceCols = nnf.sourceDimensions.rows;
-    input.sourceRows = nnf.sourceDimensions.cols;
+    input.sourceRows = nnf.sourceDimensions.rows;
+    input.sourceCols = nnf.sourceDimensions.cols;
     input.targetRows = nnf.targetDimensions.rows;
     input.targetCols = nnf.targetDimensions.cols;
     input.numGuideChannels = numGuideChannels;
     input.numStyleChannels = numStyleChannels;
-    input.hostNNF = &nnf;
+    input.hostNNF = nnf.getData();
     input.hostBlacklist = blacklist;
 
     // Extracts the source and target images.

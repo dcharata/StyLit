@@ -1,5 +1,6 @@
 #include "InputPatchMatcherCUDA.h"
 
+#include <algorithm>
 #include <limits>
 #include <stdint.h>
 #include <stdio.h>
@@ -74,7 +75,15 @@ template <typename T> struct ImageCUDA {
   void free() { check(cudaFree(deviceData)); }
 
   // Returns a pointer to the feature vector at the given coordinates.
-  inline T *at(int row, int col) {
+  __device__ inline T *at(int row, int col) {
+    // This is adapted from NVidia's website.
+    T *rowStart = (T *)((char *)deviceData + row * pitch);
+    return &rowStart[col * numChannels];
+  }
+
+  // Returns a pointer to the feature vector at the given coordinates, but with a bit of const
+  // sprinkled in so that the compiler is happy.
+  __device__ inline const T *constAt(int row, int col) const {
     // This is adapted from NVidia's website.
     T *rowStart = (T *)((char *)deviceData + row * pitch);
     return &rowStart[col * numChannels];
@@ -124,20 +133,20 @@ template <typename T> struct ImageCUDA {
         // Adds the guide vector to the device image.
         const T *guideVector = &guide[numGuideChannels * index];
         for (int i = 0; i < numGuideChannels; i++) {
-          combinedVector[i] = T(0); // guideVector[i];
+          combinedVector[i] = guideVector[i];
         }
 
         // Adds the style vector to the device image.
         const T *styleVector = &style[numStyleChannels * index];
         for (int i = 0; i < numStyleChannels; i++) {
-          combinedVector[i + numGuideChannels] = T(0); // styleVector[i];
+          combinedVector[i + numGuideChannels] = styleVector[i];
         }
       }
     }
 
     // Copies the reformatted image to the device.
-    const int sourcePitch = numTotalChannels * cols * sizeof(T);
-    check(cudaMemcpy2D(deviceData, pitch, hostImage, sourcePitch, sourcePitch, rows,
+    const int hostPitch = numTotalChannels * cols * sizeof(T);
+    check(cudaMemcpy2D(deviceData, pitch, hostImage, hostPitch, hostPitch, rows,
                        cudaMemcpyHostToDevice));
 
     // Frees the temporary reformatted image on the host.
@@ -146,16 +155,16 @@ template <typename T> struct ImageCUDA {
 };
 
 /**
- * @brief The NNFEntryCUDA struct Each NNF entry contains the row that's mapped to, the column
- * that's mapped to, and that mapping's error. NNFs are just ImageCUDAs of NNFEntryCUDAs with one
+ * @brief The NNFMappingCUDA struct Each NNF entry contains the row that's mapped to, the column
+ * that's mapped to, and that mapping's error. NNFs are just ImageCUDAs of NNFMappingCUDAs with one
  * channel.
  */
-struct NNFEntryCUDA {
+struct NNFMappingCUDA {
   int row = -1;
   int col = -1;
   float error = std::numeric_limits<float>::max();
 };
-using NNFCUDA = ImageCUDA<NNFEntryCUDA>;
+using NNFCUDA = ImageCUDA<NNFMappingCUDA>;
 
 // This is used to maintain a state for a pseudorandom number generator for each source pixel.
 using RandomStateCUDA = ImageCUDA<PCGState>;
@@ -167,7 +176,28 @@ using RandomStateCUDA = ImageCUDA<PCGState>;
  * the NNF.
  */
 __global__ void initializeRandomKernel(RandomStateCUDA random) {
-  const int index = blockDim.x * blockIdx.x + threadIdx.x;
+  const int row = blockDim.x * blockIdx.x + threadIdx.x;
+  const int col = blockDim.y * blockIdx.y + threadIdx.y;
+  if (row < random.rows && col < random.cols) {
+    pcgInit(random.at(row, col), 1361, row * random.cols + col);
+  }
+}
+
+/**
+ * @brief clamp Clamps value to the range [minInclusive, maxExclusive).
+ * @param minInclusive the inclusive minimum value
+ * @param value the value to clamp
+ * @param maxExclusive the exclusive maximum value
+ * @return value clamped to [minInclusive, maxExclusive)
+ */
+__device__ inline int clamp(const int minInclusive, const int value, const int maxExclusive) {
+  if (value < minInclusive) {
+    return minInclusive;
+  }
+  if (value >= maxExclusive) {
+    return maxExclusive - 1;
+  }
+  return value;
 }
 
 /**
@@ -188,7 +218,35 @@ __global__ void initializeRandomKernel(RandomStateCUDA random) {
 template <typename T>
 __device__ float calculateError(const ImageCUDA<T> &source, const ImageCUDA<T> &target,
                                 const int sourceRow, const int sourceCol, const int targetRow,
-                                const int targetCol, const int patchSize) {}
+                                const int targetCol, const int patchSize) {
+  // Clamps the patch coordinates so that every pixel inside a patch is in bounds.
+  const int halfPatch = patchSize / 2;
+  const int sourceRowLimit = source.rows - halfPatch;
+  const int sourceColLimit = source.cols - halfPatch;
+  const int targetRowLimit = target.rows - halfPatch;
+  const int targetColLimit = target.cols - halfPatch;
+
+  // Sums up the error across the patch.
+  float error = 0.f;
+  for (int rowOffset = -halfPatch; rowOffset <= halfPatch; rowOffset++) {
+    for (int colOffset = -halfPatch; colOffset <= halfPatch; colOffset++) {
+      // Calculates the coordinates in the patch.
+      const int patchSourceRow = clamp(halfPatch, sourceRow - rowOffset, sourceRowLimit);
+      const int patchSourceCol = clamp(halfPatch, sourceCol - colOffset, sourceColLimit);
+      const int patchTargetRow = clamp(halfPatch, targetRow - rowOffset, targetRowLimit);
+      const int patchTargetCol = clamp(halfPatch, targetCol - colOffset, targetColLimit);
+
+      // Adds the errors for each channel.
+      const T *sourceVector = source.constAt(patchSourceRow, patchSourceCol);
+      const T *targetVector = target.constAt(patchTargetRow, patchTargetCol);
+      for (int channel = 0; channel < source.numChannels; channel++) {
+        const float difference = sourceVector[channel] - targetVector[channel];
+        error += difference * difference;
+      }
+    }
+  }
+  return error;
+}
 
 /**
  * @brief randomizeNNFKernel Randomly initializes the supplied NNF and calculates the
@@ -196,11 +254,151 @@ __device__ float calculateError(const ImageCUDA<T> &source, const ImageCUDA<T> &
  * @param source the source image
  * @param target the target image
  * @param nnf The NNF to modify. Only the NNF's on-device ImageCUDA is modified.
+ * @param patchSize the patch's width/height
  */
 template <typename T>
 __global__ void randomizeNNFKernel(const ImageCUDA<T> source, const ImageCUDA<T> target,
-                                   const NNFCUDA nnf, const RandomStateCUDA random) {
-  printf("You launched an error pass kernel.\n");
+                                   NNFCUDA nnf, RandomStateCUDA random, const int patchSize) {
+  const int row = blockDim.x * blockIdx.x + threadIdx.x;
+  const int col = blockDim.y * blockIdx.y + threadIdx.y;
+
+  if (row < random.rows && col < random.cols) {
+    // Generates a random mapping.
+    const int mappedRow = pcgRand(random.at(row, col)) % target.rows;
+    const int mappedCol = pcgRand(random.at(row, col)) % target.cols;
+
+    // Fills the random mapping in.
+    NNFMappingCUDA *entry = nnf.at(row, col);
+    entry->row = mappedRow;
+    entry->col = mappedCol;
+    entry->error = calculateError(source, target, row, col, mappedRow, mappedCol, patchSize);
+  }
+}
+
+/**
+ * @brief tryPatch Calculates the error for a new mapping from [sourceRow, sourceCol] to [targetRow,
+ * targetCol]. If this error is lower than the error for the existing mapping at [sourceRow,
+ * sourceCol] in previousNNF, replaces the existing mapping at [sourceRow, sourceCol] with the new
+ * mapping.
+ * @param source the source image
+ * @param target the target image
+ * @param nextNNF the NNF to modify with improved mappings
+ * @param previousNNF the NNF to read from
+ * @param patchSize the patch width/height
+ * @param sourceRow the source row to try a mapping for
+ * @param sourceCol the source column to try a mapping for
+ * @param targetRow the target row to try a mapping for
+ * @param targetCol the target column to try a mapping for
+ */
+template <typename T>
+__device__ void tryPatch(const ImageCUDA<T> &source, const ImageCUDA<T> &target, NNFCUDA &nextNNF,
+                         const NNFCUDA &previousNNF, const int patchSize, const int sourceRow,
+                         const int sourceCol, const int targetRow, const int targetCol) {
+  // Calculates the error for the new mapping and compares it with the existing error.
+  const float oldError = previousNNF.constAt(sourceRow, sourceCol)->error;
+  const float newError =
+      calculateError(source, target, sourceRow, sourceCol, targetRow, targetCol, patchSize);
+  if (newError <= oldError) {
+    // If the new error would be lower, updates nextNNF.
+    NNFMappingCUDA *nextMapping = nextNNF.at(sourceRow, sourceCol);
+    nextMapping->row = targetRow;
+    nextMapping->col = targetCol;
+    nextMapping->error = newError;
+  }
+}
+
+/**
+ * @brief tryNeighborOffset Replaces a mapping with a neighboring mapping (but offset) if doing
+ * so reduces the overall error. See propagationPassKernel for more details.
+ * @param source the source image
+ * @param target the target image
+ * @param nextNNF the NNF to modify with improved mappings
+ * @param previousNNF the NNF to read from
+ * @param patchSize the patch width/height
+ * @param sourceRow the source row to try an offset for
+ * @param sourceCol the source column to try an offset for
+ * @param rowOffset the row offset to try
+ * @param colOffset the column offset to try
+ */
+template <typename T>
+__device__ void tryNeighborOffset(const ImageCUDA<T> &source, const ImageCUDA<T> &target,
+                                  NNFCUDA &nextNNF, const NNFCUDA &previousNNF, const int patchSize,
+                                  const int sourceRow, const int sourceCol, const int rowOffset,
+                                  const int colOffset) {
+  // Gets the neighbor's mapping.
+  const int neighborRow = clamp(0, sourceRow + rowOffset, source.rows);
+  const int neighborCol = clamp(0, sourceCol + colOffset, source.cols);
+  const NNFMappingCUDA &neighborMapping = *previousNNF.constAt(neighborRow, neighborCol);
+
+  // Translates the neighbor's mapping back to get the target coordinates to try.
+  const int targetRow = clamp(0, neighborMapping.row - rowOffset, target.rows);
+  const int targetCol = clamp(0, neighborMapping.col - colOffset, target.cols);
+
+  // Tries the mapping.
+  tryPatch(source, target, nextNNF, previousNNF, patchSize, sourceRow, sourceCol, targetRow,
+           targetCol);
+}
+
+/**
+ * @brief randomSearchPassKernel Attempts to improve the NNF by randomly shifting its mapping (i.e.
+ * the target coordinates) within a region with the specified radius. If the randomly shifted error
+ * is better, the mapping is updated in nextNNF.
+ * @param source the source image
+ * @param target the target image
+ * @param nextNNF the NNF to modify with improved mappings
+ * @param previousNNF the NNF to read from
+ * @param patchSize the patch width/height
+ * @param radius the radius to randomly search within
+ * @param random the pseudorandom number generator's state
+ */
+template <typename T>
+__global__ void randomSearchPassKernel(const ImageCUDA<T> source, const ImageCUDA<T> target,
+                                       NNFCUDA nextNNF, const NNFCUDA previousNNF,
+                                       const int patchSize, const int radius,
+                                       RandomStateCUDA random) {
+  const int row = blockDim.x * blockIdx.x + threadIdx.x;
+  const int col = blockDim.y * blockIdx.y + threadIdx.y;
+  if (row < source.rows && col < source.cols) {
+    // Gets the current mapping.
+    const NNFMappingCUDA *previousMapping = previousNNF.constAt(row, col);
+
+    // Randomly shifts the mapping within the radius.
+    PCGState *randomState = random.at(row, col);
+    const int range = 2 * radius;
+    const int rowShift = pcgRand(randomState) % range - radius;
+    const int colShift = pcgRand(randomState) % range - radius;
+    const int newTargetRow = clamp(0, previousMapping->row + rowShift, target.rows);
+    const int newTargetCol = clamp(0, previousMapping->col + colShift, target.cols);
+
+    // Tries the shifted patch.
+    tryPatch(source, target, nextNNF, previousNNF, patchSize, row, col, newTargetRow, newTargetCol);
+  }
+}
+
+/**
+ * @brief propagationPassKernel This compares each pixel to neighboring pixels to see if their
+ * mappings, when shifted to the current pixel, would be better than the current mapping. This
+ * makes good mappings propagate to nearby pixels.
+ * @param source the source image
+ * @param target the target image
+ * @param nextNNF the NNF to modify with improved mappings
+ * @param previousNNF the NNF to read from
+ * @param patchSize the patch width/height
+ * @param offset the offset to try in each direction
+ */
+template <typename T>
+__global__ void propagationPassKernel(const ImageCUDA<T> source, const ImageCUDA<T> target,
+                                      NNFCUDA nextNNF, const NNFCUDA previousNNF,
+                                      const int patchSize, const int offset) {
+  const int row = blockDim.x * blockIdx.x + threadIdx.x;
+  const int col = blockDim.y * blockIdx.y + threadIdx.y;
+  if (row < source.rows && col < source.cols) {
+    // Tries offsetting up, down, left and right.
+    tryNeighborOffset(source, target, nextNNF, previousNNF, patchSize, row, col, offset, 0);
+    tryNeighborOffset(source, target, nextNNF, previousNNF, patchSize, row, col, -offset, 0);
+    tryNeighborOffset(source, target, nextNNF, previousNNF, patchSize, row, col, 0, offset);
+    tryNeighborOffset(source, target, nextNNF, previousNNF, patchSize, row, col, 0, -offset);
+  }
 }
 
 /**
@@ -213,13 +411,27 @@ __global__ void randomizeNNFKernel(const ImageCUDA<T> source, const ImageCUDA<T>
 int divideRoundUp(int a, int b) { return (a + b - 1) / b; }
 
 /**
+ * @brief swapNNFs Swaps the pointers. This is used to alternate which NNF is read from and which
+ * NNF is written to.
+ * @param a one of the NNFs
+ * @param b the other NNF
+ */
+void swapNNFs(NNFCUDA **a, NNFCUDA **b) {
+  NNFCUDA *temp = *a;
+  *a = *b;
+  *b = temp;
+}
+
+/**
  * @brief patchMatchCUDA This is what's called from PatchMatcherCUDA. It improves the host NNF.
  * @param input a struct that contains everything patchMatchCUDA needs to run
  */
 template <typename T> void patchMatchCUDA(InputPatchMatcherCUDA<T> &input) {
-  const int BLOCK_SIZE = 256;
+  const int BLOCK_SIZE_2D = 16;
+  const int PATCH_SIZE = 5;
+  const int NUM_ITERATIONS = 6;
 
-  // Allocates on-device source and target images.
+  // Allocates on-device source and target images and copies over the on-host images' contents.
   const int numTotalChannels = input.numGuideChannels + input.numStyleChannels;
   ImageCUDA<T> source(input.sourceRows, input.sourceCols, numTotalChannels);
   source.allocate();
@@ -239,9 +451,9 @@ template <typename T> void patchMatchCUDA(InputPatchMatcherCUDA<T> &input) {
   oddNNF.allocate();
 
   // Initializes kernel dimensions for operations that are per-pixel in the source.
-  const dim3 threadsPerBlock(BLOCK_SIZE, BLOCK_SIZE);
-  const dim3 numBlocks(divideRoundUp(input.sourceRows, BLOCK_SIZE),
-                       divideRoundUp(input.sourceCols, BLOCK_SIZE));
+  const dim3 threadsPerBlock(BLOCK_SIZE_2D, BLOCK_SIZE_2D);
+  const dim3 numBlocks(divideRoundUp(input.sourceRows, threadsPerBlock.x),
+                       divideRoundUp(input.sourceCols, threadsPerBlock.y));
 
   // Initializes the pseudorandom number generator.
   RandomStateCUDA random(input.sourceRows, input.sourceCols, 1);
@@ -251,8 +463,66 @@ template <typename T> void patchMatchCUDA(InputPatchMatcherCUDA<T> &input) {
   check(cudaDeviceSynchronize());
 
   // Randomly initializes the even NNF.
-  randomizeNNFKernel<<<1, 1>>>(source, target, evenNNF, random);
+  // Copies the result over to the odd NNF.
+  randomizeNNFKernel<<<numBlocks, threadsPerBlock>>>(source, target, evenNNF, random, PATCH_SIZE);
   check(cudaDeviceSynchronize());
+  check(cudaMemcpy2D(oddNNF.deviceData, oddNNF.pitch, evenNNF.deviceData, evenNNF.pitch,
+                     oddNNF.cols * sizeof(NNFMappingCUDA), oddNNF.rows, cudaMemcpyDeviceToDevice));
+
+  // Runs iterations of PatchMatch.
+  NNFCUDA *previousNNF = &evenNNF;
+  NNFCUDA *nextNNF = &oddNNF;
+  for (int iteration = 0; iteration < NUM_ITERATIONS; iteration++) {
+    // First, runs three propagation passes with offsets of 4, 2 and 1 respectively.
+    propagationPassKernel<T>
+        <<<numBlocks, threadsPerBlock>>>(source, target, *nextNNF, *previousNNF, PATCH_SIZE, 4);
+    check(cudaDeviceSynchronize());
+    swapNNFs(&previousNNF, &nextNNF);
+
+    propagationPassKernel<T>
+        <<<numBlocks, threadsPerBlock>>>(source, target, *nextNNF, *previousNNF, PATCH_SIZE, 2);
+    check(cudaDeviceSynchronize());
+    swapNNFs(&previousNNF, &nextNNF);
+
+    propagationPassKernel<T>
+        <<<numBlocks, threadsPerBlock>>>(source, target, *nextNNF, *previousNNF, PATCH_SIZE, 1);
+    check(cudaDeviceSynchronize());
+    swapNNFs(&previousNNF, &nextNNF);
+
+    // Next, runs a number of random search passes.
+    for (int radius = std::max(input.sourceRows, input.sourceCols) / 2; radius > 1; radius /= 2) {
+      randomSearchPassKernel<T><<<numBlocks, threadsPerBlock>>>(
+          source, target, *nextNNF, *previousNNF, PATCH_SIZE, radius, random);
+      check(cudaDeviceSynchronize());
+      swapNNFs(&previousNNF, &nextNNF);
+    }
+  }
+
+  // Since every NNF-altering call has a call to swapNNFs after it, previousNNF is actually the
+  // most up-to-date NNF. It's swapped back here to make the code below less confusing.
+  swapNNFs(&previousNNF, &nextNNF);
+
+  // Copies the resulting NNF back to the host.
+  // This assumes that host NNF coordinates are tuples of ints.
+  float debugError = 0.f;
+  const NNFMappingCUDA *hostReturnNNF;
+  check(
+      cudaMallocHost(&hostReturnNNF, input.sourceRows * input.sourceCols * sizeof(NNFMappingCUDA)));
+  const int hostPitch = input.sourceCols * sizeof(NNFMappingCUDA);
+  check(cudaMemcpy2D((void *)hostReturnNNF, hostPitch, nextNNF->deviceData, nextNNF->pitch,
+                     hostPitch, input.sourceRows, cudaMemcpyDeviceToHost));
+  for (int row = 0; row < input.sourceRows; row++) {
+    for (int col = 0; col < input.sourceCols; col++) {
+      const int index = row * input.sourceCols + col;
+      const NNFMappingCUDA &tempEntry = hostReturnNNF[index];
+      int *returnEntry = &input.hostNNF[index * 2];
+      returnEntry[0] = tempEntry.row;
+      returnEntry[1] = tempEntry.col;
+      debugError += tempEntry.error;
+    }
+  }
+  check(cudaFreeHost((void *)hostReturnNNF));
+  printf("Total error after PatchMatchCUDA: %f\n", debugError);
 
   // Frees on-device memory.
   source.free();

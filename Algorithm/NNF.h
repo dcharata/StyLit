@@ -52,6 +52,12 @@ public:
   // the target image's size
   const ImageDimensions targetDimensions;
 
+  /**
+   * @brief getData Returns a pointer to the start of the data.
+   * @return a pointer to the start of the data
+   */
+  int *getData();
+
 private:
   // this is where the NNF's mappings are stored
   std::unique_ptr<ImageCoordinates[]> mappings;

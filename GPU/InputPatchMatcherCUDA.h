@@ -15,7 +15,8 @@ template <typename T> struct InputPatchMatcherCUDA {
   int numStyleChannels;
 
   // The NNF's dimensions should be the same as the source's.
-  void *hostNNF;
+  // TODO: The error isn't currently written back to the host, but it should be.
+  int *hostNNF;
 
   // If a blacklist is specified, the blacklists's dimensions should be the same as the target's.
   const void *hostBlacklist;

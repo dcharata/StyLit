@@ -25,3 +25,5 @@ void NNF::setToInitializedBlacklist() {
     mappings[i] = ImageCoordinates::FREE_PATCH;
   }
 }
+
+int *NNF::getData() { return reinterpret_cast<int *>(mappings.get()); }
