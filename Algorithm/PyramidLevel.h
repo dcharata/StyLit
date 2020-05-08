@@ -13,8 +13,7 @@ template <typename T, unsigned int numGuideChannels,
 struct PyramidLevel {
   PyramidLevel(ImageDimensions sourceDims, ImageDimensions targetDims)
       : guide(sourceDims, targetDims), style(sourceDims, targetDims),
-        forwardNNF(targetDims, sourceDims), reverseNNF(sourceDims, targetDims)
-  {
+        forwardNNF(targetDims, sourceDims), reverseNNF(sourceDims, targetDims) {
   }
 
   ImagePair<T, numGuideChannels> guide;

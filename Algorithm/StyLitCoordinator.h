@@ -4,14 +4,13 @@
 #include <Configuration/Configuration.h>
 
 /**
- * @brief The StyLitCoordinator class
+ * @brief The StyLitCoordinatorBase class This is needed so that an array of
+ * pointers to different templated implementations can be created.
  */
-template <typename T, unsigned int numGuideChannels,
-          unsigned int numStyleChannels>
-class StyLitCoordinator {
+class StyLitCoordinatorBase {
 public:
-  StyLitCoordinator() = default;
-  virtual ~StyLitCoordinator() = default;
+  StyLitCoordinatorBase() = default;
+  virtual ~StyLitCoordinatorBase() = default;
 
   /**
    * @brief runStyLit The implementation-specific StyLit implementation is
@@ -19,6 +18,17 @@ public:
    * @return true if StyLit ran successfully; otherwise false
    */
   virtual bool runStyLit(const Configuration &configuration) = 0;
+};
+
+/**
+ * @brief The StyLitCoordinator class
+ */
+template <typename T, unsigned int numGuideChannels,
+          unsigned int numStyleChannels>
+class StyLitCoordinator : public StyLitCoordinatorBase {
+public:
+  StyLitCoordinator() = default;
+  virtual ~StyLitCoordinator() = default;
 };
 
 #endif // STYLITCOORDINATOR_H
