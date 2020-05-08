@@ -7,6 +7,9 @@
 
 #include "Algorithm/Image.h"
 #include "Algorithm/ImageDimensions.h"
+#include "Algorithm/ImagePair.h"
+#include "Algorithm/PyramidLevel.h"
+#include "Configuration/Configuration.h"
 #include "ImageFormat.h"
 #include "ImageFormatTools.h"
 
@@ -133,7 +136,7 @@ bool writeImage(const QString &path, Image<float, numChannels> &image,
   // Asserts that the range of channels to write is valid.
   Q_ASSERT(startingChannel >= 0 &&
            startingChannel + ImageFormatTools::numChannels(imageFormat) <=
-               numChannels);
+               int(numChannels));
 
   // Determines the save format.
   QImage::Format format;
@@ -193,6 +196,46 @@ bool writeImage(const QString &path, Image<float, numChannels> &image,
   // Writes the image to disk.
   return qImage.save(path);
 }
+
+template <unsigned int numChannels>
+bool readFeatureVectorImage(Image<float, numChannels> &image,
+                            const std::vector<QString> &paths,
+                            const std::vector<ImageFormat> &formats) {
+  int numFilledChannels = 0;
+  for (unsigned int i = 0; i < paths.size(); i++) {
+    const ImageFormat &format = formats[i];
+    const QString &path = paths[i];
+    const int formatChannels = ImageFormatTools::numChannels(format);
+    if (!ImageIO::readImage(path, image, format, numFilledChannels)) {
+      return false;
+    }
+    numFilledChannels += formatChannels;
+  }
+  return numFilledChannels == numChannels;
+}
+
+/**
+ * @brief readPyramidLevel Populates the given pyramid level with the images
+ * specified in the configuration file.
+ * @param configuration the configuration file's contents
+ * @param pyramidLevel the PyramidLevel to populate
+ * @return true if reading succeeds; otherwise false
+ */
+template <unsigned int numGuideChannels, unsigned int numStyleChannels>
+bool readPyramidLevel(
+    const Configuration &configuration,
+    PyramidLevel<float, numGuideChannels, numStyleChannels> &pyramidLevel) {
+  return readFeatureVectorImage(pyramidLevel.guide.source,
+                                configuration.sourceGuideImagePaths,
+                                configuration.guideImageFormats) &&
+         readFeatureVectorImage(pyramidLevel.guide.target,
+                                configuration.targetGuideImagePaths,
+                                configuration.guideImageFormats) &&
+         readFeatureVectorImage(pyramidLevel.style.source,
+                                configuration.sourceStyleImagePaths,
+                                configuration.styleImageFormats);
+}
+
 }; // namespace ImageIO
 
 #endif // IMAGEREADER_H

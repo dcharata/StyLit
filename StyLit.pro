@@ -23,6 +23,7 @@ SOURCES += \
     CPU/ErrorBudgetCalculatorCPU.cpp \
     Configuration/Configuration.cpp \
     Configuration/ConfigurationParser.cpp \
+    ImplementationSelector.cpp \
     Tests/TestErrorBudget.cpp \
     Tests/TestDownscalerCPU.cpp \
     Tests/TestImageIO.cpp \
@@ -63,6 +64,7 @@ HEADERS += \
     CPU/NNFApplicatorCPU.h \
     Configuration/Configuration.h \
     Configuration/ConfigurationParser.h \
+    ImplementationSelector.h \
     Tests/TestErrorBudget.h \
     MainWindow.h \
     CPU/PatchMatcherCPU.h \
@@ -95,3 +97,7 @@ FORMS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+# define the project file path so we can use relative paths
+DEFINES += PROJECT_PATH=\"\\\"$${_PRO_FILE_PWD_}/\\\"\"
+

@@ -2,6 +2,7 @@
 
 #include "Configuration/Configuration.h"
 #include "Configuration/ConfigurationParser.h"
+#include "ImplementationSelector.h"
 #include "Tests/TestMain.h"
 
 #include <QApplication>
@@ -69,5 +70,6 @@ int main(int argc, char *argv[]) {
     w.show();
     return a.exec();
   }
+  ImplementationSelector::runWithConfiguration(configuration);
   return 0;
 }

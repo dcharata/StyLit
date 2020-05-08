@@ -1,5 +1,7 @@
 #include "ConfigurationParser.h"
 
+#include "Utilities/ImageFormatTools.h"
+
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -67,6 +69,20 @@ bool ConfigurationParser::parse(Configuration &configuration) {
           configuration.styleImageFormats.size()) {
     cerr << "The number of source style image paths, target style image paths "
             "and style formats must match."
+         << endl;
+    return false;
+  }
+  if (configuration.sourceGuideImagePaths.size() !=
+      configuration.guideImageWeights.size()) {
+    cerr << "The number of guide image weights must match the number of guide "
+            "image paths."
+         << endl;
+    return false;
+  }
+  if (configuration.sourceStyleImagePaths.size() !=
+      configuration.styleImageWeights.size()) {
+    cerr << "The number of style image weights must match the number of style "
+            "image paths."
          << endl;
     return false;
   }
@@ -139,6 +155,46 @@ bool ConfigurationParser::parseSettings(const QJsonValue &settings,
     return false;
   }
 
+  // Parses the number of optimization iterations per pyramid level.
+  QJsonValue numOptimizationIterationsPerPyramidLevel =
+      settingsObject.value(QString("numOptimizationIterationsPerPyramidLevel"));
+  if (!parsePositiveInt(
+          numOptimizationIterationsPerPyramidLevel,
+          configuration.numOptimizationIterationsPerPyramidLevel) ||
+      configuration.numOptimizationIterationsPerPyramidLevel < 1) {
+    cerr << "The number of optimization iterations per pyramid level must be "
+            "an integer greater than 0."
+         << endl;
+    return false;
+  }
+
+  // Parses the guide image weights.
+  QJsonValue guideImageWeights =
+      settingsObject.value(QString("guideImageWeights"));
+  if (!parseFloatArray(guideImageWeights, configuration.guideImageWeights)) {
+    cerr << "Could not parse \"guideImageWeights\" in \"settings\"." << endl;
+    return false;
+  }
+
+  // Parses the guide image weights.
+  QJsonValue styleImageWeights =
+      settingsObject.value(QString("styleImageWeights"));
+  if (!parseFloatArray(styleImageWeights, configuration.styleImageWeights)) {
+    cerr << "Could not parse \"styleImageWeights\" in \"settings\"." << endl;
+    return false;
+  }
+
+  // Counts the number of channels.
+  configuration.numGuideChannels = 0;
+  configuration.numStyleChannels = 0;
+  for (const ImageFormat &guideFormat : configuration.guideImageFormats) {
+    configuration.numGuideChannels +=
+        ImageFormatTools::numChannels(guideFormat);
+  }
+  for (const ImageFormat &styleFormat : configuration.styleImageFormats) {
+    configuration.numStyleChannels +=
+        ImageFormatTools::numChannels(styleFormat);
+  }
   return true;
 }
 
@@ -255,6 +311,43 @@ bool ConfigurationParser::parseStringArray(const QJsonValue &source,
 
     // Adds the entry to the destination if it looks OK.
     destination.push_back(entry.toString());
+  }
+  return true;
+}
+
+bool ConfigurationParser::parseFloatArray(const QJsonValue &source,
+                                          std::vector<float> &destination) {
+  destination.clear();
+
+  // Checks whether source is an array.
+  if (!source.isArray()) {
+    cerr << "Expected array but received non-array (possibly undefined) value."
+         << endl;
+    return false;
+  }
+  QJsonArray sourceArray = source.toArray();
+
+  // Checks whether source is empty.
+  if (sourceArray.isEmpty()) {
+    cerr << "Expected non-empty array but received empty array." << endl;
+    return false;
+  }
+  destination.reserve(sourceArray.size());
+
+  // Parses the array's values.
+  for (QJsonArray::iterator it = sourceArray.begin(); it != sourceArray.end();
+       it++) {
+    const QJsonValue &entry = *it;
+
+    // Checks whether the entry is a string.
+    if (!entry.isDouble()) {
+      cerr << "Expected double array entry but received non-double array entry."
+           << endl;
+      return false;
+    }
+
+    // Adds the entry to the destination if it looks OK.
+    destination.push_back(float(entry.toDouble()));
   }
   return true;
 }
