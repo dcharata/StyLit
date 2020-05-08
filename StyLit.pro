@@ -65,6 +65,7 @@ HEADERS += \
     CPU/NNFApplicatorCPU.h \
     Configuration/Configuration.h \
     Configuration/ConfigurationParser.h \
+    GPU/ErrorCalculatorCUDA.h \
     Tests/TestCuda.h \
     ImplementationSelector.h \
     Tests/TestErrorBudget.h \
@@ -102,7 +103,9 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 # -------------------------------------------------------------
 # CUDA settings!
-CUDA_SOURCES += GPU/vectorAdd.cu
+CUDA_SOURCES += GPU/vectorAdd.cu \
+                GPU/ErrorCalculatorCUDA.cu
+CUDA_HEADERS += GPU/vectorAdd.cuh
 
 CUDA_DIR      = /usr/local/cuda-10.0
 INCLUDEPATH  += $$CUDA_DIR/include \
@@ -110,7 +113,7 @@ INCLUDEPATH  += $$CUDA_DIR/include \
 QMAKE_LIBDIR += $$CUDA_DIR/lib64
 LIBS += -lcuda -lcudart 
 
-CUDA_ARCH     = sm_61
+CUDA_ARCH     = sm_61 # sm_75
 # match your gpu ref:
 # https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/
 NVCCFLAGS     = --compiler-options -fno-strict-aliasing -use_fast_math --ptxas-options=-v

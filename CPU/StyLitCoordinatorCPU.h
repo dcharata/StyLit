@@ -38,13 +38,13 @@ public:
     ImageDimensions sourceDimensions;
     if (!ImageIO::getImageDimensions(configuration.sourceGuideImagePaths[0],
                                      sourceDimensions)) {
-      std::cerr << "Could not read input images." << std::endl;
+      std::cerr << "Could not read source images." << std::endl;
       return false;
     }
     ImageDimensions targetDimensions;
     if (!ImageIO::getImageDimensions(configuration.targetGuideImagePaths[0],
                                      targetDimensions)) {
-      std::cerr << "Could not read input images." << std::endl;
+      std::cerr << "Could not read target images." << std::endl;
       return false;
     }
 
@@ -52,7 +52,7 @@ public:
     pyramid.levels.emplace_back(sourceDimensions, targetDimensions);
     if (!ImageIO::readPyramidLevel<numGuideChannels, numStyleChannels>(
             configuration, pyramid.levels[0])) {
-      std::cerr << "Could not read input images." << std::endl;
+      std::cerr << "Could not read guide images." << std::endl;
       return false;
     }
     printTime("Done reading A, B and A'.");
