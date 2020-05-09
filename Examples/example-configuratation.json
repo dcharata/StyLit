@@ -12,11 +12,11 @@
       "test/original_src/examples/1/target_fullgi.png",
       "test/original_src/examples/1/target_indirb.png"
     ],
-    "sourceStyleImagePaths": ["test/original_src/examples/1/source_style_5.png"]
+    "sourceStyleImagePaths": ["test/original_src/examples/1/source_style.png"]
   },
   "outputs": {
     "targetStyleImagePaths": [
-      "test/original_src/examples/lowres_1/bin/target_style.png"
+      "Results/target_style"
     ]
   },
   "settings": {
@@ -24,9 +24,9 @@
     "styleImageFormats": ["rgb"],
     "guideImageWeights": [2, 2, 2, 2],
     "styleImageWeights": [1],
-    "patchSize": 5,
-    "numPatchMatchIterations": 6,
+    "patchSize": 3,
+    "numPatchMatchIterations": 4,
     "numPyramidLevels": 6,
-    "numOptimizationIterationsPerPyramidLevel": 1
+    "numOptimizationIterationsPerPyramidLevel": 2
   }
 }

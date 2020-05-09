@@ -8,7 +8,7 @@
 #include "Algorithm/NNFError.h"
 #include "Configuration/Configuration.h"
 //#include "Utilities/parasort.h"
-#include <parallel/algorithm>
+//#include <parallel/algorithm>
 
 #include <fstream>
 #include <limits>

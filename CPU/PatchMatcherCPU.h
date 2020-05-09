@@ -67,7 +67,7 @@ private:
     if (initRandom) {
       randomlyInitializeNNF(nnf);
     }
-   
+
     for (int i = 0; i < numIterations; i++) {
       bool iterationIsOdd = i % 2 == 1 ? true : false;
       // #pragma omp parallel for num_threads(3) collapse(2)
