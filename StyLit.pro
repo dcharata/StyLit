@@ -64,6 +64,7 @@ HEADERS += \
     CPU/NNFApplicatorCPU.h \
     Configuration/Configuration.h \
     Configuration/ConfigurationParser.h \
+    GPU/StyLitCoordinatorGPU.h \
     ImplementationSelector.h \
     Tests/TestErrorBudget.h \
     MainWindow.h \

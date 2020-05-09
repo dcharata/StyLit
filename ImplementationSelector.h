@@ -18,6 +18,14 @@ bool runWithConfiguration(const Configuration &configuration);
  * @return true if running StyLit succeeds; otherwise false
  */
 bool runCPU(const Configuration &configuration);
+
+/**
+ * @brief runCUDA Picks the correct template version of the CUDA implementation.
+ * @param configuration the configuration
+ * @return true if running StyLit succeeds; otherwise false
+ */
+bool runCUDA(const Configuration &configuration);
+
 }; // namespace ImplementationSelector
 
 #endif // IMPLEMENTATIONSELECTOR_H

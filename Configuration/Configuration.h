@@ -53,6 +53,9 @@ struct Configuration {
 
   // the number of optimization iterations per pyramid level
   int numOptimizationIterationsPerPyramidLevel = 0;
+
+  enum class CoordinatorType { CPU, CUDA };
+  CoordinatorType coordinatorType = CoordinatorType::CPU;
 };
 
 #endif // CONFIGURATION_H
