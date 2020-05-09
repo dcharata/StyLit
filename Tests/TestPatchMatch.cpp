@@ -20,8 +20,8 @@ bool TestPatchMatch::run() {
   configuration.patchSize = 5;
 
   {
-    const QString path1("./Examples/brown1.png");
-    const QString path2("./Examples/brown2.png");
+    const QString path1("./test/original_src/examples/1/source_style.png");
+    const QString path2("./test/original_src/examples/1/output.png");
     QImage sourceImage(path1);
 
     const ImageDimensions sourceDims{sourceImage.height(), sourceImage.width()};

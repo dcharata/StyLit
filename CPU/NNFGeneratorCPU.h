@@ -60,7 +60,7 @@ private:
     int patchesFilled = 0;
     bool firstIteration = true;
     const int forwardNNFSize = pyramidLevel.forwardNNF.sourceDimensions.area();
-
+    int numIterations = 0;
     while (patchesFilled <
            float(forwardNNFSize) * NNF_GENERATION_STOPPING_CRITERION) {
 
@@ -83,6 +83,7 @@ private:
       // fill up the error image of the nnfError struct
       NNFError nnfError(pyramidLevel.reverseNNF);
       float totalError = 0;
+      int invalidMappings = 0;
       for (int col = 0; col < nnfError.nnf.sourceDimensions.cols; col++) {
         for (int row = 0; row < nnfError.nnf.sourceDimensions.rows; row++) {
           Q_ASSERT(
@@ -101,10 +102,12 @@ private:
             totalError += patchError;
           } else { // if the mapping is invalid, just fill the error image with max float
             nnfError.error(row, col) = FeatureVector<float, 1>(std::numeric_limits<float>::max());
+            invalidMappings++;
           }
         }
       }
       std::cout << "Total error: " << totalError << std::endl;
+      std::cout << "Invalid Mappings: " << invalidMappings << std::endl;
 
       // get the error budget
       float budget;
@@ -120,6 +123,10 @@ private:
       int i = 0;
       const int width = nnfError.nnf.sourceDimensions.cols;
       int notFreeCount = 0;
+      int numAddedToForwardNNFInIteration = 0;
+      int recentlyTakenCount = 0;
+      int redundantBackgroundMatches = 0;
+      int redundantObjectMatches = 0;
       while (pastError < budget && i < int(sortedCoordinates.size())) {
         ImageCoordinates coords{sortedCoordinates[i].first / width,
                                 sortedCoordinates[i].first % width};
@@ -130,10 +137,19 @@ private:
         if (blacklistVal == ImageCoordinates::FREE_PATCH) {
           pyramidLevel.forwardNNF.setMapping(
               pyramidLevel.reverseNNF.getMapping(coords), coords);
+          // record which iteration this target patch was added to blacklist
           blacklist.setMapping(pyramidLevel.reverseNNF.getMapping(coords),
-                               coords);
+                               ImageCoordinates{numIterations, numIterations});
           pastError = sortedCoordinates[i].second;
+          numAddedToForwardNNFInIteration++;
           patchesFilled++;
+        } else if (blacklistVal == ImageCoordinates{numIterations, numIterations}) {
+          recentlyTakenCount++;
+          if (pyramidLevel.style.source(coords.row, coords.col)(0,0) > pyramidLevel.style.source(coords.row, coords.col)(2,0)) {
+            redundantBackgroundMatches++;
+          } else {
+            redundantObjectMatches++;
+          }
         } else {
           notFreeCount++;
         }
@@ -141,8 +157,13 @@ private:
       }
       std::cout << "Final past error: " << pastError << std::endl;
       std::cout << "Not free count: " << notFreeCount << std::endl;
+      std::cout << "Not free because taken in this iteration: " << recentlyTakenCount << std::endl;
+      std::cout << "Number of patches added to forward NNF in this iteration: " << numAddedToForwardNNFInIteration << std::endl;
+      std::cout << "Redundant background matches: " << redundantBackgroundMatches << std::endl;
+      std::cout << "Redundant object matches: " << redundantObjectMatches << std::endl;
       std::cout << "i = " << i << " is out of " << sortedCoordinates.size()
                 << std::endl;
+      numIterations++;
     }
 
     // if the level's forward NNf is not completely full, make a new forward NNF

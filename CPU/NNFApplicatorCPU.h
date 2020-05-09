@@ -38,6 +38,7 @@ private:
 
     const int PATCH_SIZE = configuration.patchSize;
 
+    // omp_set_num_threads(4);
     for (int col = 0; col < targetCols; col++) {
       for (int row = 0; row < targetRows; row++) {
         // create a final pixel value and keep track of the weight added
@@ -46,6 +47,7 @@ private:
           finalPix(i) = 0;
         }
         float sumWeight = 0;
+        // #pragma omp parallel for num_threads(2) collapse(2)
         for (int colOffset = -PATCH_SIZE / 2; colOffset <= PATCH_SIZE / 2;
              colOffset++) {
           for (int rowOffset = -PATCH_SIZE / 2; rowOffset <= PATCH_SIZE / 2;
