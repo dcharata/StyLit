@@ -3,8 +3,8 @@
 
 namespace StyLitCUDA {
 
-template<typename T> struct InterfaceImage {
-  InterfaceImage(const int rows, const int cols, const int numChannels, T * const data);
+template <typename T> struct InterfaceImage {
+  InterfaceImage(const int rows, const int cols, const int numChannels, T *const data);
   virtual ~InterfaceImage() = default;
 
   /**
@@ -29,11 +29,12 @@ template<typename T> struct InterfaceImage {
   // the number of columns in the image (i.e. its width)
   const int cols;
 
-  // The number of channels in the image. The number of bytes allocated to each pixel is channels * sizeof(T).
+  // The number of channels in the image. The number of bytes allocated to each pixel is channels *
+  // sizeof(T).
   const int numChannels;
 
   // A pointer to the image's data on the host device. This should be row-major.
-  T * const data;
+  T *const data;
 };
 
 } /* namespace StyLitCUDA */
