@@ -5,6 +5,7 @@
 #include "Algorithm/FeatureVector.h"
 #include "Algorithm/PyramidLevel.h"
 #include "Algorithm/ChannelWeights.h"
+#include "Algorithm/NNFError.h"
 #include "ErrorCalculatorCPU.h"
 #include <iostream>
 #include <limits>
@@ -23,11 +24,19 @@ public:
   ~PatchMatcherCPU() = default;
 
   void randomlyInitializeNNF(NNF &nnf) {
-    for (int col = 0; col < nnf.sourceDimensions.cols; col++) {
-      for (int row = 0; row < nnf.sourceDimensions.rows; row++) {
+    for (int row = 0; row < nnf.sourceDimensions.rows; row++) {
+      for (int col = 0; col < nnf.sourceDimensions.cols; col++) {
         ImageCoordinates from{row, col};
         ImageCoordinates to{randi(0, nnf.targetDimensions.rows), randi(0, nnf.targetDimensions.col)};
         nnf.setMapping(from, to);
+      }
+    }
+  }
+
+  void initNNFError(NNFError *nnfError) {
+    for (int row = 0; row < nnfError->nnf.sourceDimensions.rows; row++) {
+      for (int col = 0; col < nnfError->nnf.sourceDimensions.cols; col++) {
+        nnfError->error(row, col) = FeatureVector<float, 1>(std::numeric_limits<float>::max());
       }
     }
   }
@@ -53,8 +62,8 @@ private:
    * @return true if patch matching succeeds; otherwise false
    */
   bool implementationOfPatchMatch(const Configuration &configuration, NNF &nnf,
-                                  const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int numIterations,
-                                  int level, bool makeReverseNNF, bool initRandom, const NNF *const blacklist = nullptr) {
+                                  const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int level,
+                                  bool makeReverseNNF, bool initRandom, NNFError *nnfError = nullptr, NNF *const blacklist = nullptr) {
 
     const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel = pyramid.levels[level];
 
@@ -68,14 +77,28 @@ private:
       randomlyInitializeNNF(nnf);
     }
 
-    for (int i = 0; i < numIterations; i++) {
+    if (nnfError != nullptr) {
+      initNNFError(nnfError);
+    }
+
+    // precompute the search step radii
+    int i = 0;
+    const int w = std::max(std::max(nnf.sourceDimensions.cols, nnf.sourceDimensions.rows),
+                           std::max(nnf.targetDimensions.cols, nnf.targetDimensions.rows));
+    std::vector<float> radii;
+    while (w * fastPow(RANDOM_SEARCH_ALPHA, i) > 1.0) {
+      radii.push_back(w * fastPow(RANDOM_SEARCH_ALPHA, i));
+      i++;
+    }
+
+    for (int i = 0; i < configuration.numPatchMatchIterations; i++) {
       bool iterationIsOdd = i % 2 == 1 ? true : false;
       // #pragma omp parallel for num_threads(3) collapse(2)
       #pragma omp parallel for schedule(dynamic)
-      for (int col = 0; col < numNNFCols; col++) {
-        for (int row = 0; row < numNNFRows; row++) {
-          propagationStep(configuration, row, col, makeReverseNNF, iterationIsOdd, nnf, pyramidLevel, guideWeights, styleWeights, blacklist);
-          searchStep(configuration, row, col, makeReverseNNF, nnf, pyramidLevel, guideWeights, styleWeights, blacklist);
+      for (int row = 0; row < numNNFRows; row++) {
+        for (int col = 0; col < numNNFCols; col++) {
+          propagationStep(configuration, row, col, makeReverseNNF, iterationIsOdd, nnf, pyramidLevel, guideWeights, styleWeights, nnfError, blacklist);
+          searchStep(configuration, row, col, makeReverseNNF, nnf, pyramidLevel, guideWeights, styleWeights, radii, nnfError, blacklist);
         }
       }
     }
@@ -105,7 +128,7 @@ private:
   void propagationStep(const Configuration &configuration, int row, int col, bool makeReverseNNF, bool iterationIsOdd,
                        NNF &nnf, const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel,
                        const ChannelWeights<numGuideChannels> &guideWeights, const ChannelWeights<numStyleChannels> &styleWeights,
-                       const NNF *const blacklist = nullptr) {
+                       NNFError *nnfError, const NNF *const blacklist = nullptr) {
     ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels> errorCalc = ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels>();
     float newPatchError1 = -1.0; // we know if a patch was out of bounds if its error remains -1, so don't consider it the end of this method
     float newPatchError2 = -1.0;
@@ -171,16 +194,19 @@ private:
     bool changedToNewPatch1 = false;
     if (newPatchError1 > 0 && newPatchError1 < currentError) {
       nnf.setMapping(currentPatch, newPatch1);
+      if (nnfError != nullptr) nnfError->error(row, col) = FeatureVector<float, 1>(newPatchError1);
       changedToNewPatch1 = true;
     }
 
     if (changedToNewPatch1) {
       if (newPatchError2 > 0 && newPatchError2 < newPatchError1) {
         nnf.setMapping(currentPatch, newPatch2);
+        if (nnfError != nullptr) nnfError->error(row, col) = FeatureVector<float, 1>(newPatchError2);
       }
     } else {
       if (newPatchError2 > 0 && newPatchError2 < currentError) {
         nnf.setMapping(currentPatch, newPatch2);
+        if (nnfError != nullptr) nnfError->error(row, col) = FeatureVector<float, 1>(newPatchError2);
       }
     }
   }
@@ -216,7 +242,7 @@ private:
   void searchStep(const Configuration &configuration, int row, int col, bool makeReverseNNF,
                   NNF &nnf, const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel,
                   const ChannelWeights<numGuideChannels> guideWeights, const ChannelWeights<numStyleChannels> styleWeights,
-                  const NNF *const blacklist = nullptr) {
+                  const std::vector<float> &radii, NNFError *nnfError, const NNF *const blacklist = nullptr) {
     // NOTE: maximum search radius is the largest dimension of the images. We should tune this later on.
     ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels> errorCalc = ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels>();
     const int w = std::max(std::max(nnf.sourceDimensions.cols, nnf.sourceDimensions.rows),
@@ -229,10 +255,9 @@ private:
     } else {
       errorCalc.calculateError(configuration, pyramidLevel, currentCodomainPatch, currentPatch, guideWeights, styleWeights, currentError);
     }
-    int i = 0;
-    while (w * fastPow(RANDOM_SEARCH_ALPHA, i) > 1.0) {
-      const int col_offset = int(w * fastPow(RANDOM_SEARCH_ALPHA, i) * rand_uniform());
-      const int row_offset = int(w * fastPow(RANDOM_SEARCH_ALPHA, i) * rand_uniform());
+    for (int i = 0; i < radii.size(); i++) {
+      const int col_offset = int(radii[i] * rand_uniform());
+      const int row_offset = int(radii[i] * rand_uniform());
       const ImageCoordinates newCodomainPatch{currentCodomainPatch.row + row_offset, currentCodomainPatch.col + col_offset};
       if (newCodomainPatch.within(nnf.targetDimensions)) { // if this new codomain patch is within the codomain dimensions of the nnf
         bool newCodomainPatchAvailable = (blacklist == nullptr) || (blacklist->getMapping(newCodomainPatch) == ImageCoordinates::FREE_PATCH);
@@ -245,22 +270,21 @@ private:
           }
           if (newError < currentError) { // update the patch that currentPatch maps to if it has lower error
             nnf.setMapping(currentPatch, newCodomainPatch);
+            if (nnfError != nullptr) nnfError->error(row, col) = FeatureVector<float, 1>(newError);
             currentCodomainPatch.row = newCodomainPatch.row;
             currentCodomainPatch.col = newCodomainPatch.col;
             currentError = newError;
           }
         }
       }
-
-      i++;
     }
   }
 
-  int randi(int min, int max) {
+  inline int randi(int min, int max) {
     return (std::rand() % (max - min)) + min;
   }
 
-  float rand_uniform() {
+  inline float rand_uniform() {
     return (float(std::rand()) / float(INT_MAX)) * 2.0 - 1.0;
   }
 

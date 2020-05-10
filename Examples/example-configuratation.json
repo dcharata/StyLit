@@ -24,9 +24,9 @@
     "styleImageFormats": ["rgb"],
     "guideImageWeights": [2, 2, 2, 2],
     "styleImageWeights": [1],
-    "patchSize": 3,
-    "numPatchMatchIterations": 4,
+    "patchSize": 5,
+    "numPatchMatchIterations": 6,
     "numPyramidLevels": 6,
-    "numOptimizationIterationsPerPyramidLevel": 2
+    "numOptimizationIterationsPerPyramidLevel": 1
   }
 }

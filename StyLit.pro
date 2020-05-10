@@ -111,4 +111,6 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 # define the project file path so we can use relative paths
 DEFINES += PROJECT_PATH=\"\\\"$${_PRO_FILE_PWD_}/\\\"\"
+QMAKE_CXXFLAGS_RELEASE -= -O2
+QMAKE_CXXFLAGS_RELEASE += -O3
 

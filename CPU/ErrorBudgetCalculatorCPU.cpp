@@ -103,42 +103,16 @@ bool comparator(const std::pair<int, float> lhs,
 // ----------------------------------------------------------------------------------------
 
 bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
-    const Configuration &config, std::vector<std::pair<int, float>> &vecerror,
+    const Configuration &config, const std::vector<std::pair<float, ImageCoordinates>> &vecerror,
     const NNFError &nnferror, const float totalError, float &errorBudget,
     const NNF *const blacklist) {
-  // we may not need configuration?
 
   // read from the error image
   const int height = nnferror.error.dimensions.rows;
   const int width = nnferror.error.dimensions.cols;
   const int num_pixels = height * width;
-  for (int row = 0; row < height; row++) {
-    for (int col = 0; col < width; col++) {
-      ImageCoordinates codomainPatch =
-          nnferror.nnf.getMapping(ImageCoordinates{row, col});
-      bool validMapping =
-          (blacklist == nullptr) || (blacklist->getMapping(codomainPatch) ==
-                                     ImageCoordinates::FREE_PATCH);
-      if (validMapping) {
-        vecerror.push_back(std::make_pair(
-            row * width + col, nnferror.error.getConstPixel(row, col)[0]));
-      }
-    }
-  }
 
-  // sort the error vector
-  sort(vecerror.begin(), vecerror.end(), &comparator);
-//  __gnu_parallel::sort(vecerror.begin(), vecerror.end(), &comparator);
-
-  // std::vector<std::pair<int, float>> &vecerror
-//  parasort(sz, a, 4);
-//  std::sort(std::parallel::seq, vecerror.begin(), vecerror.end());
-
-  // float maxError = vecerror[vecerror.size() - 1].second;
   float meanError = totalError / vecerror.size();
-  float patchSizeSquared = config.patchSize * config.patchSize;
-
-  std::cout << "Mean error" << meanError << std::endl;
 
   // writes the errors to CSV for graphing
   // std::ofstream
@@ -147,28 +121,19 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
   // outFile << e.second << ", ";
   // outFile << std::endl;
 
-  std::cout << "Max error: " << vecerror[vecerror.size() - 1].second << std::endl;
-
-  // convert to eigen matrix
-  // ref:
-  // https://medium.com/@sarvagya.vaish/levenberg-marquardt-optimization-part-2-5a71f7db27a0
   Eigen::MatrixXd measuredValues(vecerror.size(), 2); // pairs of (x, f(x))
   double x_scale = 1.f / double(height * width);
   for (unsigned int i = 0; i < vecerror.size(); i++) {
     // normalize the x axis
     measuredValues(i, 0) = float(i) * x_scale;
+    //measuredValues(i, 0) = float(i) / float(vecerror.size());
 
-    // divide by total error to normalize the y axis
-    //measuredValues(i, 1) = (double)vecerror[i].second / patchSizeSquared;
-    measuredValues(i, 1) = (double)vecerror[i].second / double(meanError);
-    // measuredValues(i, 1) = (double)vecerror[i].second / double(totalError);
+    // normalize the y axis
+    measuredValues(i, 1) = (double)vecerror[i].first / double(meanError);
   }
 
-  // fit the hyperbolic function
-  // use the Levenberg-Marquardt method to determine the parameters which
-  // minimize the sum of all squared residuals.
-  // f(ind) = (a-b*ind)^(-1)
   int n = 2; // number of parameters
+
   // 'params' is vector of length 'n' containing the initial values for the
   // parameters.
   Eigen::VectorXd params(n);
@@ -185,22 +150,6 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
 
   Eigen::LevenbergMarquardt<LMFunctor, double> lm(functor);
   lm.minimize(params); // TODO: Use the status for something.
-
-  /*
-  // ----- start: for unit test - SHOULD REMOVE ------
-  std::cout << "LM optimization status: " << status << std::endl;
-  std::cout << "LM optimization iterations: " << lm.iter << std::endl;
-  std::cout << "estimated parameters: "
-            << "\ta: " << params(0) << "\tb: " << params(1) << std::endl;
-
-  Eigen::VectorXd gt_params(n);
-  gt_params(0) = 2.f;
-  gt_params(1) = 2.f;
-  std::cout << "ground-truth parameters: "
-            << "\ta: " << gt_params(0) << "\t\tb: " << gt_params(1)
-            << std::endl;
-  // ----- end: for unit test - SHOULD REMOVE ------
-  */
 
   // calculate the knee point
   double a = params(0);
@@ -226,28 +175,8 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
       0, std::min<int>(int(kneepoint * num_pixels), vecerror.size() - 1));
   std::cout << "Kneepoint index: " << kneepointIndex << std::endl;
 
-  // the integral of the errors we can tolerate is in the measuredValues at the
-  // kneepoint index we need to multiply by the total error to undo the
-  // normalization
-  std::cout << "Total error" << totalError << std::endl;
-  std::cout << "Measured value" << measuredValues(kneepointIndex, 1)
-            << std::endl;
-  // errorBudget = measuredValues(kneepointIndex, 1) * totalError;
-  // errorBudget = measuredValues(kneepointIndex, 1) * patchSizeSquared;
+  // we need to multiply by the mean error to undo the normalization
   errorBudget = measuredValues(kneepointIndex, 1) * meanError;
-
-  /*
-  // ----- start: for unit test - SHOULD REMOVE ------
-
-  std::cout << "estimated knee point: " << kneepoint << std::endl;
-  std::cout << "estimated error budget: " << errorBudget << std::endl;
-
-  std::cout << "Note: should comment out these logs in "
-               "ErrorBudgetCalculator.cpp in runtime)"
-            << std::endl;
-
-  // ----- end: for unit test - SHOULD REMOVE ------
-  */
 
   return true;
 }

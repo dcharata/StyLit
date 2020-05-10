@@ -18,6 +18,7 @@ bool TestPatchMatch::run() {
 
   Configuration configuration;
   configuration.patchSize = 5;
+  configuration.numPatchMatchIterations = 6;
 
   {
     const QString path1("./test/original_src/examples/1/source_style.png");
@@ -53,7 +54,7 @@ bool TestPatchMatch::run() {
     }
     std::cout << "Error: " << totalError << std::endl;
     for (int i = 0; i < 2; i++) {
-      patchMatcher.patchMatch(configuration, pyramid.levels[0].forwardNNF, pyramid, 2, 0, false, false);
+      //patchMatcher.patchMatch(configuration, pyramid.levels[0].forwardNNF, pyramid, 0, false, false);
       float totalError = 0;
       for (int col = 0; col < pyramid.levels[0].forwardNNF.sourceDimensions.cols; col++) {
         for (int row = 0; row < pyramid.levels[0].forwardNNF.sourceDimensions.rows; row++) {
@@ -96,7 +97,7 @@ bool TestPatchMatch::run() {
     ErrorCalculatorCPU<float, 3, 3> errorCalc;
     patchMatcher.randomlyInitializeNNF(pyramid.levels[0].forwardNNF);
 
-    patchMatcher.patchMatch(configuration, pyramid.levels[0].forwardNNF, pyramid, 6, 0, false, false);
+    //patchMatcher.patchMatch(configuration, pyramid.levels[0].forwardNNF, pyramid, 0, false, false);
 
     NNFApplicatorCPU<float, 3, 3> imageMaker;
     imageMaker.applyNNF(configuration, pyramid.levels[0]);
@@ -137,7 +138,7 @@ bool TestPatchMatch::run() {
       }
     }
 
-    patchMatcher.patchMatch(configuration, pyramid.levels[0].forwardNNF, pyramid, 6, 0, false, false, &blacklist);
+    //patchMatcher.patchMatch(configuration, pyramid.levels[0].forwardNNF, pyramid, 6, 0, false, false, &blacklist);
 
     int invalidMappings = 0;
     for (int col = 0; col < pyramid.levels[0].forwardNNF.sourceDimensions.cols; col++) {

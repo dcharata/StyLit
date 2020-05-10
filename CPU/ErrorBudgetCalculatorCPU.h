@@ -23,7 +23,7 @@ private:
    * @return true if error budget calculation succeeds; otherwise false
    */
   bool implementationOfCalculateErrorBudget(const Configuration &configuration,
-                                            std::vector<std::pair<int, float>> &vecerror,
+                                            const std::vector<std::pair<float, ImageCoordinates>> &vecerror,
                                             const NNFError &error,
                                             const float totalError,
                                             float &errorBudget,

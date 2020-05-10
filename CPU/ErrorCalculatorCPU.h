@@ -38,7 +38,6 @@ private:
       const ChannelWeights<numGuideChannels> &guideWeights,
       const ChannelWeights<numStyleChannels> &styleWeights, float &error) {
     error = 0;
-    ImageCoordinates min = ImageCoordinates{0, 0};
     ImageCoordinates A_max = pyramidLevel.guide.source.dimensions;
     ImageCoordinates B_max = pyramidLevel.guide.target.dimensions;
     const int centerRowSource = sourceCoordinates.row;
@@ -53,16 +52,16 @@ private:
     // weight to the total error.
     // omp_set_num_threads(4);
     // #pragma omp parallel for num_threads(1) collapse(2)
-    for (int colOffset = -PATCH_SIZE / 2; colOffset <= PATCH_SIZE / 2;
-         colOffset++) {
-      for (int rowOffset = -PATCH_SIZE / 2; rowOffset <= PATCH_SIZE / 2;
-           rowOffset++) {
+    for (int rowOffset = -PATCH_SIZE / 2; rowOffset <= PATCH_SIZE / 2;
+         rowOffset++) {
+      for (int colOffset = -PATCH_SIZE / 2; colOffset <= PATCH_SIZE / 2;
+           colOffset++) {
         ImageCoordinates sourceCoords = ImageCoordinates{
-            qBound(min.row, centerRowSource + rowOffset, A_max.row - 1),
-            qBound(min.col, centerColSource + colOffset, A_max.col - 1)};
+            qBound(0, centerRowSource + rowOffset, A_max.row - 1),
+            qBound(0, centerColSource + colOffset, A_max.col - 1)};
         ImageCoordinates targetCoords = ImageCoordinates{
-            qBound(min.row, centerRowTarget + rowOffset, B_max.row - 1),
-            qBound(min.col, centerColTarget + colOffset, B_max.col - 1)};
+            qBound(0, centerRowTarget + rowOffset, B_max.row - 1),
+            qBound(0, centerColTarget + colOffset, B_max.col - 1)};
         FeatureVector<T, numGuideChannels> guideDiff =
             pyramidLevel.guide.source.getConstPixel(sourceCoords.row,
                                                     sourceCoords.col) // A
