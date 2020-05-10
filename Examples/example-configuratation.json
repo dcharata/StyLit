@@ -12,11 +12,11 @@
       "test/original_src/examples/1/target_fullgi.png",
       "test/original_src/examples/1/target_indirb.png"
     ],
-    "sourceStyleImagePaths": ["test/original_src/examples/1/source_style_5.png"]
+    "sourceStyleImagePaths": ["test/original_src/examples/1/source_style.png"]
   },
   "outputs": {
     "targetStyleImagePaths": [
-      "test/original_src/examples/lowres_1/bin/target_style.png"
+      "./"
     ]
   },
   "settings": {

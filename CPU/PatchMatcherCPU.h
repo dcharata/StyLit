@@ -71,7 +71,7 @@ private:
     for (int i = 0; i < numIterations; i++) {
       bool iterationIsOdd = i % 2 == 1 ? true : false;
       // #pragma omp parallel for num_threads(3) collapse(2)
-      #pragma omp parallel for schedule(dynamic)
+      //#pragma omp parallel for schedule(dynamic)
       for (int col = 0; col < numNNFCols; col++) {
         for (int row = 0; row < numNNFRows; row++) {
           propagationStep(configuration, row, col, makeReverseNNF, iterationIsOdd, nnf, pyramidLevel, guideWeights, styleWeights, blacklist);

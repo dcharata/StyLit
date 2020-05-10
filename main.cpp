@@ -50,8 +50,7 @@ int main(int argc, char *argv[]) {
   }
   if (!parser.isSet(configurationFileOption)) {
     std::cerr << "You must specify a JSON configuration file using the "
-                 "--configuration flag."
-              << std::endl;
+                 "--configuration flag." << std::endl;
     return 1;
   }
 
