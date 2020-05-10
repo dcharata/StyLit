@@ -551,6 +551,10 @@ void patchmatch(const V2i&  sizeA,
   irad.push_back((sizeB(0) > sizeB(1) ? sizeB(0) : sizeB(1)));
 
   while (irad.back() != 1) irad.push_back(int(std::pow(sra, int(irad.size())) * irad[0]));
+  std::cout << "******************************";
+  for (int i = 0; i < irad.size(); i++) {
+    std::cout << irad[i] << std::endl;
+  }
 
   const int nir = int(irad.size());
 

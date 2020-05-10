@@ -85,12 +85,15 @@ private:
     int i = 0;
     const int w = std::max(std::max(nnf.sourceDimensions.cols, nnf.sourceDimensions.rows),
                            std::max(nnf.targetDimensions.cols, nnf.targetDimensions.rows));
-    std::vector<float> radii;
-    while (w * fastPow(RANDOM_SEARCH_ALPHA, i) > 1.0) {
-      radii.push_back(w * fastPow(RANDOM_SEARCH_ALPHA, i));
+    std::vector<int> radii;
+    while (w * std::pow(RANDOM_SEARCH_ALPHA, i) > 1.0) {
+      radii.push_back(w * std::pow(RANDOM_SEARCH_ALPHA, i));
       i++;
     }
-
+    std::cout << "******************************" << std::endl;
+    for (int i = 0; i < radii.size(); i++) {
+      std::cout << radii[i] << std::endl;
+    }
     for (int i = 0; i < configuration.numPatchMatchIterations; i++) {
       bool iterationIsOdd = i % 2 == 1 ? true : false;
       // #pragma omp parallel for num_threads(3) collapse(2)
@@ -183,12 +186,15 @@ private:
     }
 
     // calculate the energy from the current mapping
+    /*
     float currentError;
     if (makeReverseNNF) {
       errorCalc.calculateError(configuration, pyramidLevel, currentPatch, nnf.getMapping(currentPatch), guideWeights, styleWeights, currentError);
     } else {
       errorCalc.calculateError(configuration, pyramidLevel, nnf.getMapping(currentPatch), currentPatch, guideWeights, styleWeights, currentError);
     }
+    */
+    float currentError = nnfError->error(row, col)(0,0);
 
     // now that we have the errors of the new patches we are considering and the current error, we can decide which one is the best
     bool changedToNewPatch1 = false;
@@ -242,19 +248,20 @@ private:
   void searchStep(const Configuration &configuration, int row, int col, bool makeReverseNNF,
                   NNF &nnf, const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel,
                   const ChannelWeights<numGuideChannels> guideWeights, const ChannelWeights<numStyleChannels> styleWeights,
-                  const std::vector<float> &radii, NNFError *nnfError, const NNF *const blacklist = nullptr) {
+                  const std::vector<int> &radii, NNFError *nnfError, const NNF *const blacklist = nullptr) {
     // NOTE: maximum search radius is the largest dimension of the images. We should tune this later on.
     ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels> errorCalc = ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels>();
-    const int w = std::max(std::max(nnf.sourceDimensions.cols, nnf.sourceDimensions.rows),
-                           std::max(nnf.targetDimensions.cols, nnf.targetDimensions.rows));
     const ImageCoordinates currentPatch{row, col};
     ImageCoordinates currentCodomainPatch = nnf.getMapping(currentPatch);
+    /*
     float currentError;
     if (makeReverseNNF) {
       errorCalc.calculateError(configuration, pyramidLevel, currentPatch, currentCodomainPatch, guideWeights, styleWeights, currentError);
     } else {
       errorCalc.calculateError(configuration, pyramidLevel, currentCodomainPatch, currentPatch, guideWeights, styleWeights, currentError);
     }
+    */
+    float currentError = nnfError->error(row, col)(0,0);
     for (int i = 0; i < radii.size(); i++) {
       const int col_offset = int(radii[i] * rand_uniform());
       const int row_offset = int(radii[i] * rand_uniform());

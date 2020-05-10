@@ -141,10 +141,11 @@ private:
     // from patchmatch and use that to fill up the holes in the level's forward
     // NNF
     if (patchesFilled < forwardNNFSize) {
+      NNFError nnfError(pyramidLevel.forwardNNF);
       NNF forwardNNFFinal = NNF(pyramidLevel.guide.target.dimensions,
                                 pyramidLevel.guide.source.dimensions);
       patchMatcher.patchMatch(configuration, forwardNNFFinal, pyramid,
-                              level, false, true);
+                              level, false, true, &nnfError);
       for (int row = 0; row < forwardNNFFinal.sourceDimensions.rows; row++) {
         for (int col = 0; col < forwardNNFFinal.sourceDimensions.cols; col++) {
           ImageCoordinates currentPatch{row, col};
