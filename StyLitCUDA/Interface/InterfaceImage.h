@@ -10,7 +10,10 @@ template <typename T> struct InterfaceImage {
    * @param col the column
    * @return a pointer to the feature vector for the given coordinates
    */
-  T *at(const int row, const int col);
+  T *at(const int row, const int col) {
+    const int index = row * cols + col;
+    return &data[index * numChannels];
+  }
 
   /**
    * @brief constAt Returns a const pointer to the feature vector for the given coordinates.
@@ -18,7 +21,10 @@ template <typename T> struct InterfaceImage {
    * @param col the column
    * @return a const pointer to the feature vector for the given coordinates
    */
-  const T *constAt(const int row, const int col) const;
+  const T *constAt(const int row, const int col) const {
+    const int index = row * cols + col;
+    return &data[index * numChannels];
+  }
 
   // the number of rows in the image (i.e. its height)
   int rows;

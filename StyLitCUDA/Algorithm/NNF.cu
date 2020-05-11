@@ -1,6 +1,8 @@
 #include "NNF.cuh"
 
+#include "../Utilities/Coordinates.cuh"
 #include "../Utilities/Utilities.cuh"
+#include "Error.cuh"
 #include "PCG.cuh"
 
 #include <assert.h>
@@ -11,7 +13,7 @@ namespace StyLitCUDA {
 namespace NNF {
 
 template <typename T>
-__global__ void randomizeKernel(Image<NNFEntry> nnf, Image<PCGState> random, const Image<T> from, const Image<T> to) {
+__global__ void randomizeKernel(Image<NNFEntry> nnf, Image<PCGState> random, const Image<T> from, const Image<T> to, const int patchSize) {
   const int row = blockDim.x * blockIdx.x + threadIdx.x;
   const int col = blockDim.y * blockIdx.y + threadIdx.y;
   if (row < nnf.rows && col < nnf.cols) {
@@ -23,12 +25,12 @@ __global__ void randomizeKernel(Image<NNFEntry> nnf, Image<PCGState> random, con
     NNFEntry *entry = nnf.at(row, col);
     entry->row = mappedRow;
     entry->col = mappedCol;
-    entry->error = 1.f;//calculateError(source, target, row, col, mappedRow, mappedCol, patchSize);
+    entry->error = Error::calculate(from, to, Coordinates(row, col), Coordinates(mappedRow, mappedCol), patchSize);
   }
 }
 
 template <typename T>
-void randomize(Image<NNFEntry> &nnf, Image<PCGState> &random, const Image<T> &from, const Image<T> &to) {
+void randomize(Image<NNFEntry> &nnf, Image<PCGState> &random, const Image<T> &from, const Image<T> &to, const int patchSize) {
   assert(nnf.rows <= random.rows && nnf.cols <= random.cols);
   printf("StyLitCUDA: Randomly initializing NNF with dimensions [%d, %d] using array of random "
          "states with dimensions [%d, %d].\n",
@@ -41,12 +43,12 @@ void randomize(Image<NNFEntry> &nnf, Image<PCGState> &random, const Image<T> &fr
                        Utilities::divideRoundUp(nnf.cols, threadsPerBlock.y));
 
   // Runs the kernel that randomizes NNF entries.
-  randomizeKernel<<<numBlocks, threadsPerBlock>>>(nnf, random, from, to);
+  randomizeKernel<<<numBlocks, threadsPerBlock>>>(nnf, random, from, to, patchSize);
   check(cudaDeviceSynchronize());
 }
 
-template void randomize(Image<NNFEntry> &nnf, Image<PCGState> &random, const Image<int> &from, const Image<int> &to);
-template void randomize(Image<NNFEntry> &nnf, Image<PCGState> &random, const Image<float> &from, const Image<float> &to);
+template void randomize(Image<NNFEntry> &nnf, Image<PCGState> &random, const Image<int> &from, const Image<int> &to, const int patchSize);
+template void randomize(Image<NNFEntry> &nnf, Image<PCGState> &random, const Image<float> &from, const Image<float> &to, const int patchSize);
 
 } /* namespace NNF */
 } /* namespace StyLitCUDA */

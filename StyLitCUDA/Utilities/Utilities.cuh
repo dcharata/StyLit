@@ -26,6 +26,15 @@ int divideRoundUp(int a, int b);
  */
 __device__ int restrict(int value, int max);
 
+/**
+ * @brief clamp Clamps value to the range [minInclusive, maxExclusive).
+ * @param minInclusive the inclusive minimum value
+ * @param value the value to clamp
+ * @param maxExclusive the exclusive maximum value
+ * @return value clamped to [minInclusive, maxExclusive)
+ */
+__device__ int clamp(const int minInclusive, const int value, const int maxExclusive);
+
 } /* namespace Utilities */
 } /* namespace StyLitCUDA */
 

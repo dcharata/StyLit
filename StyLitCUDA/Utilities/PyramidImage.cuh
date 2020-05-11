@@ -2,7 +2,6 @@
 #define READONLYIMAGEPITCH_H_
 
 #include "../Interface/InterfaceImage.h"
-#include "Coordinates.h"
 #include "Image.cuh"
 
 #include <vector>

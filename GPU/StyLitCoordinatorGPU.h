@@ -93,6 +93,7 @@ public:
     input.bPrime.data = (float *)&pyramidLevel.style.target(0, 0);
 
     input.numLevels = configuration.numPyramidLevels;
+    input.patchSize = configuration.patchSize;
 
     const int ret = StyLitCUDA_runStyLitCUDA_float(input);
     printf("StyLitCUDA return value: %d\n", ret);

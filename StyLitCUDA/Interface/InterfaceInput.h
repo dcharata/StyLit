@@ -21,6 +21,8 @@ template <typename T> struct InterfaceInput {
   InterfaceImage<T> bPrime;
 
   int numLevels;
+
+  int patchSize;
 };
 
 } /* namespace StyLitCUDA */

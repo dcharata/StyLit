@@ -4,14 +4,13 @@
 namespace StyLitCUDA {
 
 struct Coordinates {
-  Coordinates();
-  Coordinates(const int row, const int col);
-  virtual ~Coordinates() = default;
+  __device__ Coordinates();
+  __device__ Coordinates(const int row, const int col);
   int row;
   int col;
 };
 
-Coordinates operator/(const Coordinates &lhs, const int rhs);
+__device__ Coordinates operator/(const Coordinates &lhs, const int rhs);
 
 } /* namespace StyLitCUDA */
 

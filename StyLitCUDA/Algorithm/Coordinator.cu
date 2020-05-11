@@ -48,8 +48,8 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
 
   // Randomizes the NNFs at the coarsest pyramid level.
   const int coarsestLevel = input.numLevels - 1;
-  NNF::randomize<T>(forward.levels[coarsestLevel], random, b.levels[coarsestLevel], a.levels[coarsestLevel]);
-  NNF::randomize<T>(reverse.levels[coarsestLevel], random, a.levels[coarsestLevel], b.levels[coarsestLevel]);
+  NNF::randomize<T>(forward.levels[coarsestLevel], random, b.levels[coarsestLevel], a.levels[coarsestLevel], input.patchSize);
+  NNF::randomize<T>(reverse.levels[coarsestLevel], random, a.levels[coarsestLevel], b.levels[coarsestLevel], input.patchSize);
 
   // Copies B' back to the caller.
   std::vector<InterfaceImage<T>> bImagesPrime(1);
