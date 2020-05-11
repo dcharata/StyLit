@@ -9,7 +9,7 @@ namespace StyLitCUDA {
 
 template <typename T>
 ImagePitch<T>::ImagePitch(const int rows, const int cols, const int numChannels)
-    : Image<T>(rows, cols, numChannels) {}
+    : rows(rows), cols(cols), numChannels(numChannels) {}
 
 template <typename T> void ImagePitch<T>::allocate() {
   fprintf(stderr, "check 1\n");
@@ -51,9 +51,9 @@ int ImagePitch<T>::populateChannels(const std::vector<InterfaceImage<T>> &images
         for (int i = 0; i < image.numChannels; i++) {
           hostImageVector[channel + i] = interfaceImageVector[i];
         }
-        channel += image.numChannels;
       }
     }
+    channel += image.numChannels;
   }
 
   // Copies hostImage to the device and frees it.

@@ -10,7 +10,7 @@ namespace StyLitCUDA {
 template <typename T>
 PyramidImagePitch<T>::PyramidImagePitch(const int rows, const int cols, const int numChannels,
                                         const int numLevels)
-    : PyramidImage<T>(rows, cols, numChannels, numLevels), deviceLevels(nullptr) {}
+    : rows(rows), cols(cols), numChannels(numChannels), numLevels(numLevels), deviceLevels(nullptr) {}
 
 template <typename T> void PyramidImagePitch<T>::allocate() {
   // Allocates device memory for deviceLevels.
@@ -71,7 +71,13 @@ template <typename T> void PyramidImagePitch<T>::free() {
 template <typename T>
 void PyramidImagePitch<T>::populateTopLevel(const std::vector<InterfaceImage<T>> &images,
                                             const int fromChannel) {
-  printf("hello you need to implement me!!!!\n");
+  ImagePitch<T> finestLevel(0, 0, 0);
+  ImagePitch<T> *hostLevels;
+  check(cudaMallocHost(&hostLevels, sizeof(ImagePitch<T>)));
+  check(cudaMemcpy((void *)hostLevels, (void *)deviceLevels, sizeof(ImagePitch<T>), cudaMemcpyDeviceToHost));
+  finestLevel = hostLevels[0];
+  finestLevel.populateChannels(images, fromChannel);
+  check(cudaFreeHost(hostLevels));
 }
 
 template <typename T>

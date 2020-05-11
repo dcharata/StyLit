@@ -1,22 +1,48 @@
 #ifndef IMAGEPITCH_H_
 #define IMAGEPITCH_H_
 
-#include "Image.cuh"
+#include "../Interface/InterfaceImage.h"
+
+#include <vector>
 
 namespace StyLitCUDA {
 
-template <typename T> struct ImagePitch : public Image<T> {
+template <typename T> class ImagePitch {
 public:
   ImagePitch(const int rows, const int cols, const int numChannels);
   virtual ~ImagePitch() = default;
 
-  void allocate() override;
+  /**
+   * @brief allocate Allocates the on-device memory associated with this
+   * Image. This isn't in Image constructor because it should only be
+   * triggered intentionally by the host, not when an Image is passed to the
+   * device via a kernel.
+   */
+  void allocate();
 
-  void free() override;
+  /**
+   * @brief free Frees the on-device memory associated with this Image. This
+   * isn't in Image's destructor because it should only be triggered
+   * intentionally by the host, not when an Image is passed to the device
+   * via a kernel.
+   */
+  void free();
 
-  __device__ T *at(const int row, const int col) override;
+  /**
+   * @brief at Returns a pointer to the feature vector for the given coordinates.
+   * @param row the row
+   * @param col the column
+   * @return a pointer to the feature vector for the given coordinates
+   */
+  __device__ T *at(const int row, const int col);
 
-  __device__ const T *constAt(const int row, const int col) const override;
+  /**
+   * @brief constAt Returns a const pointer to the feature vector for the given coordinates.
+   * @param row the row
+   * @param col the column
+   * @return a const pointer to the feature vector for the given coordinates
+   */
+  __device__ const T *constAt(const int row, const int col) const;
 
   /**
    * @brief populateChannels Copies the specified images to deviceData. The InterfaceImages'
@@ -27,6 +53,15 @@ public:
    * @return the number of channels populated
    */
   int populateChannels(const std::vector<InterfaceImage<T>> &images, const int fromChannel);
+
+  // the number of rows in the image
+  int rows;
+
+  // the number of columns in the image
+  int cols;
+
+  // the number of channels in the image
+  int numChannels;
 
 private:
   // the pitch returned by cudaMallocPitch
