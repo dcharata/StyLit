@@ -2,6 +2,7 @@
 
 #include "../Utilities/Image.cuh"
 #include "../Utilities/Utilities.cuh"
+#include "Applicator.cuh"
 #include "Downscaler.cuh"
 #include "NNF.cuh"
 #include "RandomInitializer.cuh"
@@ -48,13 +49,21 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
 
   // Randomizes the NNFs at the coarsest pyramid level.
   const int coarsestLevel = input.numLevels - 1;
-  NNF::randomize<T>(forward.levels[coarsestLevel], random, b.levels[coarsestLevel], a.levels[coarsestLevel], input.patchSize);
-  NNF::randomize<T>(reverse.levels[coarsestLevel], random, a.levels[coarsestLevel], b.levels[coarsestLevel], input.patchSize);
+  NNF::randomize<T>(forward.levels[coarsestLevel], random, b.levels[coarsestLevel],
+                    a.levels[coarsestLevel], input.patchSize);
+  NNF::randomize<T>(reverse.levels[coarsestLevel], random, a.levels[coarsestLevel],
+                    b.levels[coarsestLevel], input.patchSize);
+
+  // Populates B' at the coarsest pyramid level.
+  Applicator::apply<T>(forward.levels[coarsestLevel], b.levels[coarsestLevel],
+                       a.levels[coarsestLevel], input.b.numChannels,
+                       input.b.numChannels + input.bPrime.numChannels, input.patchSize);
 
   // Copies B' back to the caller.
+  // TODO: (this is currently configured to export the lowest resolution)
   std::vector<InterfaceImage<T>> bImagesPrime(1);
   bImagesPrime[0] = input.bPrime;
-  a.levels[1].retrieveChannels(bImagesPrime, 0);
+  b.levels[coarsestLevel].retrieveChannels(bImagesPrime, input.b.numChannels);
 }
 
 template <typename T> Coordinator<T>::~Coordinator() { random.free(); }

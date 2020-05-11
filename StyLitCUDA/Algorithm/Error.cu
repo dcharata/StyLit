@@ -8,7 +8,8 @@ namespace StyLitCUDA {
 namespace Error {
 
 template <typename T>
-__device__ float calculate(const Image<T> &x, const Image<T> &y, Coordinates inX, Coordinates inY, const int patchSize) {
+__device__ float calculate(const Image<T> &x, const Image<T> &y, Coordinates inX, Coordinates inY,
+                           const int patchSize) {
   // Clamps the patch coordinates so that every pixel inside a patch is in bounds.
   const int halfPatch = patchSize / 2;
   const int xRowLimit = x.rows - halfPatch;
@@ -38,8 +39,10 @@ __device__ float calculate(const Image<T> &x, const Image<T> &y, Coordinates inX
   return error;
 }
 
-template __device__ float calculate(const Image<int> &x, const Image<int> &y, Coordinates inX, Coordinates inY, const int patchSize);
-template __device__ float calculate(const Image<float> &x, const Image<float> &y, Coordinates inX, Coordinates inY, const int patchSize);
+template __device__ float calculate(const Image<int> &x, const Image<int> &y, Coordinates inX,
+                                    Coordinates inY, const int patchSize);
+template __device__ float calculate(const Image<float> &x, const Image<float> &y, Coordinates inX,
+                                    Coordinates inY, const int patchSize);
 
 } /* namespace Error */
 } /* namespace StyLitCUDA */

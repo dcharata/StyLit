@@ -10,7 +10,8 @@ namespace StyLitCUDA {
 namespace NNF {
 
 template <typename T>
-void randomize(Image<NNFEntry> &nnf, Image<PCGState> &random, const Image<T> &from, const Image<T> &to, const int patchSize);
+void randomize(Image<NNFEntry> &nnf, Image<PCGState> &random, const Image<T> &from,
+               const Image<T> &to, const int patchSize);
 
 } /* namespace NNF */
 } /* namespace StyLitCUDA */
