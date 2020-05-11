@@ -8,13 +8,11 @@
  * @brief The PyramidLevel struct This holds the information that's needed
  * across pyramid levels during StyLit.
  */
-template <typename T, unsigned int numGuideChannels,
-          unsigned int numStyleChannels>
+template <typename T, unsigned int numGuideChannels, unsigned int numStyleChannels>
 struct PyramidLevel {
   PyramidLevel(ImageDimensions sourceDims, ImageDimensions targetDims)
       : guide(sourceDims, targetDims), style(sourceDims, targetDims),
-        forwardNNF(targetDims, sourceDims), reverseNNF(sourceDims, targetDims) {
-  }
+        forwardNNF(targetDims, sourceDims), reverseNNF(sourceDims, targetDims) {}
 
   ImagePair<T, numGuideChannels> guide;
   ImagePair<T, numStyleChannels> style;

@@ -73,7 +73,6 @@ public:
   // the number of channels in the image
   int numChannels;
 
-private:
   // the pitch returned by cudaMallocPitch
   size_t pitch = 0;
 

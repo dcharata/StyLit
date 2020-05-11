@@ -23,8 +23,7 @@ public:
 /**
  * @brief The StyLitCoordinator class
  */
-template <typename T, unsigned int numGuideChannels,
-          unsigned int numStyleChannels>
+template <typename T, unsigned int numGuideChannels, unsigned int numStyleChannels>
 class StyLitCoordinator : public StyLitCoordinatorBase {
 public:
   StyLitCoordinator() = default;

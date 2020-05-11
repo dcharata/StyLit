@@ -1,15 +1,21 @@
 #include "Coordinator.cuh"
 
+#include "../Utilities/ImagePitch.cuh"
 #include "../Utilities/Utilities.cuh"
 #include "Downscaler.cuh"
 
 #include <cuda_runtime.h>
-#include <vector>
 #include <stdio.h>
+#include <vector>
 
 namespace StyLitCUDA {
 
-template <typename T> Coordinator<T>::Coordinator(InterfaceInput<T> &input) : input(input), a(input.a.rows, input.a.cols, input.a.numChannels + input.aPrime.numChannels, input.numLevels), b(input.b.rows, input.b.cols, input.b.numChannels + input.bPrime.numChannels, input.numLevels) {
+template <typename T>
+Coordinator<T>::Coordinator(InterfaceInput<T> &input)
+    : input(input), a(input.a.rows, input.a.cols, input.a.numChannels + input.aPrime.numChannels,
+                      input.numLevels),
+      b(input.b.rows, input.b.cols, input.b.numChannels + input.bPrime.numChannels,
+        input.numLevels) {
   // Loads the images into A and B.
   // A contains both A and A'.
   // B contains only B (since B' is filled in by StyLit).
@@ -29,20 +35,17 @@ template <typename T> Coordinator<T>::Coordinator(InterfaceInput<T> &input) : in
     Downscaler::downscale(b.levels[level], b.levels[level + 1]);
   }
 
+  // Copies B' back to the caller.
   std::vector<InterfaceImage<T>> bImagesPrime(1);
   bImagesPrime[0] = input.bPrime;
-  b.levels[0].retrieveChannels(bImagesPrime, input.b.numChannels);
+  a.levels[1].retrieveChannels(bImagesPrime, 0);
 }
 
-template <typename T> Coordinator<T>::~Coordinator() {
-
-}
+template <typename T> Coordinator<T>::~Coordinator() {}
 
 template class Coordinator<int>;
 template class Coordinator<float>;
 
-void runCoordinator_float(InterfaceInput<float> &input) {
-  Coordinator<float> coordinator(input);
-}
+void runCoordinator_float(InterfaceInput<float> &input) { Coordinator<float> coordinator(input); }
 
 } /* namespace StyLitCUDA */

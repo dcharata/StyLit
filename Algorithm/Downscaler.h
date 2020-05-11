@@ -26,8 +26,7 @@ public:
    * @param half the image to downscale to
    * @return true if downscaling succeeds; otherwise false
    */
-  bool downscale(const Configuration &configuration,
-                 const Image<T, numChannels> &full,
+  bool downscale(const Configuration &configuration, const Image<T, numChannels> &full,
                  Image<T, numChannels> &half) {
     Q_ASSERT(half.dimensions.halfTheSizeOf(full.dimensions));
     return implementationOfDownscale(configuration, full, half);

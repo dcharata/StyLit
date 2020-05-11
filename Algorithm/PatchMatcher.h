@@ -12,8 +12,7 @@ class NNF;
  * NNFs (nearest-neighbor fields). The NNF must have the size of the domain and
  * will map to indices in the codomain.
  */
-template <typename T, unsigned int numGuideChannels,
-          unsigned int numStyleChannels>
+template <typename T, unsigned int numGuideChannels, unsigned int numStyleChannels>
 class PatchMatcher {
 public:
   PatchMatcher() = default;
@@ -36,12 +35,11 @@ public:
    * @return true if patch matching succeeds; otherwise false
    */
   bool patchMatch(const Configuration &configuration, NNF &nnf,
-                  const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid,
-                  int numIterations, int level, bool makeReverseNNF,
-                  bool initRandom, const NNF *const blacklist = nullptr) {
-    return implementationOfPatchMatch(configuration, nnf, pyramid,
-                                      numIterations, level, makeReverseNNF,
-                                      initRandom, blacklist);
+                  const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int numIterations,
+                  int level, bool makeReverseNNF, bool initRandom,
+                  const NNF *const blacklist = nullptr) {
+    return implementationOfPatchMatch(configuration, nnf, pyramid, numIterations, level,
+                                      makeReverseNNF, initRandom, blacklist);
   }
 
 protected:
@@ -63,11 +61,11 @@ protected:
    * have already been mapped shouldn't be mapped again.
    * @return true if patch matching succeeds; otherwise false
    */
-  virtual bool implementationOfPatchMatch(
-      const Configuration &configuration, NNF &nnf,
-      const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid,
-      int numIterations, int level, bool makeReverseNNF, bool initRandom,
-      const NNF *const blacklist = nullptr) = 0;
+  virtual bool
+  implementationOfPatchMatch(const Configuration &configuration, NNF &nnf,
+                             const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid,
+                             int numIterations, int level, bool makeReverseNNF, bool initRandom,
+                             const NNF *const blacklist = nullptr) = 0;
 };
 
 #endif // PATCHMATCHER_H

@@ -24,8 +24,7 @@ public:
    * @param full the NNF to store the result in
    * @return true if upscaling succeeds; otherwise false
    */
-  bool upscaleNNF(const Configuration &configuration, const NNF &half,
-                  NNF &full);
+  bool upscaleNNF(const Configuration &configuration, const NNF &half, NNF &full);
 
 protected:
   /**
@@ -36,8 +35,8 @@ protected:
    * @param full the NNF to store the result in
    * @return true if upscaling succeeds; otherwise false
    */
-  virtual bool implementationOfUpscaleNNF(const Configuration &configuration,
-                                          const NNF &half, NNF &full) = 0;
+  virtual bool implementationOfUpscaleNNF(const Configuration &configuration, const NNF &half,
+                                          NNF &full) = 0;
 };
 
 #endif // NNFUPSCALER_H

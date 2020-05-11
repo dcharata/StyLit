@@ -10,9 +10,7 @@
  * @brief The Pyramid struct This holds the image pyramid used for StyLit and
  * its weights.
  */
-template <typename T, unsigned int numGuideChannels,
-          unsigned int numStyleChannels>
-struct Pyramid {
+template <typename T, unsigned int numGuideChannels, unsigned int numStyleChannels> struct Pyramid {
   std::vector<PyramidLevel<T, numGuideChannels, numStyleChannels>> levels;
   ChannelWeights<numGuideChannels> guideWeights;
   ChannelWeights<numStyleChannels> styleWeights;

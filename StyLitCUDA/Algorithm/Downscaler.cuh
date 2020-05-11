@@ -6,8 +6,7 @@
 namespace StyLitCUDA {
 namespace Downscaler {
 
-template <typename T>
-void downscale(const ImagePitch<T> &from, ImagePitch<T> to);
+template <typename T> void downscale(const ImagePitch<T> &from, ImagePitch<T> to);
 
 } /* namespace Downscaler */
 } /* namespace StyLitCUDA */

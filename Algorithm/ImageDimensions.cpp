@@ -1,6 +1,6 @@
 #include "ImageDimensions.h"
 
-const ImageDimensions ImageDimensions::FREE_PATCH = ImageDimensions{-1,-1};
+const ImageDimensions ImageDimensions::FREE_PATCH = ImageDimensions{-1, -1};
 
 ImageDimensions::ImageDimensions() : rows(-1), cols(-1) {}
 
@@ -21,13 +21,13 @@ bool operator==(const ImageDimensions &lhs, const ImageDimensions &rhs) {
 }
 
 ImageDimensions operator*(const ImageDimensions &dimensions, const int n) {
-    return ImageDimensions {dimensions.row * n, dimensions.col * n};
+  return ImageDimensions{dimensions.row * n, dimensions.col * n};
 }
 
 ImageDimensions operator/(const ImageDimensions &dimensions, const int n) {
-    return ImageDimensions {dimensions.row / n, dimensions.col / n};
+  return ImageDimensions{dimensions.row / n, dimensions.col / n};
 }
 
 ImageDimensions operator+(const ImageDimensions &dim1, const ImageDimensions &dim2) {
-    return ImageDimensions {dim1.row + dim2.row, dim1.col + dim2.col};
+  return ImageDimensions{dim1.row + dim2.row, dim1.col + dim2.col};
 }

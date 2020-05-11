@@ -14,8 +14,7 @@ struct Configuration;
  * by repeatedly sampling a reverse NNF, but this could theoretically be swapped
  * out for something that resembles ebsynth's implementation more.
  */
-template <typename T, unsigned int numGuideChannels,
-          unsigned int numStyleChannels>
+template <typename T, unsigned int numGuideChannels, unsigned int numStyleChannels>
 class NNFGenerator {
 public:
   NNFGenerator() = default;
@@ -33,8 +32,7 @@ public:
    * @return true if NNF generation succeeds; otherwise false
    */
   bool generateNNF(const Configuration &configuration,
-                   Pyramid<T, numGuideChannels, numStyleChannels> &pyramid,
-                   int level) {
+                   Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int level) {
     // The pyramid level must be valid.
     Q_ASSERT(level >= 0 && level < int(pyramid.levels.size()));
 
@@ -61,9 +59,9 @@ protected:
    * generated
    * @return true if NNF generation succeeds; otherwise false
    */
-  virtual bool implementationOfGenerateNNF(
-      const Configuration &configuration,
-      Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int level) = 0;
+  virtual bool implementationOfGenerateNNF(const Configuration &configuration,
+                                           Pyramid<T, numGuideChannels, numStyleChannels> &pyramid,
+                                           int level) = 0;
 };
 
 #endif // NNFGENERATOR_H

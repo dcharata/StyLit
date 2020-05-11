@@ -13,4 +13,12 @@ void assertCUDA(cudaError_t code, const char *file, int line, bool abort) {
   }
 }
 
+namespace Utilities {
+
+int divideRoundUp(int a, int b) { return (a + b - 1) / b; }
+
+__device__ int restrict(int value, int max) { return (value >= max) ? max - 1 : value; }
+
+} /* namespace Utilities */
+
 } /* namespace StyLitCUDA */

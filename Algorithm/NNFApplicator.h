@@ -11,8 +11,7 @@ struct Configuration;
  * target image by averaging patches in a pyramid level's NNF and storing
  * the results in the level's stylized target image.
  */
-template <typename T, unsigned int numGuideChannels,
-          unsigned int numStyleChannels>
+template <typename T, unsigned int numGuideChannels, unsigned int numStyleChannels>
 class NNFApplicator {
 public:
   NNFApplicator() = default;
@@ -40,9 +39,9 @@ protected:
    *        we are generating the stylized target image
    * @return true if stylized target image generation succeeds; otherwise false
    */
-  virtual bool implementationOfApplyNNF(
-      const Configuration &configuration,
-      PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel) = 0;
+  virtual bool
+  implementationOfApplyNNF(const Configuration &configuration,
+                           PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel) = 0;
 };
 
 #endif // NNFAPPLICATOR_H

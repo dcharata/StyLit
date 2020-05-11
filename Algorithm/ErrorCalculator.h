@@ -1,9 +1,9 @@
 #ifndef ERRORCALCULATOR_H
 #define ERRORCALCULATOR_H
 
+#include "ChannelWeights.h"
 #include "ImageDimensions.h"
 #include "PyramidLevel.h"
-#include "ChannelWeights.h"
 #include <iostream>
 
 struct Configuration;
@@ -13,8 +13,7 @@ struct Configuration;
  * calculator. It takes a pyramid level and set of coordinates and calculates
  * the error.
  */
-template <typename T, unsigned int numGuideChannels,
-          unsigned int numStyleChannels>
+template <typename T, unsigned int numGuideChannels, unsigned int numStyleChannels>
 class ErrorCalculator {
 public:
   ErrorCalculator() = default;
@@ -31,23 +30,18 @@ public:
    * @param error the out argument for the error
    * @return true if calculating the error succeeds; otherwise false
    */
-  bool calculateError(
-      const Configuration &configuration,
-      const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel,
-      const ImageCoordinates &sourceCoordinates,
-      const ImageCoordinates &targetCoordinates,
-      const ChannelWeights<numGuideChannels> &guideWeights,
-      const ChannelWeights<numStyleChannels> &styleWeights, float &error) {
-    Q_ASSERT(pyramidLevel.guide.source.dimensions ==
-             pyramidLevel.style.source.dimensions);
-    Q_ASSERT(pyramidLevel.guide.target.dimensions ==
-             pyramidLevel.style.target.dimensions);
+  bool calculateError(const Configuration &configuration,
+                      const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel,
+                      const ImageCoordinates &sourceCoordinates,
+                      const ImageCoordinates &targetCoordinates,
+                      const ChannelWeights<numGuideChannels> &guideWeights,
+                      const ChannelWeights<numStyleChannels> &styleWeights, float &error) {
+    Q_ASSERT(pyramidLevel.guide.source.dimensions == pyramidLevel.style.source.dimensions);
+    Q_ASSERT(pyramidLevel.guide.target.dimensions == pyramidLevel.style.target.dimensions);
     Q_ASSERT(sourceCoordinates.within(pyramidLevel.guide.source.dimensions));
     Q_ASSERT(targetCoordinates.within(pyramidLevel.guide.target.dimensions));
-    return implementationOfCalculateError(configuration, pyramidLevel,
-                                          sourceCoordinates, targetCoordinates,
-                                          guideWeights, styleWeights,
-                                          error);
+    return implementationOfCalculateError(configuration, pyramidLevel, sourceCoordinates,
+                                          targetCoordinates, guideWeights, styleWeights, error);
   }
 
 protected:
@@ -64,8 +58,7 @@ protected:
   virtual bool implementationOfCalculateError(
       const Configuration &configuration,
       const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel,
-      const ImageCoordinates &sourceCoordinates,
-      const ImageCoordinates &targetCoordinates,
+      const ImageCoordinates &sourceCoordinates, const ImageCoordinates &targetCoordinates,
       const ChannelWeights<numGuideChannels> &guideWeights,
       const ChannelWeights<numStyleChannels> &styleWeights, float &error) = 0;
 };

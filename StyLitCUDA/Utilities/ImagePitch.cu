@@ -12,8 +12,7 @@ ImagePitch<T>::ImagePitch(const int rows, const int cols, const int numChannels)
     : rows(rows), cols(cols), numChannels(numChannels) {}
 
 template <typename T> void ImagePitch<T>::allocate() {
-  check(
-      cudaMallocPitch(&deviceData, &pitch, numChannels * cols * sizeof(T), rows));
+  check(cudaMallocPitch(&deviceData, &pitch, numChannels * cols * sizeof(T), rows));
 }
 
 template <typename T> void ImagePitch<T>::free() { check(cudaFree((void *)deviceData)); }
@@ -65,8 +64,7 @@ int ImagePitch<T>::populateChannels(const std::vector<InterfaceImage<T>> &images
 }
 
 template <typename T>
-int ImagePitch<T>::retrieveChannels(std::vector<InterfaceImage<T>> &images,
-                                    const int fromChannel) {
+int ImagePitch<T>::retrieveChannels(std::vector<InterfaceImage<T>> &images, const int fromChannel) {
   // Temporarily allocates space for the image on the host.
   T *hostData;
   const int hostImageSizeInBytes = rows * cols * numChannels * sizeof(T);
