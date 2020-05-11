@@ -10,7 +10,8 @@ namespace StyLitCUDA {
 namespace Downscaler {
 
 template <typename T>
-__device__ void sampleBilinear(T *result, const ImagePitch<T> &from, const float row, const float col) {
+__device__ void sampleBilinear(T *result, const ImagePitch<T> &from, const float row,
+                               const float col) {
   const int rowFloor = Utilities::restrict(int(row), from.rows);
   const int colFloor = Utilities::restrict(int(col), from.cols);
   const int rowCeil = Utilities::restrict(rowFloor + 1, from.rows);
@@ -32,11 +33,14 @@ __device__ void sampleBilinear(T *result, const ImagePitch<T> &from, const float
   const T *bottomRight = from.constAt(rowCeil, colCeil);
 
   for (int i = 0; i < from.numChannels; i++) {
-    result[i] = (T)(topLeft[i] * topLeftWeight + topRight[i] * topRightWeight + bottomLeft[i] * bottomLeftWeight + bottomRight[i] * bottomRightWeight);
+    result[i] = (T)(topLeft[i] * topLeftWeight + topRight[i] * topRightWeight +
+                    bottomLeft[i] * bottomLeftWeight + bottomRight[i] * bottomRightWeight);
   }
 }
 
-template <typename T> __global__ void downscaleKernel(const ImagePitch<T> from, ImagePitch<T> to, const float rowScale, const float colScale) {
+template <typename T>
+__global__ void downscaleKernel(const ImagePitch<T> from, ImagePitch<T> to, const float rowScale,
+                                const float colScale) {
   const int row = blockDim.x * blockIdx.x + threadIdx.x;
   const int col = blockDim.y * blockIdx.y + threadIdx.y;
   if (row < to.rows && col < to.cols) {
