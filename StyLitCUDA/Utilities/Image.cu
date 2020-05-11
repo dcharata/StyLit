@@ -1,5 +1,7 @@
 #include "Image.cuh"
 
+#include "../Algorithm/NNF.cuh"
+#include "../Algorithm/PCG.cuh"
 #include "Utilities.cuh"
 
 #include <cuda_runtime.h>
@@ -97,5 +99,7 @@ int Image<T>::retrieveChannels(std::vector<InterfaceImage<T>> &images, const int
 
 template struct Image<int>;
 template struct Image<float>;
+template struct Image<NNFEntry>;
+template struct Image<PCGState>;
 
 } /* namespace StyLitCUDA */

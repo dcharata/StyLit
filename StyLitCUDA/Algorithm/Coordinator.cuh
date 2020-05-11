@@ -3,6 +3,8 @@
 
 #include "../Interface/InterfaceInput.h"
 #include "../Utilities/PyramidImage.cuh"
+#include "NNFEntry.h"
+#include "PCG.cuh"
 
 #include <memory>
 
@@ -21,6 +23,18 @@ private:
 
   // This contains the channels for B and B'.
   PyramidImage<T> b;
+
+  // This image contains the state needed for per-pixel pseudorandom number generation.
+  // It's big enough to work for both A and B.
+  Image<PCGState> random;
+
+  // This contains a forward NNF for each pyramid level.
+  // (forward NNF: B-sized array of entries in A)
+  PyramidImage<NNFEntry> forward;
+
+  // This contains a reverse NNF for each pyramid level.
+  // (reverse NNF: A-sized array of entries in B)
+  PyramidImage<NNFEntry> reverse;
 };
 
 // This allows the C++ code to access the coordinator.

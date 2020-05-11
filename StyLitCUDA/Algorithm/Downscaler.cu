@@ -7,7 +7,6 @@
 #include <stdio.h>
 
 namespace StyLitCUDA {
-namespace Downscaler {
 
 template <typename T>
 __device__ void sampleBilinear(T *result, const Image<T> &from, const float row, const float col) {
@@ -47,7 +46,7 @@ __global__ void downscaleKernel(const Image<T> from, Image<T> to, const float ro
   }
 }
 
-template <typename T> void downscale(const Image<T> &from, Image<T> to) {
+template <typename T> void downscale(const Image<T> &from, Image<T> &to) {
   printf("StyLitCUDA: Downscaling [%d, %d] to [%d, %d].\n", from.rows, from.cols, to.rows, to.cols);
 
   // Calculates the block size.
@@ -63,8 +62,7 @@ template <typename T> void downscale(const Image<T> &from, Image<T> to) {
   check(cudaDeviceSynchronize());
 }
 
-template void downscale(const Image<int> &from, Image<int> to);
-template void downscale(const Image<float> &from, Image<float> to);
+template void downscale(const Image<int> &from, Image<int> &to);
+template void downscale(const Image<float> &from, Image<float> &to);
 
-} /* namespace Downscaler */
 } /* namespace StyLitCUDA */

@@ -2,13 +2,12 @@
 #define PCG_H_
 
 #include "../Utilities/Image.cuh"
+#include "../Utilities/PyramidImage.cuh"
 
 #include <cuda_runtime.h>
 #include <stdint.h>
 
 namespace StyLitCUDA {
-
-namespace PCG {
 
 /**
  * @brief The PCGState struct This holds the state for PCG pseudorandom number generation. This is
@@ -19,19 +18,17 @@ struct PCGState {
   uint64_t increment;
 };
 
-__device__ void pcgAdvance(PCGState *rng);
+namespace PCG {
 
-__device__ uint32_t pcgOutput(uint64_t state);
+__device__ void advance(PCGState *rng);
 
-__device__ uint32_t pcgRand(PCGState *rng);
+__device__ uint32_t output(uint64_t state);
 
-__device__ void pcgInit(PCGState *rng, uint64_t seed, uint64_t stream);
+__device__ uint32_t rand(PCGState *rng);
 
-// This is used to maintain a state for a pseudorandom number generator for each source pixel.
-using RandomState = Image<PCGState>;
+__device__ void init(PCGState *rng, uint64_t seed, uint64_t stream);
 
 } /* namespace PCG */
-
 } /* namespace StyLitCUDA */
 
 #endif /* PCG_H_ */

@@ -1,5 +1,7 @@
 #include "PyramidImage.cuh"
 
+#include "../Algorithm/NNF.cuh"
+#include "../Algorithm/PCG.cuh"
 #include "Utilities.cuh"
 
 #include <cuda_runtime.h>
@@ -32,5 +34,7 @@ template <typename T> PyramidImage<T>::~PyramidImage() {
 
 template struct PyramidImage<int>;
 template struct PyramidImage<float>;
+template struct PyramidImage<NNFEntry>;
+template struct PyramidImage<PCGState>;
 
 } /* namespace StyLitCUDA */

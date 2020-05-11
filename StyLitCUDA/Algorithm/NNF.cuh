@@ -2,19 +2,17 @@
 #define NNF_H_
 
 #include "../Utilities/Image.cuh"
-
-#include <limits>
+#include "../Utilities/PyramidImage.cuh"
+#include "NNFEntry.h"
+#include "PCG.cuh"
 
 namespace StyLitCUDA {
+namespace NNF {
 
-struct NNFEntry {
-  int row = -1;
-  int col = -1;
-  float error = std::numeric_limits<float>::max();
-};
+template <typename T>
+void randomize(Image<NNFEntry> &nnf, Image<PCGState> &random, const Image<T> &from, const Image<T> &to);
 
-using NNF = Image<NNFEntry>;
-
+} /* namespace NNF */
 } /* namespace StyLitCUDA */
 
 #endif /* NNF_H_ */
