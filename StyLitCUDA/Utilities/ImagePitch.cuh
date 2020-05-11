@@ -54,6 +54,16 @@ public:
    */
   int populateChannels(const std::vector<InterfaceImage<T>> &images, const int fromChannel);
 
+  /**
+   * @brief retrieveChannels Copies the specified images from deviceData. The InterfaceImages'
+   * dimensions must match this ImagePitch's dimensions, and the sum of the InterfaceImages'
+   * numChannels plus fromChannel must be less than or equal to this ImagePitch's numChannels.
+   * @param images the image to copy into from deviceData
+   * @param fromChannel the channel in the ImagePitch to start from when copying
+   * @return the number of channels populated
+   */
+  int retrieveChannels(std::vector<InterfaceImage<T>> &images, const int fromChannel);
+
   // the number of rows in the image
   int rows;
 

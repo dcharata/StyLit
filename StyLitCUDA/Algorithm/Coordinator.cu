@@ -1,39 +1,41 @@
 #include "Coordinator.cuh"
 
+#include "../Utilities/Utilities.cuh"
+#include "Downscaler.cuh"
+
 #include <cuda_runtime.h>
 #include <vector>
 #include <stdio.h>
 
 namespace StyLitCUDA {
 
-template <typename T>
-__global__  void test(PyramidImagePitch<T> test) {
-  printf("hi from the GPU I guess\n");
-}
-
 template <typename T> Coordinator<T>::Coordinator(InterfaceInput<T> &input) : input(input), a(input.a.rows, input.a.cols, input.a.numChannels + input.aPrime.numChannels, input.numLevels), b(input.b.rows, input.b.cols, input.b.numChannels + input.bPrime.numChannels, input.numLevels) {
-  // A and B are initialized here since putting them in the initializer lists would be confusing.
-  a.allocate();
-  b.allocate();
-
   // Loads the images into A and B.
   // A contains both A and A'.
+  // B contains only B (since B' is filled in by StyLit).
   std::vector<InterfaceImage<T>> aImages(2);
   aImages[0] = input.a;
   aImages[1] = input.aPrime;
-  a.populateTopLevel(aImages, 0);
-
-  // B contains only B (since B' is filled in by StyLit).
+  a.levels[0].populateChannels(aImages, 0);
   std::vector<InterfaceImage<T>> bImages(1);
   bImages[0] = input.b;
-  b.populateTopLevel(bImages, 0);
+  b.levels[0].populateChannels(bImages, 0);
 
-  test<T><<<1, 1>>>(a);
+  // Downscales the images to form the pyramid.
+  for (int level = 0; level < a.levels.size() - 1; level++) {
+    Downscaler::downscale(a.levels[level], a.levels[level + 1]);
+  }
+  for (int level = 0; level < b.levels.size() - 1; level++) {
+    Downscaler::downscale(b.levels[level], b.levels[level + 1]);
+  }
+
+  std::vector<InterfaceImage<T>> bImagesPrime(1);
+  bImagesPrime[0] = input.bPrime;
+  b.levels[0].retrieveChannels(bImagesPrime, input.b.numChannels);
 }
 
 template <typename T> Coordinator<T>::~Coordinator() {
-  a.free();
-  b.free();
+
 }
 
 template class Coordinator<int>;

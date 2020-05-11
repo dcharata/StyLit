@@ -84,18 +84,21 @@ public:
 
     input.aPrime.rows = pyramidLevel.style.source.dimensions.rows;
     input.aPrime.cols = pyramidLevel.style.source.dimensions.cols;
-    input.aPrime.numChannels = numGuideChannels;
+    input.aPrime.numChannels = numStyleChannels;
     input.aPrime.data = (float *)&pyramidLevel.style.source(0, 0);
 
     input.bPrime.rows = pyramidLevel.style.target.dimensions.rows;
     input.bPrime.cols = pyramidLevel.style.target.dimensions.cols;
-    input.bPrime.numChannels = numGuideChannels;
+    input.bPrime.numChannels = numStyleChannels;
     input.bPrime.data = (float *)&pyramidLevel.style.target(0, 0);
 
     input.numLevels = configuration.numPyramidLevels;
 
     const int ret = StyLitCUDA_runStyLitCUDA_float(input);
     printf("StyLitCUDA return value: %d\n", ret);
+    ImageIO::writeImage<numStyleChannels>("/home/davidcharatan/Documents/StyLitBin/test.png",
+                                          pyramidLevel.style.target, ImageFormat::RGB, 0);
+    printf("Saved image.");
     return true;
   }
 
