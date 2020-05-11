@@ -267,6 +267,8 @@ void resampleCPU(      Array2<Vec<N,T>>& O,
   }
 }
 
+int calls = 0;
+
 template<int NS,int NG,typename T>
 struct PatchSSD_Split
 {
@@ -297,6 +299,7 @@ struct PatchSSD_Split
                    const V2i   sxy,
                    const float ebest)
   {
+    calls += 1;
     const int tx = txy(0);
     const int ty = txy(1);
     const int sx = sxy(0);
@@ -960,7 +963,8 @@ void ebsynthCpu(int    numStyleChannels,
         */
       }
     }
-
+    std::cout << "CALLS" << std::endl;
+    std::cout << calls << std::endl;
     if (level==levelCount-1 && (extraPass3x3==0 || (extraPass3x3!=0 && inExtraPass)))
     {
       if (outputNnfData!=NULL) { copy(&outputNnfData,pyramid[level].NNF); }

@@ -34,6 +34,8 @@ public:
     printTime("Starting runStyLit in StyLitCoordinatorCPU.");
     Pyramid<float, numGuideChannels, numStyleChannels> pyramid;
 
+    //srand(4);
+
     // Gets the highest pyramid level's dimensions.
     ImageDimensions sourceDimensions;
     if (!ImageIO::getImageDimensions(configuration.sourceGuideImagePaths[0],
@@ -171,6 +173,7 @@ public:
 
     // Runs the actual algorithm.
     printTime("Created final image");
+    ErrorCalculatorCPU<float, numGuideChannels, numStyleChannels> thing;
     return true;
   }
 

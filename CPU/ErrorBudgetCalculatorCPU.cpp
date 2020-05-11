@@ -121,15 +121,23 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
   // outFile << e.second << ", ";
   // outFile << std::endl;
 
-  Eigen::MatrixXd measuredValues(vecerror.size(), 2); // pairs of (x, f(x))
-  double x_scale = 1.f / double(height * width);
-  for (unsigned int i = 0; i < vecerror.size(); i++) {
-    // normalize the x axis
-    measuredValues(i, 0) = float(i) * x_scale;
-    //measuredValues(i, 0) = float(i) / float(vecerror.size());
+  int NUM_SAMPLES = 50;
 
-    // normalize the y axis
-    measuredValues(i, 1) = (double)vecerror[i].first / double(meanError);
+  Eigen::MatrixXd measuredValues(NUM_SAMPLES, 2); // pairs of (x, f(x))
+  double x_scale = 1.f / double(height * width);
+  int idx = 0;
+  int validSamples = 0;
+  for (unsigned int i = 0; i < vecerror.size(); i++) {
+    if (i % ((height * width) / (NUM_SAMPLES - 1)) == 0 && (vecerror[i].first < 100.0f)) {
+      // normalize the x axis
+      measuredValues(idx, 0) = float(i) * x_scale;
+      //measuredValues(i, 0) = float(i) / float(vecerror.size());
+
+      // normalize the y axis
+      measuredValues(idx, 1) = (double)vecerror[i].first / double(meanError);
+      idx++;
+      validSamples++;
+    }
   }
 
   int n = 2; // number of parameters
@@ -145,11 +153,13 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
   // Create a LevenbergMarquardt object and pass it the functor.
   LMFunctor functor;
   functor.measuredValues = measuredValues;
-  functor.m = vecerror.size(); // num_pixels;
+  functor.m = validSamples; // num_pixels;
   functor.n = n;
 
   Eigen::LevenbergMarquardt<LMFunctor, double> lm(functor);
+  std::cout << "minimizing" << std::endl;
   lm.minimize(params); // TODO: Use the status for something.
+  std::cout << "minimizing" << std::endl;
 
   // calculate the knee point
   double a = params(0);
@@ -171,8 +181,7 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
 
   // get the kneepoint index
   // we need to multply by the number of pixels to undo the normalization
-  int kneepointIndex = std::max<int>(
-      0, std::min<int>(int(kneepoint * num_pixels), vecerror.size() - 1));
+  int kneepointIndex = std::max<int>(0, std::min<int>(int(kneepoint * validSamples), validSamples - 1));
   std::cout << "Kneepoint index: " << kneepointIndex << std::endl;
 
   // we need to multiply by the mean error to undo the normalization

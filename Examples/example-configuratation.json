@@ -27,6 +27,6 @@
     "patchSize": 5,
     "numPatchMatchIterations": 6,
     "numPyramidLevels": 6,
-    "numOptimizationIterationsPerPyramidLevel": 1
+    "numOptimizationIterationsPerPyramidLevel": 6
   }
 }

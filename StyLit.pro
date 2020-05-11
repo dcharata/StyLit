@@ -13,6 +13,8 @@ QMAKE_LFLAGS += -lomp
 LIBS += -L /usr/local/lib /usr/local/lib/libomp.dylib
 }
 
+#DEFINES += EIGEN_NO_DEBUG
+
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
@@ -111,6 +113,6 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 # define the project file path so we can use relative paths
 DEFINES += PROJECT_PATH=\"\\\"$${_PRO_FILE_PWD_}/\\\"\"
-QMAKE_CXXFLAGS_RELEASE -= -O2
-QMAKE_CXXFLAGS_RELEASE += -O3
+#QMAKE_CXXFLAGS_RELEASE -= -O2
+#QMAKE_CXXFLAGS_RELEASE += -O3
 

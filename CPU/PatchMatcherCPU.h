@@ -1,4 +1,4 @@
-#ifndef PATCHMATCHERCPU_H
+﻿#ifndef PATCHMATCHERCPU_H
 #define PATCHMATCHERCPU_H
 
 #include "Algorithm/PatchMatcher.h"
@@ -33,16 +33,18 @@ public:
     }
   }
 
-  void initNNFError(NNFError *nnfError) {
-    for (int row = 0; row < nnfError->nnf.sourceDimensions.rows; row++) {
-      for (int col = 0; col < nnfError->nnf.sourceDimensions.cols; col++) {
-        nnfError->error(row, col) = FeatureVector<float, 1>(std::numeric_limits<float>::max());
+  void initNNFError(NNFError &nnfError) {
+    for (int row = 0; row < nnfError.nnf.sourceDimensions.rows; row++) {
+      for (int col = 0; col < nnfError.nnf.sourceDimensions.cols; col++) {
+        nnfError.error(row, col) = FeatureVector<float, 1>(BIG_ERROR);
       }
     }
   }
 
 private:
   const float RANDOM_SEARCH_ALPHA = .5;
+  const float OMEGA_WEIGHT = 10;
+  const float BIG_ERROR = 100000;
 
   /**
    * @brief patchMatch This is a wrapper around implementationOfPatchMatch. It
@@ -63,7 +65,9 @@ private:
    */
   bool implementationOfPatchMatch(const Configuration &configuration, NNF &nnf,
                                   const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int level,
-                                  bool makeReverseNNF, bool initRandom, NNFError *nnfError = nullptr, NNF *const blacklist = nullptr) {
+                                  bool makeReverseNNF, bool initRandom, NNFError &nnfError, bool initError,
+                                  std::vector<float> &omega, const ImageDimensions omegaDimensions,
+                                  NNF *const blacklist = nullptr) {
 
     const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel = pyramid.levels[level];
 
@@ -77,7 +81,7 @@ private:
       randomlyInitializeNNF(nnf);
     }
 
-    if (nnfError != nullptr) {
+    if (initError) {
       initNNFError(nnfError);
     }
 
@@ -90,18 +94,16 @@ private:
       radii.push_back(w * std::pow(RANDOM_SEARCH_ALPHA, i));
       i++;
     }
-    std::cout << "******************************" << std::endl;
-    for (int i = 0; i < radii.size(); i++) {
-      std::cout << radii[i] << std::endl;
-    }
+
     for (int i = 0; i < configuration.numPatchMatchIterations; i++) {
       bool iterationIsOdd = i % 2 == 1 ? true : false;
-      // #pragma omp parallel for num_threads(3) collapse(2)
       #pragma omp parallel for schedule(dynamic)
       for (int row = 0; row < numNNFRows; row++) {
         for (int col = 0; col < numNNFCols; col++) {
-          propagationStep(configuration, row, col, makeReverseNNF, iterationIsOdd, nnf, pyramidLevel, guideWeights, styleWeights, nnfError, blacklist);
-          searchStep(configuration, row, col, makeReverseNNF, nnf, pyramidLevel, guideWeights, styleWeights, radii, nnfError, blacklist);
+          propagationStep(configuration, row, col, makeReverseNNF, iterationIsOdd, nnf,
+                          pyramidLevel, guideWeights, styleWeights, nnfError, omega, omegaDimensions, blacklist);
+          searchStep(configuration, row, col, makeReverseNNF, nnf, pyramidLevel, guideWeights,
+                     styleWeights, radii, nnfError, omega, omegaDimensions, blacklist);
         }
       }
     }
@@ -131,7 +133,7 @@ private:
   void propagationStep(const Configuration &configuration, int row, int col, bool makeReverseNNF, bool iterationIsOdd,
                        NNF &nnf, const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel,
                        const ChannelWeights<numGuideChannels> &guideWeights, const ChannelWeights<numStyleChannels> &styleWeights,
-                       NNFError *nnfError, const NNF *const blacklist = nullptr) {
+                       NNFError &nnfError, std::vector<float> &omega, const ImageDimensions omegaDimensions, const NNF *const blacklist = nullptr) {
     ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels> errorCalc = ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels>();
     float newPatchError1 = -1.0; // we know if a patch was out of bounds if its error remains -1, so don't consider it the end of this method
     float newPatchError2 = -1.0;
@@ -139,6 +141,7 @@ private:
     const ImageCoordinates currentPatch{row, col};
     ImageCoordinates newPatch1{-1, -1};
     ImageCoordinates newPatch2{-1, -1};
+    bool newPatch1Available = false;
     const ImageCoordinates domainNeighbor1{row + offset, col};
     if (domainNeighbor1.within(nnf.sourceDimensions)) { // if the neighbor in the nnf domain actually exists
       ImageCoordinates codomainNeighbor1 = nnf.getMapping(domainNeighbor1);
@@ -151,7 +154,7 @@ private:
       // the blacklist tells us if the codomain index newPatch1 is available.
       if (newPatch1.within(nnf.targetDimensions)) { // if new codomain patch is in the codomain dimensions
         // if the corresponding element in the blacklist is (-1,-1), then this new patch is available
-        bool newPatch1Available = (blacklist == nullptr) || (blacklist->getMapping(newPatch1) == ImageCoordinates::FREE_PATCH);
+        newPatch1Available = (blacklist == nullptr) || (blacklist->getMapping(newPatch1) == ImageCoordinates::FREE_PATCH);
         if (newPatch1Available) {
           if (makeReverseNNF) {
             errorCalc.calculateError(configuration, pyramidLevel, currentPatch, newPatch1, guideWeights, styleWeights, newPatchError1);
@@ -165,6 +168,7 @@ private:
     }
 
     // do the exact same thing as above but with the analogous col offset
+    bool newPatch2Available = false;
     const ImageCoordinates domainNeighbor2{row, col + offset};
     if (domainNeighbor2.within(nnf.sourceDimensions)) { // if the neighbor in te nnf domain actually exists
       ImageCoordinates codomainNeighbor2 = nnf.getMapping(domainNeighbor2);
@@ -172,7 +176,7 @@ private:
       newPatch2.row = codomainNeighbor2.row;
       newPatch2.col = codomainNeighbor2.col - offset;
       if (newPatch2.within(nnf.targetDimensions)) { // if the new codomain patch is in the codomain dimensions
-        bool newPatch2Available = (blacklist == nullptr) || (blacklist->getMapping(newPatch2) == ImageCoordinates::FREE_PATCH);
+        newPatch2Available = (blacklist == nullptr) || (blacklist->getMapping(newPatch2) == ImageCoordinates::FREE_PATCH);
         if (newPatch2Available) {
           if (makeReverseNNF) {
             errorCalc.calculateError(configuration, pyramidLevel, currentPatch, newPatch2, guideWeights, styleWeights, newPatchError2);
@@ -194,25 +198,43 @@ private:
       errorCalc.calculateError(configuration, pyramidLevel, nnf.getMapping(currentPatch), currentPatch, guideWeights, styleWeights, currentError);
     }
     */
-    float currentError = nnfError->error(row, col)(0,0);
-
+    ImageCoordinates oldCodomainPatch = nnf.getMapping(currentPatch);
+    int PATCH_SIZE = configuration.patchSize;
+    float omegaError = nnfError.error(row, col)(0,0) + computeOmegaValue(omega, oldCodomainPatch.row, oldCodomainPatch.col,
+                                                                          omegaDimensions, PATCH_SIZE);
+    float newPatchOmegaError1 = 0;
+    if (newPatch1Available) {
+      newPatchOmegaError1 = newPatchError1 + computeOmegaValue(omega, newPatch1.row, newPatch1.col,
+                                                               omegaDimensions, PATCH_SIZE);
+    }
+    float newPatchOmegaError2 = 0;
+    if (newPatch2Available) {
+      newPatchOmegaError2 = newPatchError2 + computeOmegaValue(omega, newPatch2.row, newPatch2.col,
+                                                               omegaDimensions, PATCH_SIZE);
+    }
     // now that we have the errors of the new patches we are considering and the current error, we can decide which one is the best
     bool changedToNewPatch1 = false;
-    if (newPatchError1 > 0 && newPatchError1 < currentError) {
+    if (newPatch1Available && newPatchOmegaError1 < omegaError) {
+      updateOmegaValue(omega, oldCodomainPatch.row, oldCodomainPatch.col, omegaDimensions, PATCH_SIZE, -1);
+      updateOmegaValue(omega, newPatch1.row, newPatch1.col, omegaDimensions, PATCH_SIZE, 1);
       nnf.setMapping(currentPatch, newPatch1);
-      if (nnfError != nullptr) nnfError->error(row, col) = FeatureVector<float, 1>(newPatchError1);
+      nnfError.error(row, col) = FeatureVector<float, 1>(newPatchError1);
       changedToNewPatch1 = true;
     }
 
     if (changedToNewPatch1) {
-      if (newPatchError2 > 0 && newPatchError2 < newPatchError1) {
+      if (newPatch2Available && newPatchOmegaError2 < newPatchOmegaError1) {
+        updateOmegaValue(omega, newPatch1.row, oldCodomainPatch.col, omegaDimensions, PATCH_SIZE, -1);
+        updateOmegaValue(omega, newPatch2.row, newPatch2.col, omegaDimensions, PATCH_SIZE, 1);
         nnf.setMapping(currentPatch, newPatch2);
-        if (nnfError != nullptr) nnfError->error(row, col) = FeatureVector<float, 1>(newPatchError2);
+        nnfError.error(row, col) = FeatureVector<float, 1>(newPatchError2);
       }
     } else {
-      if (newPatchError2 > 0 && newPatchError2 < currentError) {
+      if (newPatch2Available && newPatchOmegaError2 < omegaError) {
+        updateOmegaValue(omega, oldCodomainPatch.row, oldCodomainPatch.col, omegaDimensions, PATCH_SIZE, -1);
+        updateOmegaValue(omega, newPatch2.row, newPatch2.col, omegaDimensions, PATCH_SIZE, 1);
         nnf.setMapping(currentPatch, newPatch2);
-        if (nnfError != nullptr) nnfError->error(row, col) = FeatureVector<float, 1>(newPatchError2);
+        nnfError.error(row, col) = FeatureVector<float, 1>(newPatchError2);
       }
     }
   }
@@ -234,21 +256,11 @@ private:
    * @param blacklist Another NNF of pixels that should not be mapped to.
    * @return true if patch matching succeeds; otherwise false
    */
-  // source: http://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
-  inline double fastPow(double a, double b) {
-  union {
-      double d;
-      int x[2];
-    } u = { a };
-    u.x[1] = (int)(b * (u.x[1] - 1072632447) + 1072632447);
-    u.x[0] = 0;
-    return u.d;
-  }
-
   void searchStep(const Configuration &configuration, int row, int col, bool makeReverseNNF,
                   NNF &nnf, const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel,
                   const ChannelWeights<numGuideChannels> guideWeights, const ChannelWeights<numStyleChannels> styleWeights,
-                  const std::vector<int> &radii, NNFError *nnfError, const NNF *const blacklist = nullptr) {
+                  const std::vector<int> &radii, NNFError &nnfError, std::vector<float> &omega, const ImageDimensions omegaDimensions,
+                  const NNF *const blacklist = nullptr) {
     // NOTE: maximum search radius is the largest dimension of the images. We should tune this later on.
     ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels> errorCalc = ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels>();
     const ImageCoordinates currentPatch{row, col};
@@ -261,7 +273,12 @@ private:
       errorCalc.calculateError(configuration, pyramidLevel, currentCodomainPatch, currentPatch, guideWeights, styleWeights, currentError);
     }
     */
-    float currentError = nnfError->error(row, col)(0,0);
+    ImageCoordinates oldCodomainPatch = nnf.getMapping(currentPatch);
+    int PATCH_SIZE = configuration.patchSize;
+    float currentError = nnfError.error(row, col)(0,0);
+    float currentOmegaError = currentError + computeOmegaValue(omega, oldCodomainPatch.row, oldCodomainPatch.col,
+                                                               omegaDimensions, PATCH_SIZE);
+    //float currentError = nnfError.error(row, col)(0,0);
     for (int i = 0; i < radii.size(); i++) {
       const int col_offset = int(radii[i] * rand_uniform());
       const int row_offset = int(radii[i] * rand_uniform());
@@ -275,13 +292,46 @@ private:
           } else {
             errorCalc.calculateError(configuration, pyramidLevel, newCodomainPatch, currentPatch, guideWeights, styleWeights, newError);
           }
-          if (newError < currentError) { // update the patch that currentPatch maps to if it has lower error
+          float newOmegaError = newError + OMEGA_WEIGHT * omega[newCodomainPatch.row * omegaDimensions.cols + newCodomainPatch.col] / PATCH_SIZE;
+          if (newOmegaError < currentOmegaError) { // update the patch that currentPatch maps to if it has lower error
             nnf.setMapping(currentPatch, newCodomainPatch);
-            if (nnfError != nullptr) nnfError->error(row, col) = FeatureVector<float, 1>(newError);
+            nnfError.error(row, col) = FeatureVector<float, 1>(newError);
+            updateOmegaValue(omega, currentCodomainPatch.row, currentCodomainPatch.col, omegaDimensions, PATCH_SIZE, -1);
+            updateOmegaValue(omega, newCodomainPatch.row, newCodomainPatch.col, omegaDimensions, PATCH_SIZE, 1);
             currentCodomainPatch.row = newCodomainPatch.row;
             currentCodomainPatch.col = newCodomainPatch.col;
             currentError = newError;
+            currentOmegaError = currentError + computeOmegaValue(omega, currentCodomainPatch.row, currentCodomainPatch.col,
+                                                                 omegaDimensions, PATCH_SIZE);
           }
+        }
+      }
+    }
+  }
+
+  inline float computeOmegaValue(std::vector<float> &omega, int row, int col, ImageDimensions dims, int PATCH_SIZE) {
+    float ret = 0;
+    int HALF_PATH_SIZE = PATCH_SIZE / 2;
+    for (int rowOffset = -HALF_PATH_SIZE; rowOffset <= HALF_PATH_SIZE;
+         rowOffset++) {
+      for (int colOffset = -HALF_PATH_SIZE; colOffset <= HALF_PATH_SIZE;
+           colOffset++) {
+        if (ImageCoordinates{row + rowOffset,col + colOffset}.within(dims)) {
+          ret += OMEGA_WEIGHT * omega[(row + rowOffset) * dims.cols + (col + colOffset)] / PATCH_SIZE;
+        }
+      }
+    }
+    return ret;
+  }
+
+  inline float updateOmegaValue(std::vector<float> &omega, int row, int col, ImageDimensions dims, int PATCH_SIZE, int change) {
+    int HALF_PATH_SIZE = PATCH_SIZE / 2;
+    for (int rowOffset = -HALF_PATH_SIZE; rowOffset <= HALF_PATH_SIZE;
+         rowOffset++) {
+      for (int colOffset = -HALF_PATH_SIZE; colOffset <= HALF_PATH_SIZE;
+           colOffset++) {
+        if (ImageCoordinates{row + rowOffset,col + colOffset}.within(dims)) {
+          omega[(row + rowOffset) * dims.cols + (col + colOffset)] += change;
         }
       }
     }
