@@ -1,6 +1,6 @@
 #include "Downscaler.cuh"
 
-#include "../Utilities/ImagePitch.cuh"
+#include "../Utilities/Image.cuh"
 #include "../Utilities/Utilities.cuh"
 
 #include <cuda_runtime.h>
@@ -10,8 +10,7 @@ namespace StyLitCUDA {
 namespace Downscaler {
 
 template <typename T>
-__device__ void sampleBilinear(T *result, const ImagePitch<T> &from, const float row,
-                               const float col) {
+__device__ void sampleBilinear(T *result, const Image<T> &from, const float row, const float col) {
   const int rowFloor = Utilities::restrict(int(row), from.rows);
   const int colFloor = Utilities::restrict(int(col), from.cols);
   const int rowCeil = Utilities::restrict(rowFloor + 1, from.rows);
@@ -39,7 +38,7 @@ __device__ void sampleBilinear(T *result, const ImagePitch<T> &from, const float
 }
 
 template <typename T>
-__global__ void downscaleKernel(const ImagePitch<T> from, ImagePitch<T> to, const float rowScale,
+__global__ void downscaleKernel(const Image<T> from, Image<T> to, const float rowScale,
                                 const float colScale) {
   const int row = blockDim.x * blockIdx.x + threadIdx.x;
   const int col = blockDim.y * blockIdx.y + threadIdx.y;
@@ -48,7 +47,7 @@ __global__ void downscaleKernel(const ImagePitch<T> from, ImagePitch<T> to, cons
   }
 }
 
-template <typename T> void downscale(const ImagePitch<T> &from, ImagePitch<T> to) {
+template <typename T> void downscale(const Image<T> &from, Image<T> to) {
   printf("StyLitCUDA: Downscaling [%d, %d] to [%d, %d].\n", from.rows, from.cols, to.rows, to.cols);
 
   // Calculates the block size.
@@ -64,8 +63,8 @@ template <typename T> void downscale(const ImagePitch<T> &from, ImagePitch<T> to
   check(cudaDeviceSynchronize());
 }
 
-template void downscale(const ImagePitch<int> &from, ImagePitch<int> to);
-template void downscale(const ImagePitch<float> &from, ImagePitch<float> to);
+template void downscale(const Image<int> &from, Image<int> to);
+template void downscale(const Image<float> &from, Image<float> to);
 
 } /* namespace Downscaler */
 } /* namespace StyLitCUDA */

@@ -1,4 +1,4 @@
-#include "ImagePitch.cuh"
+#include "Image.cuh"
 
 #include "Utilities.cuh"
 
@@ -8,29 +8,28 @@
 namespace StyLitCUDA {
 
 template <typename T>
-ImagePitch<T>::ImagePitch(const int rows, const int cols, const int numChannels)
+Image<T>::Image(const int rows, const int cols, const int numChannels)
     : rows(rows), cols(cols), numChannels(numChannels) {}
 
-template <typename T> void ImagePitch<T>::allocate() {
+template <typename T> void Image<T>::allocate() {
   check(cudaMallocPitch(&deviceData, &pitch, numChannels * cols * sizeof(T), rows));
 }
 
-template <typename T> void ImagePitch<T>::free() { check(cudaFree((void *)deviceData)); }
+template <typename T> void Image<T>::free() { check(cudaFree((void *)deviceData)); }
 
-template <typename T> __device__ T *ImagePitch<T>::at(const int row, const int col) {
+template <typename T> __device__ T *Image<T>::at(const int row, const int col) {
+  T *rowStart = (T *)((char *)deviceData + row * pitch);
+  return &rowStart[col * numChannels];
+}
+
+template <typename T> __device__ const T *Image<T>::constAt(const int row, const int col) const {
   T *rowStart = (T *)((char *)deviceData + row * pitch);
   return &rowStart[col * numChannels];
 }
 
 template <typename T>
-__device__ const T *ImagePitch<T>::constAt(const int row, const int col) const {
-  T *rowStart = (T *)((char *)deviceData + row * pitch);
-  return &rowStart[col * numChannels];
-}
-
-template <typename T>
-int ImagePitch<T>::populateChannels(const std::vector<InterfaceImage<T>> &images,
-                                    const int fromChannel) {
+int Image<T>::populateChannels(const std::vector<InterfaceImage<T>> &images,
+                               const int fromChannel) {
   // Temporarily allocates space for the image on the host.
   T *hostData;
   const int hostImageSizeInBytes = rows * cols * numChannels * sizeof(T);
@@ -64,7 +63,7 @@ int ImagePitch<T>::populateChannels(const std::vector<InterfaceImage<T>> &images
 }
 
 template <typename T>
-int ImagePitch<T>::retrieveChannels(std::vector<InterfaceImage<T>> &images, const int fromChannel) {
+int Image<T>::retrieveChannels(std::vector<InterfaceImage<T>> &images, const int fromChannel) {
   // Temporarily allocates space for the image on the host.
   T *hostData;
   const int hostImageSizeInBytes = rows * cols * numChannels * sizeof(T);
@@ -96,7 +95,7 @@ int ImagePitch<T>::retrieveChannels(std::vector<InterfaceImage<T>> &images, cons
   return channel - fromChannel;
 }
 
-template struct ImagePitch<int>;
-template struct ImagePitch<float>;
+template struct Image<int>;
+template struct Image<float>;
 
 } /* namespace StyLitCUDA */

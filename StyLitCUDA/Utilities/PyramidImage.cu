@@ -1,4 +1,4 @@
-#include "PyramidImagePitch.cuh"
+#include "PyramidImage.cuh"
 
 #include "Utilities.cuh"
 
@@ -8,29 +8,29 @@
 namespace StyLitCUDA {
 
 template <typename T>
-PyramidImagePitch<T>::PyramidImagePitch(const int rows, const int cols, const int numChannels,
-                                        const int numLevels)
+PyramidImage<T>::PyramidImage(const int rows, const int cols, const int numChannels,
+                              const int numLevels)
     : rows(rows), cols(cols), numChannels(numChannels), numLevels(numLevels) {
   // Allocates on-device memory for each pyramid level.
   levels.clear();
   levels.emplace_back(rows, cols, numChannels);
   for (int level = 0; level < numLevels; level++) {
     if (level > 0) {
-      const ImagePitch<T> &previous = levels[level - 1];
+      const Image<T> &previous = levels[level - 1];
       levels.emplace_back(previous.rows / 2, previous.cols / 2, numChannels);
     }
     levels[level].allocate();
   }
 }
 
-template <typename T> PyramidImagePitch<T>::~PyramidImagePitch() {
+template <typename T> PyramidImage<T>::~PyramidImage() {
   // Frees the on-device memory for each pyramid level.
-  for (ImagePitch<T> &image : levels) {
+  for (Image<T> &image : levels) {
     image.free();
   }
 }
 
-template struct PyramidImagePitch<int>;
-template struct PyramidImagePitch<float>;
+template struct PyramidImage<int>;
+template struct PyramidImage<float>;
 
 } /* namespace StyLitCUDA */

@@ -2,7 +2,7 @@
 #define COORDINATOR_H_
 
 #include "../Interface/InterfaceInput.h"
-#include "../Utilities/PyramidImagePitch.cuh"
+#include "../Utilities/PyramidImage.cuh"
 
 #include <memory>
 
@@ -17,10 +17,10 @@ private:
   InterfaceInput<T> &input;
 
   // This contains the channels for A and A'.
-  PyramidImagePitch<T> a;
+  PyramidImage<T> a;
 
   // This contains the channels for B and B'.
-  PyramidImagePitch<T> b;
+  PyramidImage<T> b;
 };
 
 // This allows the C++ code to access the coordinator.

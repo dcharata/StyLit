@@ -1,7 +1,7 @@
 #ifndef NNF_H_
 #define NNF_H_
 
-#include "../Utilities/ImagePitch.cuh"
+#include "../Utilities/Image.cuh"
 
 #include <limits>
 
@@ -13,7 +13,7 @@ struct NNFEntry {
   float error = std::numeric_limits<float>::max();
 };
 
-using NNF = ImagePitch<NNFEntry>;
+using NNF = Image<NNFEntry>;
 
 } /* namespace StyLitCUDA */
 

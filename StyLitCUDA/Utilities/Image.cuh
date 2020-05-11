@@ -7,10 +7,10 @@
 
 namespace StyLitCUDA {
 
-template <typename T> class ImagePitch {
+template <typename T> class Image {
 public:
-  ImagePitch(const int rows, const int cols, const int numChannels);
-  virtual ~ImagePitch() = default;
+  Image(const int rows, const int cols, const int numChannels);
+  virtual ~Image() = default;
 
   /**
    * @brief allocate Allocates the on-device memory associated with this
@@ -46,20 +46,20 @@ public:
 
   /**
    * @brief populateChannels Copies the specified images to deviceData. The InterfaceImages'
-   * dimensions must match this ImagePitch's dimensions, and the sum of the InterfaceImages'
-   * numChannels plus fromChannel must be less than or equal to this ImagePitch's numChannels.
+   * dimensions must match this Image's dimensions, and the sum of the InterfaceImages'
+   * numChannels plus fromChannel must be less than or equal to this Image's numChannels.
    * @param images the images to copy to deviceData
-   * @param fromChannel the channel in the ImagePitch to start from when copying
+   * @param fromChannel the channel in the Image to start from when copying
    * @return the number of channels populated
    */
   int populateChannels(const std::vector<InterfaceImage<T>> &images, const int fromChannel);
 
   /**
    * @brief retrieveChannels Copies the specified images from deviceData. The InterfaceImages'
-   * dimensions must match this ImagePitch's dimensions, and the sum of the InterfaceImages'
-   * numChannels plus fromChannel must be less than or equal to this ImagePitch's numChannels.
+   * dimensions must match this Image's dimensions, and the sum of the InterfaceImages'
+   * numChannels plus fromChannel must be less than or equal to this Image's numChannels.
    * @param images the image to copy into from deviceData
-   * @param fromChannel the channel in the ImagePitch to start from when copying
+   * @param fromChannel the channel in the Image to start from when copying
    * @return the number of channels populated
    */
   int retrieveChannels(std::vector<InterfaceImage<T>> &images, const int fromChannel);
@@ -78,7 +78,7 @@ public:
 
   // A device pointer to the image data (row major). The image data is not
   // initialized and freed in the constructor and destructor respectively
-  // because ImagePitch is copied to the device during kernel launches.
+  // because Image is copied to the device during kernel launches.
   T *deviceData = nullptr;
 };
 

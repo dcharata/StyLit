@@ -3,20 +3,20 @@
 
 #include "../Interface/InterfaceImage.h"
 #include "Coordinates.h"
-#include "ImagePitch.cuh"
+#include "Image.cuh"
 
 #include <vector>
 
 namespace StyLitCUDA {
 
-template <typename T> struct PyramidImagePitch {
-  PyramidImagePitch(const int rows, const int cols, const int numChannels, const int numLevels);
-  virtual ~PyramidImagePitch();
+template <typename T> struct PyramidImage {
+  PyramidImage(const int rows, const int cols, const int numChannels, const int numLevels);
+  virtual ~PyramidImage();
   int rows;
   int cols;
   int numChannels;
   int numLevels;
-  std::vector<ImagePitch<T>> levels;
+  std::vector<Image<T>> levels;
 };
 
 } /* namespace StyLitCUDA */

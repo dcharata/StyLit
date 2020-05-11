@@ -1,6 +1,6 @@
 #include "Coordinator.cuh"
 
-#include "../Utilities/ImagePitch.cuh"
+#include "../Utilities/Image.cuh"
 #include "../Utilities/Utilities.cuh"
 #include "Downscaler.cuh"
 
