@@ -5,6 +5,7 @@
 #include "Applicator.cuh"
 #include "Downscaler.cuh"
 #include "NNF.cuh"
+#include "PatchMatch.cuh"
 #include "RandomInitializer.cuh"
 
 #include <algorithm>
@@ -55,6 +56,13 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
                     b.levels[coarsestLevel], input.patchSize);
 
   // Populates B' at the coarsest pyramid level.
+  Applicator::apply<T>(forward.levels[coarsestLevel], b.levels[coarsestLevel],
+                       a.levels[coarsestLevel], input.b.numChannels,
+                       input.b.numChannels + input.bPrime.numChannels, input.patchSize);
+
+  // TODO: Runs PatchMatch for debugging, then applies the result.
+  PatchMatch::run(forward.levels[coarsestLevel], nullptr, b.levels[coarsestLevel],
+                  a.levels[coarsestLevel], random, input.patchSize, 6);
   Applicator::apply<T>(forward.levels[coarsestLevel], b.levels[coarsestLevel],
                        a.levels[coarsestLevel], input.b.numChannels,
                        input.b.numChannels + input.bPrime.numChannels, input.patchSize);

@@ -16,34 +16,40 @@ __global__ void applyKernel(const Image<NNFEntry> nnf, Image<T> from, const Imag
   const int col = blockDim.y * blockIdx.y + threadIdx.y;
   if (row < to.rows && col < to.cols) {
     // Counterintuitively, from is the image that's being populated.
-    // Gets the NNF mapping.
-    const NNFEntry *entry = nnf.constAt(row, col);
-    const int halfPatch = patchSize / 2;
-    const int toRowStart = Utilities::clamp(0, entry->row - halfPatch, to.rows);
-    const int toRowEnd = Utilities::clamp(0, entry->row + halfPatch, to.rows);
-    const int toColStart = Utilities::clamp(0, entry->col - halfPatch, to.cols);
-    const int toColEnd = Utilities::clamp(0, entry->col + halfPatch, to.cols);
-
     // Zeroes out the pixel that will be populated.
     T *fromVector = from.at(row, col);
     for (int channel = startChannel; channel < endChannel; channel++) {
       fromVector[channel] = (T)0;
     }
 
-    // Adds the values from the sampled region of to.
-    for (int toRow = toRowStart; toRow < toRowEnd; toRow++) {
-      for (int toCol = toColStart; toCol < toColEnd; toCol++) {
-        const T *toVector = to.constAt(toRow, toCol);
-        for (int channel = startChannel; channel < endChannel; channel++) {
-          fromVector[channel] += toVector[channel];
+    // Gets the mapping for each pixel within the patch.
+    int denominator = 0.f;
+    const int halfPatch = patchSize / 2;
+    const int fromRowStart = Utilities::clamp(0, row - halfPatch, from.rows);
+    const int fromRowEnd = Utilities::clamp(0, row + halfPatch, from.rows);
+    const int fromColStart = Utilities::clamp(0, col - halfPatch, from.cols);
+    const int fromColEnd = Utilities::clamp(0, col + halfPatch, from.cols);
+    for (int fromRow = fromRowStart; fromRow < fromRowEnd; fromRow++) {
+      for (int fromCol = fromColStart; fromCol < fromColEnd; fromCol++) {
+        // Offsets the mapping so it corresponds to the pixel that will be populated.
+        const NNFEntry *mapping = nnf.constAt(fromRow, fromCol);
+        const int toRow = mapping->row + row - fromRow;
+        const int toCol = mapping->col + col - fromCol;
+
+        // Includes the pixel if it's within range.
+        if (toRow > 0 && toRow < to.rows && toCol > 0 && toCol < to.cols) {
+          const T *toVector = to.constAt(toRow, toCol);
+          for (int channel = startChannel; channel < endChannel; channel++) {
+            fromVector[channel] += toVector[channel];
+          }
+          denominator += 1.f;
         }
       }
     }
 
     // Divides by the number of pixels sampled.
-    const float area = (float)((toRowEnd - toRowStart) * (toColEnd - toColStart));
     for (int channel = startChannel; channel < endChannel; channel++) {
-      fromVector[channel] = (T)(fromVector[channel] / area);
+      fromVector[channel] = (T)(fromVector[channel] / denominator);
     }
   }
 }
