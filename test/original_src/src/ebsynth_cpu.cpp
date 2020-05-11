@@ -371,7 +371,6 @@ struct PatchSSD_Split
         }
       }
     }
-
     return error;
   }
 };
@@ -516,12 +515,16 @@ bool tryPatch(FUNC patchError,const V2i& sizeA,int patchWidth,const V2i& axy,con
 {
   const float curOcc = (float(patchOmega(patchWidth,N(axy),Omega))/float(patchWidth*patchWidth))/omegaBest;
   const float newOcc = (float(patchOmega(patchWidth,   bxy,Omega))/float(patchWidth*patchWidth))/omegaBest;
-
   const float curErr = E(axy);
   const float newErr = patchError(patchWidth,axy,bxy,curErr+lambda*curOcc);
 
   if ((newErr+lambda*newOcc) < (curErr+lambda*curOcc))
   {
+    if ((std::rand() % 10000) == 0) {
+      std::cout << "omegaBest " << omegaBest << std::endl;
+      std::cout << "new " << newErr << " " << lambda*newOcc << std::endl;
+      std::cout << "curr " << curErr << " " << lambda*curOcc << std::endl;
+    }
     updateOmega(Omega,sizeA,patchWidth,axy,bxy   ,+1);
     updateOmega(Omega,sizeA,patchWidth,axy,N(axy),-1);
     N(axy) = bxy;

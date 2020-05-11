@@ -85,6 +85,8 @@ private:
    * if it fails (e.g. because the source is empty or not an integer)
    */
   bool parsePositiveInt(const QJsonValue &source, int &destination);
+
+  bool parseFloat(const QJsonValue &source, float &destination);
 };
 
 #endif // CONFIGURATIONPARSER_H

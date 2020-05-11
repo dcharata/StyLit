@@ -69,8 +69,6 @@ private:
     bool firstIteration = true;
     const int forwardNNFSize = pyramidLevel.forwardNNF.sourceDimensions.area();
     int iteration = 0;
-    std::vector<float> omega;
-    initOmega(omega, pyramidLevel.guide.target.dimensions, configuration.patchSize);
     while (patchesFilled < float(forwardNNFSize) * NNF_GENERATION_STOPPING_CRITERION && iteration < MAX_ITERATIONS) {
 
       std::cout << "*************************" << std::endl;
@@ -81,13 +79,16 @@ private:
 
       NNF patchMatchBlacklist = NNF(pyramidLevel.guide.target.dimensions,
                                     pyramidLevel.guide.source.dimensions);
+
+      std::vector<float> omega;
+      patchMatcher.initOmega(configuration, omega, pyramidLevel.guide.target.dimensions, configuration.patchSize);
       if (firstIteration) {
         patchMatcher.patchMatch(configuration, pyramidLevel.reverseNNF, pyramid,
                                 level, true, true, nnfError, true, omega, pyramidLevel.guide.target.dimensions, nullptr);
         firstIteration = false;
       } else {
         patchMatcher.patchMatch(configuration, pyramidLevel.reverseNNF, pyramid,
-                                level, true, false, nnfError, true, omega, pyramidLevel.guide.target.dimensions, &blacklist);
+                                level, true, false, nnfError, false, omega, pyramidLevel.guide.target.dimensions, &blacklist);
       }
 
       std::cout << "getting knee point" << std::endl;
@@ -146,13 +147,13 @@ private:
     // from patchmatch and use that to fill up the holes in the level's forward
     // NNF
     if (patchesFilled < forwardNNFSize) {
-      std::vector<float> omega;
-      initOmega(omega, pyramidLevel.guide.source.dimensions, configuration.patchSize);
+      std::vector<float> finalOmega;
+      patchMatcher.initOmega(configuration, finalOmega, pyramidLevel.guide.source.dimensions, configuration.patchSize);
       NNFError nnfErrorFinal(pyramidLevel.forwardNNF);
       NNF forwardNNFFinal = NNF(pyramidLevel.guide.target.dimensions,
                                 pyramidLevel.guide.source.dimensions);
       patchMatcher.patchMatch(configuration, forwardNNFFinal, pyramid,
-                              level, false, true, nnfErrorFinal, true, omega, pyramidLevel.guide.source.dimensions);
+                              level, false, true, nnfErrorFinal, true, finalOmega, pyramidLevel.guide.source.dimensions);
       for (int row = 0; row < forwardNNFFinal.sourceDimensions.rows; row++) {
         for (int col = 0; col < forwardNNFFinal.sourceDimensions.cols; col++) {
           ImageCoordinates currentPatch{row, col};
@@ -181,10 +182,6 @@ private:
       }
     }
     std::sort(sortedCoordinates.begin(), sortedCoordinates.end(), &generatorComparator);
-  }
-
-  void initOmega(std::vector<float> &omega, ImageDimensions omegaDimensions, int PATCH_SIZE) {
-    omega.assign(omegaDimensions.rows*omegaDimensions.cols, PATCH_SIZE*PATCH_SIZE);
   }
 
 };

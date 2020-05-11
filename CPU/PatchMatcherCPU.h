@@ -41,9 +41,37 @@ public:
     }
   }
 
+  void initNNFErrorProperly(const Configuration &configuration, NNFError &nnfError, const NNF &nnf, bool makeReverseNNF,
+                            const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel,
+                            const ChannelWeights<numGuideChannels> &guideWeights,
+                            const ChannelWeights<numStyleChannels> &styleWeights,
+                            ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels> &calc) {
+    for (int row = 0; row < nnfError.nnf.sourceDimensions.rows; row++) {
+      for (int col = 0; col < nnfError.nnf.sourceDimensions.cols; col++) {
+        float error = 0;
+        if (makeReverseNNF) {
+          ImageCoordinates coords{row, col};
+          calc.calculateError(configuration, pyramidLevel, coords, nnf.getMapping(coords), guideWeights, styleWeights, error);
+        } else {
+          ImageCoordinates coords{row, col};
+          calc.calculateError(configuration, pyramidLevel, nnf.getMapping(coords), coords, guideWeights, styleWeights, error);
+        }
+        nnfError.error(row, col) = FeatureVector<float, 1>(error);
+      }
+    }
+  }
+
+  void initOmega(Configuration &configuration, std::vector<float> &omega, ImageDimensions dims, int PATCH_SIZE) {
+    omega.assign(dims.rows*dims.cols, 0);
+    for (int row = 0; row < dims.rows; row++) {
+      for (int col = 0; col < dims.cols; col++) {
+        updateOmegaValue(configuration, omega,row,col,dims,PATCH_SIZE, 1);
+      }
+    }
+  }
+
 private:
   const float RANDOM_SEARCH_ALPHA = .5;
-  const float OMEGA_WEIGHT = 10;
   const float BIG_ERROR = 100000;
 
   /**
@@ -81,8 +109,11 @@ private:
       randomlyInitializeNNF(nnf);
     }
 
+
     if (initError) {
-      initNNFError(nnfError);
+      //initNNFError(nnfError);
+      ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels> errorCalc = ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels>();
+      initNNFErrorProperly(configuration, nnfError, nnf, makeReverseNNF, pyramidLevel, guideWeights, styleWeights, errorCalc);
     }
 
     // precompute the search step radii
@@ -200,23 +231,23 @@ private:
     */
     ImageCoordinates oldCodomainPatch = nnf.getMapping(currentPatch);
     int PATCH_SIZE = configuration.patchSize;
-    float omegaError = nnfError.error(row, col)(0,0) + computeOmegaValue(omega, oldCodomainPatch.row, oldCodomainPatch.col,
-                                                                          omegaDimensions, PATCH_SIZE);
+    float omegaError = nnfError.error(row, col)(0,0) + computeOmegaValue(configuration, omega, oldCodomainPatch.row, oldCodomainPatch.col,
+                                                                         omegaDimensions, PATCH_SIZE);
     float newPatchOmegaError1 = 0;
     if (newPatch1Available) {
-      newPatchOmegaError1 = newPatchError1 + computeOmegaValue(omega, newPatch1.row, newPatch1.col,
+      newPatchOmegaError1 = newPatchError1 + computeOmegaValue(configuration, omega, newPatch1.row, newPatch1.col,
                                                                omegaDimensions, PATCH_SIZE);
     }
     float newPatchOmegaError2 = 0;
     if (newPatch2Available) {
-      newPatchOmegaError2 = newPatchError2 + computeOmegaValue(omega, newPatch2.row, newPatch2.col,
+      newPatchOmegaError2 = newPatchError2 + computeOmegaValue(configuration, omega, newPatch2.row, newPatch2.col,
                                                                omegaDimensions, PATCH_SIZE);
     }
     // now that we have the errors of the new patches we are considering and the current error, we can decide which one is the best
     bool changedToNewPatch1 = false;
     if (newPatch1Available && newPatchOmegaError1 < omegaError) {
-      updateOmegaValue(omega, oldCodomainPatch.row, oldCodomainPatch.col, omegaDimensions, PATCH_SIZE, -1);
-      updateOmegaValue(omega, newPatch1.row, newPatch1.col, omegaDimensions, PATCH_SIZE, 1);
+      updateOmegaValue(configuration, omega, oldCodomainPatch.row, oldCodomainPatch.col, omegaDimensions, PATCH_SIZE, -1);
+      updateOmegaValue(configuration, omega, newPatch1.row, newPatch1.col, omegaDimensions, PATCH_SIZE, 1);
       nnf.setMapping(currentPatch, newPatch1);
       nnfError.error(row, col) = FeatureVector<float, 1>(newPatchError1);
       changedToNewPatch1 = true;
@@ -224,15 +255,15 @@ private:
 
     if (changedToNewPatch1) {
       if (newPatch2Available && newPatchOmegaError2 < newPatchOmegaError1) {
-        updateOmegaValue(omega, newPatch1.row, oldCodomainPatch.col, omegaDimensions, PATCH_SIZE, -1);
-        updateOmegaValue(omega, newPatch2.row, newPatch2.col, omegaDimensions, PATCH_SIZE, 1);
+        updateOmegaValue(configuration, omega, newPatch1.row, newPatch1.col, omegaDimensions, PATCH_SIZE, -1);
+        updateOmegaValue(configuration, omega, newPatch2.row, newPatch2.col, omegaDimensions, PATCH_SIZE, 1);
         nnf.setMapping(currentPatch, newPatch2);
         nnfError.error(row, col) = FeatureVector<float, 1>(newPatchError2);
       }
     } else {
       if (newPatch2Available && newPatchOmegaError2 < omegaError) {
-        updateOmegaValue(omega, oldCodomainPatch.row, oldCodomainPatch.col, omegaDimensions, PATCH_SIZE, -1);
-        updateOmegaValue(omega, newPatch2.row, newPatch2.col, omegaDimensions, PATCH_SIZE, 1);
+        updateOmegaValue(configuration, omega, oldCodomainPatch.row, oldCodomainPatch.col, omegaDimensions, PATCH_SIZE, -1);
+        updateOmegaValue(configuration, omega, newPatch2.row, newPatch2.col, omegaDimensions, PATCH_SIZE, 1);
         nnf.setMapping(currentPatch, newPatch2);
         nnfError.error(row, col) = FeatureVector<float, 1>(newPatchError2);
       }
@@ -276,7 +307,7 @@ private:
     ImageCoordinates oldCodomainPatch = nnf.getMapping(currentPatch);
     int PATCH_SIZE = configuration.patchSize;
     float currentError = nnfError.error(row, col)(0,0);
-    float currentOmegaError = currentError + computeOmegaValue(omega, oldCodomainPatch.row, oldCodomainPatch.col,
+    float currentOmegaError = currentError + computeOmegaValue(configuration, omega, oldCodomainPatch.row, oldCodomainPatch.col,
                                                                omegaDimensions, PATCH_SIZE);
     //float currentError = nnfError.error(row, col)(0,0);
     for (int i = 0; i < radii.size(); i++) {
@@ -292,16 +323,23 @@ private:
           } else {
             errorCalc.calculateError(configuration, pyramidLevel, newCodomainPatch, currentPatch, guideWeights, styleWeights, newError);
           }
-          float newOmegaError = newError + OMEGA_WEIGHT * omega[newCodomainPatch.row * omegaDimensions.cols + newCodomainPatch.col] / PATCH_SIZE;
+          float newOmegaError = newError + computeOmegaValue(configuration, omega, newCodomainPatch.row, newCodomainPatch.col,
+                                                             omegaDimensions, PATCH_SIZE);
           if (newOmegaError < currentOmegaError) { // update the patch that currentPatch maps to if it has lower error
+            /*
+            if ((std::rand() % 10000) == 0) {
+              std::cout << "new " << newError << " " << newOmegaError << std::endl;
+              std::cout << "curr " << currentError << " " << currentOmegaError << std::endl;
+            }
+            */
             nnf.setMapping(currentPatch, newCodomainPatch);
             nnfError.error(row, col) = FeatureVector<float, 1>(newError);
-            updateOmegaValue(omega, currentCodomainPatch.row, currentCodomainPatch.col, omegaDimensions, PATCH_SIZE, -1);
-            updateOmegaValue(omega, newCodomainPatch.row, newCodomainPatch.col, omegaDimensions, PATCH_SIZE, 1);
+            updateOmegaValue(configuration, omega, currentCodomainPatch.row, currentCodomainPatch.col, omegaDimensions, PATCH_SIZE, -1);
+            updateOmegaValue(configuration, omega, newCodomainPatch.row, newCodomainPatch.col, omegaDimensions, PATCH_SIZE, 1);
             currentCodomainPatch.row = newCodomainPatch.row;
             currentCodomainPatch.col = newCodomainPatch.col;
             currentError = newError;
-            currentOmegaError = currentError + computeOmegaValue(omega, currentCodomainPatch.row, currentCodomainPatch.col,
+            currentOmegaError = currentError + computeOmegaValue(configuration, omega, currentCodomainPatch.row, currentCodomainPatch.col,
                                                                  omegaDimensions, PATCH_SIZE);
           }
         }
@@ -309,26 +347,34 @@ private:
     }
   }
 
-  inline float computeOmegaValue(std::vector<float> &omega, int row, int col, ImageDimensions dims, int PATCH_SIZE) {
+  inline float computeOmegaValue(Configuration &configuration, const std::vector<float> &omega, int row, int col, ImageDimensions dims, int PATCH_SIZE) {
+    if (configuration.omegaWeight <= 0) {
+      return 0.0f;
+    }
     float ret = 0;
-    int HALF_PATH_SIZE = PATCH_SIZE / 2;
-    for (int rowOffset = -HALF_PATH_SIZE; rowOffset <= HALF_PATH_SIZE;
+    int HALF_PATCH_SIZE = PATCH_SIZE / 2;
+    int PATCH_SIZE_SQUARED = PATCH_SIZE * PATCH_SIZE;
+    float mult = configuration.omegaWeight / PATCH_SIZE_SQUARED;
+    for (int rowOffset = -HALF_PATCH_SIZE; rowOffset <= HALF_PATCH_SIZE;
          rowOffset++) {
-      for (int colOffset = -HALF_PATH_SIZE; colOffset <= HALF_PATH_SIZE;
+      for (int colOffset = -HALF_PATCH_SIZE; colOffset <= HALF_PATCH_SIZE;
            colOffset++) {
         if (ImageCoordinates{row + rowOffset,col + colOffset}.within(dims)) {
-          ret += OMEGA_WEIGHT * omega[(row + rowOffset) * dims.cols + (col + colOffset)] / PATCH_SIZE;
+          ret += omega[(row + rowOffset) * dims.cols + (col + colOffset)];
         }
       }
     }
-    return ret;
+    return mult * ret;
   }
 
-  inline float updateOmegaValue(std::vector<float> &omega, int row, int col, ImageDimensions dims, int PATCH_SIZE, int change) {
-    int HALF_PATH_SIZE = PATCH_SIZE / 2;
-    for (int rowOffset = -HALF_PATH_SIZE; rowOffset <= HALF_PATH_SIZE;
+  inline void updateOmegaValue(Configuration &configuration, std::vector<float> &omega, int row, int col, ImageDimensions dims, int PATCH_SIZE, int change) {
+    if (configuration.omegaWeight <= 0) {
+      return;
+    }
+    int HALF_PATCH_SIZE = PATCH_SIZE / 2;
+    for (int rowOffset = -HALF_PATCH_SIZE; rowOffset <= HALF_PATCH_SIZE;
          rowOffset++) {
-      for (int colOffset = -HALF_PATH_SIZE; colOffset <= HALF_PATH_SIZE;
+      for (int colOffset = -HALF_PATCH_SIZE; colOffset <= HALF_PATCH_SIZE;
            colOffset++) {
         if (ImageCoordinates{row + rowOffset,col + colOffset}.within(dims)) {
           omega[(row + rowOffset) * dims.cols + (col + colOffset)] += change;

@@ -184,6 +184,13 @@ bool ConfigurationParser::parseSettings(const QJsonValue &settings,
     return false;
   }
 
+  QJsonValue omegaWeight =
+      settingsObject.value(QString("omegaWeight"));
+  if (!parseFloat(omegaWeight, configuration.omegaWeight)) {
+    cerr << "Could not parse \"omegaWeight\" in \"settings\"." << endl;
+    return false;
+  }
+
   // Counts the number of channels.
   configuration.numGuideChannels = 0;
   configuration.numStyleChannels = 0;
@@ -357,6 +364,19 @@ bool ConfigurationParser::parsePositiveInt(const QJsonValue &source,
   const int value = source.toInt(-1);
   if (value < 0) {
     cerr << "Expected positive integer. Make sure the integer is not formatted "
+            "as a string."
+         << endl;
+    return false;
+  }
+  destination = value;
+  return true;
+}
+
+bool ConfigurationParser::parseFloat(const QJsonValue &source,
+                                           float &destination) {
+  const float value = float(source.toDouble(-1));
+  if (value < 0) {
+    cerr << "Expected positive float. Make sure the float is not formatted "
             "as a string."
          << endl;
     return false;
