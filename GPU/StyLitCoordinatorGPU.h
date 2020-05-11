@@ -1,6 +1,9 @@
 #ifndef STYLITCOORDINATORGPU_H
 #define STYLITCOORDINATORGPU_H
 
+#include "StyLitCUDA/Interface/InterfaceImage.h"
+#include "StyLitCUDA/Interface/InterfaceInput.h"
+
 #include "Algorithm/Pyramid.h"
 #include "Algorithm/PyramidLevel.h"
 #include "Algorithm/StyLitCoordinator.h"
@@ -8,6 +11,8 @@
 
 #include <QString>
 #include <iostream>
+
+int StyLitCUDA_runStyLitCUDA_float(StyLitCUDA::InterfaceInput<float> &input);
 
 template <unsigned int numGuideChannels, unsigned int numStyleChannels>
 class StyLitCoordinatorGPU : public StyLitCoordinator<float, numGuideChannels, numStyleChannels> {
@@ -48,7 +53,7 @@ public:
     printTime("Done reading A, B and A'.");
 
     // Adds the guide and style weights.
-    unsigned int guideChannel = 0;
+    /*unsigned int guideChannel = 0;
     for (unsigned int i = 0; i < configuration.guideImageFormats.size(); i++) {
       const int numChannels = ImageFormatTools::numChannels(configuration.guideImageFormats[i]);
       for (int j = 0; j < numChannels; j++) {
@@ -63,8 +68,34 @@ public:
         // pyramid.styleWeights[styleChannel++] = configuration.styleImageWeights[i];
       }
     }
-    Q_ASSERT(styleChannel == numStyleChannels);
+    Q_ASSERT(styleChannel == numStyleChannels);*/
 
+    // Translates everything to a format that StyLitCUDA understands.
+    StyLitCUDA::InterfaceInput<float> input;
+    input.a.rows = pyramidLevel.guide.source.dimensions.rows;
+    input.a.cols = pyramidLevel.guide.source.dimensions.cols;
+    input.a.numChannels = numGuideChannels;
+    input.a.data = (float *)&pyramidLevel.guide.source(0, 0);
+
+    input.b.rows = pyramidLevel.guide.target.dimensions.rows;
+    input.b.cols = pyramidLevel.guide.target.dimensions.cols;
+    input.b.numChannels = numGuideChannels;
+    input.b.data = (float *)&pyramidLevel.guide.target(0, 0);
+
+    input.aPrime.rows = pyramidLevel.style.source.dimensions.rows;
+    input.aPrime.cols = pyramidLevel.style.source.dimensions.cols;
+    input.aPrime.numChannels = numGuideChannels;
+    input.aPrime.data = (float *)&pyramidLevel.style.source(0, 0);
+
+    input.bPrime.rows = pyramidLevel.style.target.dimensions.rows;
+    input.bPrime.cols = pyramidLevel.style.target.dimensions.cols;
+    input.bPrime.numChannels = numGuideChannels;
+    input.bPrime.data = (float *)&pyramidLevel.style.target(0, 0);
+
+    input.numLevels = configuration.numPyramidLevels;
+
+    const int ret = StyLitCUDA_runStyLitCUDA_float(input);
+    printf("StyLitCUDA return value: %d\n", ret);
     return true;
   }
 

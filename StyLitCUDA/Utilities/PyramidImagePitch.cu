@@ -3,70 +3,86 @@
 #include "Utilities.cuh"
 
 #include <cuda_runtime.h>
-#include <vector>
+#include <stdio.h>
 
 namespace StyLitCUDA {
 
 template <typename T>
 PyramidImagePitch<T>::PyramidImagePitch(const int rows, const int cols, const int numChannels,
-                                          const int numLevels)
-    : PyramidImage<T>(rows, cols, numChannels, numLevels), deviceData(nullptr),
-      devicePitch(nullptr), deviceDimensions(nullptr) {}
+                                        const int numLevels)
+    : PyramidImage<T>(rows, cols, numChannels, numLevels), deviceLevels(nullptr) {}
 
 template <typename T> void PyramidImagePitch<T>::allocate() {
-  // Allocates device memory for deviceData, devicePitch and deviceDimensions.
-  check(cudaMalloc(&deviceData, this->numLevels * sizeof(T *)));
-  check(cudaMalloc(&devicePitch, this->numLevels * sizeof(size_t)));
-  check(cudaMalloc(&deviceDimensions, this->numLevels * sizeof(Coordinates)));
+  // Allocates device memory for deviceLevels.
+  const size_t deviceLevelsSize = this->numLevels * sizeof(ImagePitch<T>);
+  check(cudaMalloc(&deviceLevels, deviceLevelsSize));
 
-  // Populates temporary copies of deviceData, devicePitch and deviceDimensions on the host.
-  std::vector<T *> hostData(this->numLevels);
-  std::vector<size_t> hostPitch(this->numLevels);
-  std::vector<Coordinates> hostDimensions(this->numLevels);
-  hostDimensions[0] = Coordinates(this->rows, this->cols);
+  // Allocates temporary memory for hostLevels.
+  ImagePitch<T> *hostLevels;
+  check(cudaMallocHost(&hostLevels, deviceLevelsSize));
+
+  // Populates hostLevels.
+  // When implementing this, I ran into an issue where assigning directly to hostLevels[i] does not
+  // copy what's needed to call functions on ImagePitch<T>. So in other words, calling
+  // hostLevels[i]->allocate() would cause a segfault. This is a workaround, but clearly, I'm not
+  // enough of a C++ programmer to really understand what's going on. Doing a memcpy into hostLevels
+  // makes the function call work, but I assume then it won't work on the device, since the vtable
+  // reference (or whatever it is) will no longer be valid.
+  ImagePitch<T> currentLevel(this->rows, this->cols, this->numChannels);
+  hostLevels[0] = currentLevel;
   for (int level = 0; level < this->numLevels; level++) {
     if (level > 0) {
-      hostDimensions[level] = hostDimensions[level - 1] / 2;
+      const ImagePitch<T> &lastLevel = hostLevels[level - 1];
+      currentLevel = ImagePitch<T>(lastLevel.rows / 2, lastLevel.cols / 2, this->numChannels);
     }
-    check(cudaMallocPitch(&hostData[level], &hostPitch[level],
-                          this->numChannels * hostDimensions[level].col * sizeof(T),
-                          hostDimensions[level].row));
+    currentLevel.allocate();
+    hostLevels[level] = currentLevel;
   }
 
-  // Copies hostData, hostPitch and hostDimensions to the device.
-  check(cudaMemcpy((void *) deviceData, (void *) hostData.data(), this->numLevels * sizeof(T *), cudaMemcpyHostToDevice));
-  check(cudaMemcpy((void *) devicePitch, (void *) hostPitch.data(), this->numLevels * sizeof(size_t), cudaMemcpyHostToDevice));
-  check(cudaMemcpy((void *) deviceDimensions, (void *) hostDimensions.data(), this->numLevels * sizeof(Coordinates), cudaMemcpyHostToDevice));
+  // Copies hostLevels to the device.
+  check(cudaMemcpy((void *)deviceLevels, (void *)hostLevels, deviceLevelsSize,
+                   cudaMemcpyHostToDevice));
+
+  // Frees the temporary memory for hostLevels.
+  check(cudaFreeHost(hostLevels));
 }
 
 template <typename T> void PyramidImagePitch<T>::free() {
-  // Temporarily allocates memory for deviceData on the host.
-  T **hostData;
-  check(cudaMallocHost(&hostData, this->numLevels * sizeof(T *)));
+  // Allocates and populates temporary memory for hostLevels.
+  ImagePitch<T> *hostLevels;
+  const size_t deviceLevelsSize = this->numLevels * sizeof(ImagePitch<T>);
+  check(cudaMallocHost(&hostLevels, deviceLevelsSize));
+  check(cudaMemcpy((void *)hostLevels, (void *)deviceLevels, deviceLevelsSize,
+                   cudaMemcpyDeviceToHost));
 
-  // Copies deviceData to the host.
-  check(cudaMemcpy((void *) hostData, (void *) deviceData, this->numLevels * sizeof(T *), cudaMemcpyDeviceToHost));
-
-  // Frees the images in each pyramid level.
+  // Frees the images in deviceLevels, then deviceLevels itself.
+  // The variable currentLevel is needed for essentially the same reason as in allocate.
+  ImagePitch<T> currentLevel(0, 0, 0);
   for (int level = 0; level < this->numLevels; level++) {
-    check(cudaFree((void *) hostData[level]));
+    currentLevel = hostLevels[level];
+    currentLevel.free();
   }
+  check(cudaFree(deviceLevels));
 
-  // Frees deviceData, devicePitch and deviceDimensions.
-  check(cudaFree(deviceData));
-  check(cudaFree(devicePitch));
-  check(cudaFree(deviceDimensions));
-
-  // Frees the temporarily allocated hostData.
-  check(cudaFreeHost(hostData));
+  // Frees the temporary memory for hostLevels.
+  check(cudaFreeHost(hostLevels));
 }
 
 template <typename T>
-__device__ const T *PyramidImagePitch<T>::at(const int row, const int col, const int level) {
-  // T *image = deviceData[level];
-  // T *rowStart = (T *)((char *)image + row * devicePitch[level]);
-  // return &rowStart[col * this->numChannels];
-  return nullptr;
+void PyramidImagePitch<T>::populateTopLevel(const std::vector<InterfaceImage<T>> &images,
+                                            const int fromChannel) {
+  printf("hello you need to implement me!!!!\n");
+}
+
+template <typename T>
+__device__ T *PyramidImagePitch<T>::at(const int row, const int col, const int level) {
+  return deviceLevels[level].at(row, col);
+}
+
+template <typename T>
+__device__ const T *PyramidImagePitch<T>::constAt(const int row, const int col,
+                                                  const int level) const {
+  return deviceLevels[level].constAt(row, col);
 }
 
 template struct PyramidImagePitch<int>;

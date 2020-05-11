@@ -1,5 +1,12 @@
 #include "StyLitCUDA.h"
 
-unsigned int StyLitCUDA::sanityCheckStyLitCUDA() { return 0xDEADBEEF; }
+namespace StyLitCUDA {
+  void runCoordinator_float(InterfaceInput<float> &input);
+}
 
-int StyLitCUDA::runStyLitCUDA() { return 1234; }
+unsigned int StyLitCUDA_sanityCheckStyLitCUDA() { return 0xDEADBEEF; }
+
+int StyLitCUDA_runStyLitCUDA_float(StyLitCUDA::InterfaceInput<float> &input) {
+  StyLitCUDA::runCoordinator_float(input);
+  return 124;
+}

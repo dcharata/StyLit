@@ -2,6 +2,7 @@
 #define READONLYIMAGEPITCH_H_
 
 #include "Coordinates.h"
+#include "ImagePitch.cuh"
 #include "PyramidImage.cuh"
 
 namespace StyLitCUDA {
@@ -15,17 +16,15 @@ public:
 
   void free() override;
 
-  __device__ virtual const T *at(const int row, const int col, const int level) override;
+  void populateTopLevel(const std::vector<InterfaceImage<T>> &images,
+                        const int fromChannel) override;
+
+  __device__ T *at(const int row, const int col, const int level) override;
+
+  __device__ T const *constAt(const int row, const int col, const int level) const override;
 
 private:
-  // a device pointer to an array of T * (the images)
-  T **deviceData;
-
-  // a device pointer to an array of size_t (the pitch from allocation)
-  size_t *devicePitch;
-
-  // a device pointer to an array of image dimensions
-  Coordinates *deviceDimensions;
+  ImagePitch<T> *deviceLevels;
 };
 
 } /* namespace StyLitCUDA */

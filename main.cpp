@@ -9,10 +9,10 @@
 #include <QCommandLineParser>
 #include <iostream>
 
-#include "StyLitCUDA/StyLitCUDA.h"
+unsigned int StyLitCUDA_sanityCheckStyLitCUDA();
 
 int main(int argc, char *argv[]) {
-  if (StyLitCUDA::sanityCheckStyLitCUDA() != 0xDEADBEEF) {
+  if (StyLitCUDA_sanityCheckStyLitCUDA() != 0xDEADBEEF) {
     std::cerr << "StyLitCUDA library is not linked!" << std::endl;
     return 1;
   }
@@ -21,11 +21,9 @@ int main(int argc, char *argv[]) {
   QApplication a(argc, argv);
   QCoreApplication::setApplicationName("StyLit Implementation");
   QCommandLineParser parser;
-  parser.setApplicationDescription(
-      "An implementation of StyLit for CSCI 2240.");
+  parser.setApplicationDescription("An implementation of StyLit for CSCI 2240.");
   parser.addHelpOption();
 
-  // test
   // Sets up the GUI argument.
   QCommandLineOption interfaceOption(QStringList() << "g"
                                                    << "gui",
@@ -33,18 +31,16 @@ int main(int argc, char *argv[]) {
   parser.addOption(interfaceOption);
 
   // Sets up the configuration file argument.
-  QCommandLineOption configurationFileOption(
-      QStringList() << "f"
-                    << "configuration",
-      "Configure StyLit using a JSON configuration file.",
-      "the JSON configuration file");
+  QCommandLineOption configurationFileOption(QStringList() << "f"
+                                                           << "configuration",
+                                             "Configure StyLit using a JSON configuration file.",
+                                             "the JSON configuration file");
   parser.addOption(configurationFileOption);
 
   // Sets up the test argument.
-  QCommandLineOption testOption(
-      QStringList() << "t"
-                    << "test",
-      "Run the unit tests instead of the image generator.");
+  QCommandLineOption testOption(QStringList() << "t"
+                                              << "test",
+                                "Run the unit tests instead of the image generator.");
   parser.addOption(testOption);
 
   // Processes the arguments.

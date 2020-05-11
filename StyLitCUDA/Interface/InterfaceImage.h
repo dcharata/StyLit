@@ -4,9 +4,6 @@
 namespace StyLitCUDA {
 
 template <typename T> struct InterfaceImage {
-  InterfaceImage(const int rows, const int cols, const int numChannels, T *const data);
-  virtual ~InterfaceImage() = default;
-
   /**
    * @brief at Returns a pointer to the feature vector for the given coordinates.
    * @param row the row
@@ -24,17 +21,17 @@ template <typename T> struct InterfaceImage {
   const T *constAt(const int row, const int col) const;
 
   // the number of rows in the image (i.e. its height)
-  const int rows;
+  int rows;
 
   // the number of columns in the image (i.e. its width)
-  const int cols;
+  int cols;
 
   // The number of channels in the image. The number of bytes allocated to each pixel is channels *
   // sizeof(T).
-  const int numChannels;
+  int numChannels;
 
   // A pointer to the image's data on the host device. This should be row-major.
-  T *const data;
+  T *data;
 };
 
 } /* namespace StyLitCUDA */

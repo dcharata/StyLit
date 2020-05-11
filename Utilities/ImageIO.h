@@ -76,8 +76,7 @@ bool readImage(const QString &path, Image<float, numChannels> &image,
                const ImageFormat &imageFormat, int startingChannel) {
   // Asserts that the range of channels to read is valid.
   Q_ASSERT(startingChannel >= 0 &&
-           startingChannel + ImageFormatTools::numChannels(imageFormat) <=
-               int(numChannels));
+           startingChannel + ImageFormatTools::numChannels(imageFormat) <= int(numChannels));
 
   // Reads the QImage.
   QImage qImage(path);
@@ -87,8 +86,7 @@ bool readImage(const QString &path, Image<float, numChannels> &image,
 
   // If allocate isn't asserted and the FeatureVector image's dimensions don't
   // match the QImage's dimensions, reading fails.
-  if (image.dimensions.rows != qImage.height() ||
-      image.dimensions.cols != qImage.width()) {
+  if (image.dimensions.rows != qImage.height() || image.dimensions.cols != qImage.width()) {
     return false;
   }
 
@@ -135,8 +133,7 @@ bool writeImage(const QString &path, Image<float, numChannels> &image,
                 const ImageFormat &imageFormat, int startingChannel) {
   // Asserts that the range of channels to write is valid.
   Q_ASSERT(startingChannel >= 0 &&
-           startingChannel + ImageFormatTools::numChannels(imageFormat) <=
-               int(numChannels));
+           startingChannel + ImageFormatTools::numChannels(imageFormat) <= int(numChannels));
 
   // Determines the save format.
   QImage::Format format;
@@ -170,20 +167,17 @@ bool writeImage(const QString &path, Image<float, numChannels> &image,
       }
       case ImageFormat::BWA: {
         const float intensity = featureVector[startingChannel];
-        pixel = floatsToPixel(intensity, intensity, intensity,
-                              featureVector[startingChannel + 1]);
+        pixel = floatsToPixel(intensity, intensity, intensity, featureVector[startingChannel + 1]);
         break;
       }
       case ImageFormat::RGB:
-        pixel = floatsToPixel(featureVector[startingChannel],
-                              featureVector[startingChannel + 1],
+        pixel = floatsToPixel(featureVector[startingChannel], featureVector[startingChannel + 1],
                               featureVector[startingChannel + 2], 1.f);
         break;
       case ImageFormat::RGBA:
-        pixel = floatsToPixel(featureVector[startingChannel],
-                              featureVector[startingChannel + 1],
-                              featureVector[startingChannel + 2],
-                              featureVector[startingChannel + 3]);
+        pixel =
+            floatsToPixel(featureVector[startingChannel], featureVector[startingChannel + 1],
+                          featureVector[startingChannel + 2], featureVector[startingChannel + 3]);
         break;
       default:
         // If the image format is unrecognized, reading fails.
@@ -198,8 +192,7 @@ bool writeImage(const QString &path, Image<float, numChannels> &image,
 }
 
 template <unsigned int numChannels>
-bool readFeatureVectorImage(Image<float, numChannels> &image,
-                            const std::vector<QString> &paths,
+bool readFeatureVectorImage(Image<float, numChannels> &image, const std::vector<QString> &paths,
                             const std::vector<ImageFormat> &formats) {
   int numFilledChannels = 0;
   for (unsigned int i = 0; i < paths.size(); i++) {
@@ -222,17 +215,13 @@ bool readFeatureVectorImage(Image<float, numChannels> &image,
  * @return true if reading succeeds; otherwise false
  */
 template <unsigned int numGuideChannels, unsigned int numStyleChannels>
-bool readPyramidLevel(
-    const Configuration &configuration,
-    PyramidLevel<float, numGuideChannels, numStyleChannels> &pyramidLevel) {
-  return readFeatureVectorImage(pyramidLevel.guide.source,
-                                configuration.sourceGuideImagePaths,
+bool readPyramidLevel(const Configuration &configuration,
+                      PyramidLevel<float, numGuideChannels, numStyleChannels> &pyramidLevel) {
+  return readFeatureVectorImage(pyramidLevel.guide.source, configuration.sourceGuideImagePaths,
                                 configuration.guideImageFormats) &&
-         readFeatureVectorImage(pyramidLevel.guide.target,
-                                configuration.targetGuideImagePaths,
+         readFeatureVectorImage(pyramidLevel.guide.target, configuration.targetGuideImagePaths,
                                 configuration.guideImageFormats) &&
-         readFeatureVectorImage(pyramidLevel.style.source,
-                                configuration.sourceStyleImagePaths,
+         readFeatureVectorImage(pyramidLevel.style.source, configuration.sourceStyleImagePaths,
                                 configuration.styleImageFormats);
 }
 
