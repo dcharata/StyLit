@@ -60,18 +60,19 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
                        a.levels[coarsestLevel], input.b.numChannels,
                        input.b.numChannels + input.bPrime.numChannels, input.patchSize);
 
-  // TODO: Runs PatchMatch for debugging, then applies the result.
+  // TODO: Runs PatchMatch for debugging, upscales the NNF, then applies the result.
   PatchMatch::run(forward.levels[coarsestLevel], nullptr, b.levels[coarsestLevel],
                   a.levels[coarsestLevel], random, input.patchSize, 6);
-  Applicator::apply<T>(forward.levels[coarsestLevel], b.levels[coarsestLevel],
-                       a.levels[coarsestLevel], input.b.numChannels,
+  NNF::upscale(forward.levels[coarsestLevel], forward.levels[coarsestLevel - 1]);
+  Applicator::apply<T>(forward.levels[coarsestLevel - 1], b.levels[coarsestLevel - 1],
+                       a.levels[coarsestLevel - 1], input.b.numChannels,
                        input.b.numChannels + input.bPrime.numChannels, input.patchSize);
 
   // Copies B' back to the caller.
   // TODO: (this is currently configured to export the lowest resolution)
   std::vector<InterfaceImage<T>> bImagesPrime(1);
   bImagesPrime[0] = input.bPrime;
-  b.levels[coarsestLevel].retrieveChannels(bImagesPrime, input.b.numChannels);
+  b.levels[coarsestLevel - 1].retrieveChannels(bImagesPrime, input.b.numChannels);
 }
 
 template <typename T> Coordinator<T>::~Coordinator() { random.free(); }

@@ -13,6 +13,13 @@ template <typename T>
 void randomize(Image<NNFEntry> &nnf, Image<PCGState> &random, const Image<T> &from,
                const Image<T> &to, const int patchSize);
 
+/**
+ * @brief upscale Upscales the given NNF by a factor of two.
+ * @param from the NNF to read from (1x size)
+ * @param to the NNF to write to (2x size)
+ */
+void upscale(const Image<NNFEntry> &from, Image<NNFEntry> &to);
+
 } /* namespace NNF */
 } /* namespace StyLitCUDA */
 
