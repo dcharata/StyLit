@@ -8,5 +8,5 @@ unsigned int StyLitCUDA_sanityCheckStyLitCUDA() { return 0xDEADBEEF; }
 
 int StyLitCUDA_runStyLitCUDA_float(StyLitCUDA::InterfaceInput<float> &input) {
   StyLitCUDA::runCoordinator_float(input);
-  return 124;
+  return 503;
 }

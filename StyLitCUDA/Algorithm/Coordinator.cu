@@ -73,7 +73,7 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
     // The reverse NNF should be randomized or prepopulated, depending on the pyramid level.
     // The forward NNF should be entirely empty (invalid).
     const int GIVING_UP_THRESHOLD = 10;
-    const float STOPPING_THRESHOLD = 0.9f;
+    const float STOPPING_THRESHOLD = 0.95f;
     int pixelsMapped = 0;
     float fractionFilled = 0.f;
     Image<NNFEntry> bestReverseNNF(curReverse.rows, curReverse.cols, 1);
@@ -106,19 +106,20 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
       NNF::randomize(tempForward, random, curB, curA, input.patchSize);
     } else {
       NNF::upscale(forward.levels[level + 1], tempForward, input.patchSize);
+      NNF::recalculateErrors(tempForward, curB, curA, input.patchSize);
     }
     PatchMatch::run(tempForward, nullptr, curB, curA, random, input.patchSize,
                     NUM_PATCH_MATCH_ITERATIONS);
     ReverseToForwardNNF::fill(tempForward, curForward);
     tempForward.free();
 
-    // Either prepares the next pyramid level or renders the final result, depending on the iteration.
     if (level) {
       // This is a coarse pyramid level.
       // The following needs to happen:
       // 1) The reverse NNF needs to be upscaled to produce the next-finest level's reverse NNF.
       // 2) The next-finest level's reverse NNF needs to be applied to produce B'.
       NNF::upscale(bestReverseNNF, reverse.levels[level - 1], input.patchSize);
+      NNF::upscale(curForward, forward.levels[level - 1], input.patchSize);
       Applicator::apply<T>(forward.levels[level - 1], b.levels[level - 1], a.levels[level - 1],
                            input.b.numChannels, input.b.numChannels + input.bPrime.numChannels,
                            input.patchSize);
