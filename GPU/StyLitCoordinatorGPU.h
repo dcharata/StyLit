@@ -50,7 +50,6 @@ public:
       std::cerr << "Could not read input images." << std::endl;
       return false;
     }
-    printTime("Done reading A, B and A'.");
 
     // Adds the guide and style weights.
     /*unsigned int guideChannel = 0;
@@ -97,9 +96,10 @@ public:
 
     const int ret = StyLitCUDA_runStyLitCUDA_float(input);
     printf("StyLitCUDA return value: %d\n", ret);
+    printTime("StyLitCUDA is done.");
     ImageIO::writeImage<numStyleChannels>("/home/davidcharatan/Documents/StyLitBin/test.png",
                                           pyramidLevel.style.target, ImageFormat::RGB, 0);
-    printf("Saved image.");
+    printf("Saved image.\n");
     return true;
   }
 

@@ -71,7 +71,8 @@ __global__ void upscaleKernel(const Image<NNFEntry> from, Image<NNFEntry> to) {
 
 void upscale(const Image<NNFEntry> &from, Image<NNFEntry> &to) {
   assert(to.rows / 2 == from.rows && to.cols / 2 == from.cols);
-  printf("StyLitCUDA: Upscaling NNF with dimensions [%d, %d] to dimensions [%d, %d].\n", from.rows, from.cols, to.rows, to.cols);
+  printf("StyLitCUDA: Upscaling NNF with dimensions [%d, %d] to dimensions [%d, %d].\n", from.rows,
+         from.cols, to.rows, to.cols);
 
   // Calculates the block size.
   const int BLOCK_SIZE_2D = 16;

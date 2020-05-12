@@ -48,31 +48,41 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
   random.allocate();
   initializeRandomState(random);
 
-  // Randomizes the NNFs at the coarsest pyramid level.
+  // Randomizes the NNFs and populates B' at the coarsest pyramid level.
   const int coarsestLevel = input.numLevels - 1;
   NNF::randomize<T>(forward.levels[coarsestLevel], random, b.levels[coarsestLevel],
                     a.levels[coarsestLevel], input.patchSize);
   NNF::randomize<T>(reverse.levels[coarsestLevel], random, a.levels[coarsestLevel],
                     b.levels[coarsestLevel], input.patchSize);
-
-  // Populates B' at the coarsest pyramid level.
   Applicator::apply<T>(forward.levels[coarsestLevel], b.levels[coarsestLevel],
                        a.levels[coarsestLevel], input.b.numChannels,
                        input.b.numChannels + input.bPrime.numChannels, input.patchSize);
 
-  // TODO: Runs PatchMatch for debugging, upscales the NNF, then applies the result.
-  PatchMatch::run(forward.levels[coarsestLevel], nullptr, b.levels[coarsestLevel],
-                  a.levels[coarsestLevel], random, input.patchSize, 6);
-  NNF::upscale(forward.levels[coarsestLevel], forward.levels[coarsestLevel - 1]);
-  Applicator::apply<T>(forward.levels[coarsestLevel - 1], b.levels[coarsestLevel - 1],
-                       a.levels[coarsestLevel - 1], input.b.numChannels,
-                       input.b.numChannels + input.bPrime.numChannels, input.patchSize);
+  // Runs StyLit across the pyramid, starting with the lowest level.
+  for (int level = coarsestLevel; level >= 0; level--) {
+    // At this stage, all NNFs and images (A, B, A', B') should be populated.
+    // Improves the NNF.
+    PatchMatch::run(forward.levels[level], nullptr, b.levels[level], a.levels[level], random,
+                    input.patchSize, 6);
+
+    // Upscales or applies the improved NNF, depending on the pyramid level.
+    if (level) {
+      NNF::upscale(forward.levels[level], forward.levels[level - 1]);
+      Applicator::apply<T>(forward.levels[level - 1], b.levels[level - 1], a.levels[level - 1],
+                           input.b.numChannels, input.b.numChannels + input.bPrime.numChannels,
+                           input.patchSize);
+    } else {
+      // For the finest pyramid level, the NNF is applied to produce the final B'.
+      Applicator::apply<T>(forward.levels[0], b.levels[0], a.levels[0], input.b.numChannels,
+                           input.b.numChannels + input.bPrime.numChannels, input.patchSize);
+    }
+  }
 
   // Copies B' back to the caller.
   // TODO: (this is currently configured to export the lowest resolution)
   std::vector<InterfaceImage<T>> bImagesPrime(1);
   bImagesPrime[0] = input.bPrime;
-  b.levels[coarsestLevel - 1].retrieveChannels(bImagesPrime, input.b.numChannels);
+  b.levels[1].retrieveChannels(bImagesPrime, input.b.numChannels);
 }
 
 template <typename T> Coordinator<T>::~Coordinator() { random.free(); }
