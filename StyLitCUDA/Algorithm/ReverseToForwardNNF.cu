@@ -82,5 +82,10 @@ int transfer(Image<NNFEntry> &reverse, Image<NNFEntry> &forward) {
   return numTransfers;
 }
 
+void fill(const Image<NNFEntry> &from, Image<NNFEntry> to) {
+  printf("StyLitCUDA: Filling in missing entries in NNF with dimensions [%d %d].\n", from.rows, from.cols);
+
+}
+
 } /* namespace ReverseToForwardNNF */
 } /* namespace StyLitCUDA */

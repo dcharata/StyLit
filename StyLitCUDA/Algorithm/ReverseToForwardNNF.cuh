@@ -16,6 +16,14 @@ namespace ReverseToForwardNNF {
  */
 int transfer(Image<NNFEntry> &reverse, Image<NNFEntry> &forward);
 
+/**
+ * @brief fill Fills the NNF to, which is only partially filled (some mappings are to NNF::INVALID),
+ * with the corresponding mappings from the NNF from.
+ * @param from a fully filled NNF
+ * @param to a partially filled NNF
+ */
+void fill(const Image<NNFEntry> &from, Image<NNFEntry> to);
+
 } /* namespace ReverseToForwardNNF */
 } /* namespace StyLitCUDA */
 
