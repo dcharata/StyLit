@@ -39,10 +39,8 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
   b.levels[0].populateChannels(bImages, 0);
 
   // Downscales the images to form the pyramid.
-  for (int level = 0; level < a.levels.size() - 1; level++) {
+  for (int level = 0; level < input.numLevels - 1; level++) {
     downscale(a.levels[level], a.levels[level + 1]);
-  }
-  for (int level = 0; level < b.levels.size() - 1; level++) {
     downscale(b.levels[level], b.levels[level + 1]);
   }
 
@@ -53,7 +51,7 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
 
   // Randomizes the NNFs and populates B' at the coarsest pyramid level.
   const int coarsestLevel = input.numLevels - 1;
-  NNF::invalidate(forward.levels[coarsestLevel]);
+
   NNF::randomize<T>(reverse.levels[coarsestLevel], random, a.levels[coarsestLevel],
                     b.levels[coarsestLevel], input.patchSize);
   Applicator::apply<T>(forward.levels[coarsestLevel], b.levels[coarsestLevel],
@@ -62,10 +60,14 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
 
   // Runs StyLit across the pyramid, starting with the lowest level.
   for (int level = coarsestLevel; level >= 0; level--) {
+    // Defines some things to make the code below more legible.
     Image<NNFEntry> &curReverse = reverse.levels[level];
     Image<NNFEntry> &curForward = forward.levels[level];
     Image<T> &curA = a.levels[level];
     Image<T> &curB = b.levels[level];
+
+    // Invalidates the forward NNF.
+    NNF::invalidate(forward.levels[level]);
 
     // At this stage, the images (A, B, A', B') should be populated.
     // The reverse NNF should be randomized or prepopulated, depending on the pyramid level.
@@ -73,42 +75,60 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
     const int GIVING_UP_THRESHOLD = 10;
     const float STOPPING_THRESHOLD = 0.9f;
     int pixelsMapped = 0;
+    float fractionFilled = 0.f;
+    Image<NNFEntry> bestReverseNNF(curReverse.rows, curReverse.cols, 1);
+    bestReverseNNF.allocate();
     for (int i = 0; i < GIVING_UP_THRESHOLD; i++) {
       // Improves the NNF.
-      PatchMatch::run(curReverse, &curForward, curA, curB, random, input.patchSize, NUM_PATCH_MATCH_ITERATIONS);
+      PatchMatch::run(curReverse, &curForward, curA, curB, random, input.patchSize,
+                      NUM_PATCH_MATCH_ITERATIONS);
+
+      // The reverse NNF after the first iteration is the ideal reverse NNF, since it's completely
+      // unaffected by the blacklist. It's copied to bestReverseNNF for later use (since the reverse
+      // NNF is upscaled, and we want the best one).
+      if (i == 0) {
+        cudaMemcpy2D(bestReverseNNF.deviceData, bestReverseNNF.pitch, curReverse.deviceData,
+                     curReverse.pitch, curReverse.cols * sizeof(NNFEntry), curReverse.rows,
+                     cudaMemcpyDeviceToDevice);
+      }
       pixelsMapped += ReverseToForwardNNF::transfer(curReverse, curForward);
-      const float fractionFilled = (float)pixelsMapped / (curForward.rows * curForward.cols);
+      fractionFilled = (float)pixelsMapped / (curForward.rows * curForward.cols);
       if (fractionFilled > STOPPING_THRESHOLD) {
-        printf("StyLitCUDA: Stopped generating reverse NNFs after %d iterations because forward "
-               "NNF is %f percent full (threshold: %f percent).\n",
-               i + 1, fractionFilled * 100.f, STOPPING_THRESHOLD * 100.f);
         break;
       }
     }
+    printf("StyLitCUDA: NNF is %f percent full (target: %f percent).\n", fractionFilled * 100.f, STOPPING_THRESHOLD * 100.f);
 
     // Generates a forward NNF and uses it to fill the remaining entries in the NNF.
     Image<NNFEntry> tempForward(curForward.rows, curForward.cols, 1);
     tempForward.allocate();
-    if (level) {
-      NNF::upscale(tempForward, forward.levels[level - 1], input.patchSize);
-    } else {
+    if (level == coarsestLevel) {
       NNF::randomize(tempForward, random, curB, curA, input.patchSize);
+    } else {
+      NNF::upscale(forward.levels[level + 1], tempForward, input.patchSize);
     }
-    PatchMatch::run(tempForward, nullptr, curB, curA, random, input.patchSize, NUM_PATCH_MATCH_ITERATIONS);
+    PatchMatch::run(tempForward, nullptr, curB, curA, random, input.patchSize,
+                    NUM_PATCH_MATCH_ITERATIONS);
     ReverseToForwardNNF::fill(tempForward, curForward);
     tempForward.free();
 
-    // Upscales or applies the improved NNF, depending on the pyramid level.
+    // Either prepares the next pyramid level or renders the final result, depending on the iteration.
     if (level) {
-      NNF::upscale(curReverse, reverse.levels[level - 1], input.patchSize);
+      // This is a coarse pyramid level.
+      // The following needs to happen:
+      // 1) The reverse NNF needs to be upscaled to produce the next-finest level's reverse NNF.
+      // 2) The next-finest level's reverse NNF needs to be applied to produce B'.
+      NNF::upscale(bestReverseNNF, reverse.levels[level - 1], input.patchSize);
       Applicator::apply<T>(forward.levels[level - 1], b.levels[level - 1], a.levels[level - 1],
                            input.b.numChannels, input.b.numChannels + input.bPrime.numChannels,
                            input.patchSize);
     } else {
-      // For the finest pyramid level, the NNF is applied to produce the final B'.
+      // This is the finest pyramid level.
+      // The final NNF needs to be applied to create an image.
       Applicator::apply<T>(curForward, curB, curA, input.b.numChannels,
                            input.b.numChannels + input.bPrime.numChannels, input.patchSize);
     }
+    bestReverseNNF.free();
   }
 
   // Copies B' back to the caller.

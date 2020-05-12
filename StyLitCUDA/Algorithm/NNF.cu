@@ -55,6 +55,40 @@ template void randomize(Image<NNFEntry> &nnf, Image<PCGState> &random, const Ima
 template void randomize(Image<NNFEntry> &nnf, Image<PCGState> &random, const Image<float> &from,
                         const Image<float> &to, const int patchSize);
 
+template <typename T>
+__global__ void recalculateErrorsKernel(Image<NNFEntry> nnf, const Image<T> from, const Image<T> to,
+                                        const int patchSize) {
+  const int row = blockDim.x * blockIdx.x + threadIdx.x;
+  const int col = blockDim.y * blockIdx.y + threadIdx.y;
+  if (row < nnf.rows && col < nnf.cols) {
+    NNFEntry *entry = nnf.at(row, col);
+    entry->error = Error::calculate(from, to, Coordinates(row, col),
+                                    Coordinates(entry->row, entry->col), patchSize);
+  }
+}
+
+template <typename T>
+void recalculateErrors(Image<NNFEntry> &nnf, const Image<T> &from, const Image<T> &to,
+                       const int patchSize) {
+  printf("StyLitCUDA: Recalculating errors for NNF with dimensions [%d, %d].\n", nnf.rows,
+         nnf.cols);
+
+  // Calculates the block size.
+  const int BLOCK_SIZE_2D = 16;
+  const dim3 threadsPerBlock(BLOCK_SIZE_2D, BLOCK_SIZE_2D);
+  const dim3 numBlocks(Utilities::divideRoundUp(nnf.rows, threadsPerBlock.x),
+                       Utilities::divideRoundUp(nnf.cols, threadsPerBlock.y));
+
+  // Runs the kernel that recalculates NNF error entries.
+  recalculateErrorsKernel<<<numBlocks, threadsPerBlock>>>(nnf, from, to, patchSize);
+  check(cudaDeviceSynchronize());
+}
+
+template void recalculateErrors(Image<NNFEntry> &nnf, const Image<int> &from, const Image<int> &to,
+                                const int patchSize);
+template void recalculateErrors(Image<NNFEntry> &nnf, const Image<float> &from,
+                                const Image<float> &to, const int patchSize);
+
 __global__ void upscaleKernel(const Image<NNFEntry> from, Image<NNFEntry> to, const int patchSize) {
   const int toRow = blockDim.x * blockIdx.x + threadIdx.x;
   const int toCol = blockDim.y * blockIdx.y + threadIdx.y;

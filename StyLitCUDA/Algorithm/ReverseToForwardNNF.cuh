@@ -22,7 +22,7 @@ int transfer(Image<NNFEntry> &reverse, Image<NNFEntry> &forward);
  * @param from a fully filled NNF
  * @param to a partially filled NNF
  */
-void fill(const Image<NNFEntry> &from, Image<NNFEntry> to);
+void fill(Image<NNFEntry> &from, Image<NNFEntry> &to);
 
 } /* namespace ReverseToForwardNNF */
 } /* namespace StyLitCUDA */

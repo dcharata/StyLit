@@ -26,7 +26,7 @@
     "styleImageWeights": [1],
     "patchSize": 5,
     "numPatchMatchIterations": 6,
-    "numPyramidLevels": 1,
+    "numPyramidLevels": 6,
     "numOptimizationIterationsPerPyramidLevel": 6,
     "coordinatorType": "CUDA"
   }

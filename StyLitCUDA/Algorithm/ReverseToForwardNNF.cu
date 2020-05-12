@@ -10,25 +10,47 @@
 namespace StyLitCUDA {
 namespace ReverseToForwardNNF {
 
+/**
+ * @brief memoryToHost Allocates space for the NNF's contents at hostNNF and transfers the NNF's
+ * contents to hostNNF. Remember to call memoryToDevice after using memoryToHost in order to
+ * transfer the modified memory back and free it!
+ * @param nnf the NNF to transfer to host
+ * @param hostNNF a pointer which will point to the on-host NNF data
+ */
+void memoryToHost(Image<NNFEntry> &nnf, NNFEntry *&hostNNF) {
+  // Transfers the NNF to host memory.
+  const int hostPitch = nnf.cols * sizeof(NNFEntry);
+  const int sizeInBytes = nnf.rows * hostPitch;
+  check(cudaMallocHost(&hostNNF, sizeInBytes));
+  check(cudaMemcpy2D((void *)hostNNF, hostPitch, nnf.deviceData, nnf.pitch, hostPitch, nnf.rows,
+                     cudaMemcpyDeviceToHost));
+}
+
+/**
+ * @brief memoryToHost Copies the data from hostNNF to the on-device memory for the NNF, then frees
+ * hostNNF.
+ * @param nnf the NNF to transfer to
+ * @param hostNNF a pointer which points to on-device NNF data allocated via memoryToHost
+ * (cudaMallocHost)
+ */
+void memoryToDevice(Image<NNFEntry> &nnf, NNFEntry *&hostNNF) {
+  const int hostPitch = nnf.cols * sizeof(NNFEntry);
+  check(cudaMemcpy2D((void *)nnf.deviceData, nnf.pitch, hostNNF, hostPitch, hostPitch, nnf.rows,
+                     cudaMemcpyDeviceToHost));
+  check(cudaFreeHost(hostNNF));
+  hostNNF = nullptr;
+}
+
 int transfer(Image<NNFEntry> &reverse, Image<NNFEntry> &forward) {
   printf("StyLitCUDA: Transferring from reverse NNF with dimensions [%d %d] to forward NNF with "
          "dimensions [%d %d].\n",
          reverse.rows, reverse.cols, forward.rows, forward.cols);
 
   // Transfers the NNFs to host memory.
-  const int reverseHostPitch = reverse.cols * sizeof(NNFEntry);
-  const int reverseSizeInBytes = reverse.rows * reverseHostPitch;
   NNFEntry *reverseHost;
-  check(cudaMallocHost(&reverseHost, reverseSizeInBytes));
-  check(cudaMemcpy2D((void *)reverseHost, reverseHostPitch, reverse.deviceData, reverse.pitch,
-                     reverseHostPitch, reverse.rows, cudaMemcpyDeviceToHost));
-
-  const int forwardHostPitch = forward.cols * sizeof(NNFEntry);
-  const int forwardSizeInBytes = forward.rows * forwardHostPitch;
   NNFEntry *forwardHost;
-  check(cudaMallocHost(&forwardHost, forwardSizeInBytes));
-  check(cudaMemcpy2D((void *)forwardHost, forwardHostPitch, forward.deviceData, forward.pitch,
-                     forwardHostPitch, forward.rows, cudaMemcpyDeviceToHost));
+  memoryToHost(reverse, reverseHost);
+  memoryToHost(forward, forwardHost);
 
   // TODO: Find a real knee point :)
   // For now, the knee point is based on the average of the valid mappings.
@@ -72,19 +94,40 @@ int transfer(Image<NNFEntry> &reverse, Image<NNFEntry> &forward) {
          (float)numTransfers / (forward.rows * forward.cols) * 100.f);
 
   // Copies the NNFs back.
-  check(cudaMemcpy2D((void *)reverse.deviceData, reverse.pitch, reverseHost, reverseHostPitch,
-                     reverseHostPitch, reverse.rows, cudaMemcpyDeviceToHost));
-  check(cudaFreeHost(reverseHost));
-
-  check(cudaMemcpy2D((void *)forward.deviceData, forward.pitch, forwardHost, forwardHostPitch,
-                     forwardHostPitch, forward.rows, cudaMemcpyDeviceToHost));
-  check(cudaFreeHost(forwardHost));
+  memoryToDevice(reverse, reverseHost);
+  memoryToDevice(forward, forwardHost);
   return numTransfers;
 }
 
-void fill(const Image<NNFEntry> &from, Image<NNFEntry> to) {
-  printf("StyLitCUDA: Filling in missing entries in NNF with dimensions [%d %d].\n", from.rows, from.cols);
+void fill(Image<NNFEntry> &from, Image<NNFEntry> &to) {
+  printf("StyLitCUDA: Filling in missing entries in NNF with dimensions [%d %d].\n", from.rows,
+         from.cols);
 
+  // Transfers the NNFs to host memory.
+  NNFEntry *fromHost;
+  NNFEntry *toHost;
+  memoryToHost(from, fromHost);
+  memoryToHost(to, toHost);
+  int numFilled = 0;
+  for (int row = 0; row < from.rows; row++) {
+    for (int col = 0; col < from.cols; col++) {
+      const int index = row * from.cols + col;
+      const NNFEntry *fromEntry = &fromHost[index];
+      NNFEntry *toEntry = &toHost[index];
+      if (toEntry->row == NNF::INVALID || toEntry->col == NNF::INVALID) {
+        numFilled++;
+        toEntry->row = fromEntry->row;
+        toEntry->col = fromEntry->col;
+        toEntry->error = fromEntry->error;
+      }
+    }
+  }
+  const float percentFilled = (100.f * numFilled) / (from.rows * from.cols);
+  printf("StyLitCUDA: Filled in %d entries (%f percent).\n", numFilled, percentFilled);
+
+  // Copies the NNFs back.
+  memoryToDevice(from, fromHost);
+  memoryToDevice(to, toHost);
 }
 
 } /* namespace ReverseToForwardNNF */

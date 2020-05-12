@@ -14,6 +14,10 @@ template <typename T>
 void randomize(Image<NNFEntry> &nnf, Image<PCGState> &random, const Image<T> &from,
                const Image<T> &to, const int patchSize);
 
+template <typename T>
+void recalculateErrors(Image<NNFEntry> &nnf, const Image<T> &from, const Image<T> &to,
+                       const int patchSize);
+
 // Invalid rows/columns point to -1.
 const int INVALID = -1;
 
