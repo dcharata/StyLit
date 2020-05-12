@@ -64,8 +64,10 @@ __global__ void upscaleKernel(const Image<NNFEntry> from, Image<NNFEntry> to, co
     const NNFEntry *fromEntry = from.constAt(fromRow, fromCol);
     NNFEntry *toEntry = to.at(toRow, toCol);
     const int halfPatch = patchSize / 2;
-    toEntry->row = Utilities::clamp(halfPatch, fromEntry->row * 2 + (toRow % 2), to.rows - halfPatch);
-    toEntry->col = Utilities::clamp(halfPatch, fromEntry->col * 2 + (toCol % 2), to.cols - halfPatch);
+    toEntry->row =
+        Utilities::clamp(halfPatch, fromEntry->row * 2 + (toRow % 2), to.rows - halfPatch);
+    toEntry->col =
+        Utilities::clamp(halfPatch, fromEntry->col * 2 + (toCol % 2), to.cols - halfPatch);
     toEntry->error = fromEntry->error;
   }
 }
@@ -83,6 +85,31 @@ void upscale(const Image<NNFEntry> &from, Image<NNFEntry> &to, const int patchSi
 
   // Runs the kernel that randomizes NNF entries.
   upscaleKernel<<<numBlocks, threadsPerBlock>>>(from, to, patchSize);
+  check(cudaDeviceSynchronize());
+}
+
+__global__ void invalidateKernel(Image<NNFEntry> nnf) {
+  const int row = blockDim.x * blockIdx.x + threadIdx.x;
+  const int col = blockDim.y * blockIdx.y + threadIdx.y;
+  if (row < nnf.rows && col < nnf.cols) {
+    NNFEntry *entry = nnf.at(row, col);
+    entry->row = NNF::INVALID;
+    entry->col = NNF::INVALID;
+    entry->error = 0.f;
+  }
+}
+
+void invalidate(Image<NNFEntry> &nnf) {
+  printf("StyLitCUDA: Invalidating NNF with dimensions [%d, %d].\n", nnf.rows, nnf.cols);
+
+  // Calculates the block size.
+  const int BLOCK_SIZE_2D = 16;
+  const dim3 threadsPerBlock(BLOCK_SIZE_2D, BLOCK_SIZE_2D);
+  const dim3 numBlocks(Utilities::divideRoundUp(nnf.rows, threadsPerBlock.x),
+                       Utilities::divideRoundUp(nnf.cols, threadsPerBlock.y));
+
+  // Runs the kernel that randomizes NNF entries.
+  invalidateKernel<<<numBlocks, threadsPerBlock>>>(nnf);
   check(cudaDeviceSynchronize());
 }
 

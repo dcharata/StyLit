@@ -26,9 +26,9 @@ __global__ void applyKernel(const Image<NNFEntry> nnf, Image<T> from, const Imag
     int denominator = 0.f;
     const int halfPatch = patchSize / 2;
     const int fromRowStart = Utilities::clamp(0, row - halfPatch, from.rows);
-    const int fromRowEnd = Utilities::clamp(0, row + halfPatch, from.rows);
+    const int fromRowEnd = Utilities::clamp(0, row + halfPatch + 1, from.rows);
     const int fromColStart = Utilities::clamp(0, col - halfPatch, from.cols);
-    const int fromColEnd = Utilities::clamp(0, col + halfPatch, from.cols);
+    const int fromColEnd = Utilities::clamp(0, col + halfPatch + 1, from.cols);
     for (int fromRow = fromRowStart; fromRow < fromRowEnd; fromRow++) {
       for (int fromCol = fromColStart; fromCol < fromColEnd; fromCol++) {
         // Offsets the mapping so it corresponds to the pixel that will be populated.

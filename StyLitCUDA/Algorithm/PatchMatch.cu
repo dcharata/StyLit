@@ -3,14 +3,18 @@
 #include "../Utilities/Coordinates.cuh"
 #include "../Utilities/Utilities.cuh"
 #include "Error.cuh"
+#include "NNF.cuh"
 #include "PCG.cuh"
 
 #include <algorithm>
 #include <cuda_runtime.h>
+#include <limits>
 #include <stdio.h>
 
 namespace StyLitCUDA {
 namespace PatchMatch {
+
+constexpr float fmax = std::numeric_limits<float>::max();
 
 /**
  * @brief tryPatch Calculates the error for a new mapping from [sourceRow, sourceCol] to [targetRow,
@@ -26,17 +30,36 @@ namespace PatchMatch {
  * @param sourceCol the source column to try a mapping for
  * @param targetRow the target row to try a mapping for
  * @param targetCol the target column to try a mapping for
+ * @param optionalBlacklist An optional blacklist (NNF that goes in the other direction). If a
+ * location in the blacklist has a valid mapping, it should not be mapped to. A blacklist with zero
+ * dimensions is ignored.
  */
 template <typename T>
 __device__ void tryPatch(const Image<T> &source, const Image<T> &target, Image<NNFEntry> &nextNNF,
                          const Image<NNFEntry> &previousNNF, const int patchSize,
                          const int sourceRow, const int sourceCol, const int targetRow,
-                         const int targetCol) {
+                         const int targetCol, const Image<NNFEntry> &optionalBlacklist) {
   // Calculates the error for the new mapping and compares it with the existing error.
   const float oldError = previousNNF.constAt(sourceRow, sourceCol)->error;
-  const float newError = Error::calculate(source, target, Coordinates(sourceRow, sourceCol),
-                                          Coordinates(targetRow, targetCol), patchSize);
-  if (newError <= oldError) {
+  float newError;
+
+  // If the blacklist exists and the target is in it, no error calculation is necessary.
+  if (optionalBlacklist.numChannels) {
+    // A blacklist exists.
+    const NNFEntry *blacklistEntry = optionalBlacklist.constAt(targetRow, targetCol);
+    if (blacklistEntry->row != NNF::INVALID || blacklistEntry->col != NNF::INVALID) {
+      // There's already a mapping for the mapped-to pixel; it's blacklisted!
+      newError = fmax;
+    } else {
+      newError = Error::calculate(source, target, Coordinates(sourceRow, sourceCol),
+                                  Coordinates(targetRow, targetCol), patchSize);
+    }
+  } else {
+    newError = Error::calculate(source, target, Coordinates(sourceRow, sourceCol),
+                                Coordinates(targetRow, targetCol), patchSize);
+  }
+
+  if (newError < oldError) {
     // If the new error would be lower, updates nextNNF.
     NNFEntry *nextMapping = nextNNF.at(sourceRow, sourceCol);
     nextMapping->row = targetRow;
@@ -57,12 +80,16 @@ __device__ void tryPatch(const Image<T> &source, const Image<T> &target, Image<N
  * @param sourceCol the source column to try an offset for
  * @param rowOffset the row offset to try
  * @param colOffset the column offset to try
+ * @param optionalBlacklist An optional blacklist (NNF that goes in the other direction). If a
+ * location in the blacklist has a valid mapping, it should not be mapped to. A blacklist with zero
+ * dimensions is ignored.
  */
 template <typename T>
 __device__ void tryNeighborOffset(const Image<T> &source, const Image<T> &target,
                                   Image<NNFEntry> &nextNNF, const Image<NNFEntry> &previousNNF,
                                   const int patchSize, const int sourceRow, const int sourceCol,
-                                  const int rowOffset, const int colOffset) {
+                                  const int rowOffset, const int colOffset,
+                                  const Image<NNFEntry> &optionalBlacklist) {
   // Gets the neighbor's mapping.
   const int neighborRow = Utilities::clamp(0, sourceRow + rowOffset, source.rows);
   const int neighborCol = Utilities::clamp(0, sourceCol + colOffset, source.cols);
@@ -74,7 +101,7 @@ __device__ void tryNeighborOffset(const Image<T> &source, const Image<T> &target
 
   // Tries the mapping.
   tryPatch(source, target, nextNNF, previousNNF, patchSize, sourceRow, sourceCol, targetRow,
-           targetCol);
+           targetCol, optionalBlacklist);
 }
 
 /**
@@ -87,19 +114,27 @@ __device__ void tryNeighborOffset(const Image<T> &source, const Image<T> &target
  * @param previousNNF the NNF to read from
  * @param patchSize the patch width/height
  * @param offset the offset to try in each direction
+ * @param optionalBlacklist An optional blacklist (NNF that goes in the other direction). If a
+ * location in the blacklist has a valid mapping, it should not be mapped to. A blacklist with zero
+ * dimensions is ignored.
  */
 template <typename T>
 __global__ void propagationPassKernel(const Image<T> source, const Image<T> target,
                                       Image<NNFEntry> nextNNF, const Image<NNFEntry> previousNNF,
-                                      const int patchSize, const int offset) {
+                                      const int patchSize, const int offset,
+                                      const Image<NNFEntry> optionalBlacklist) {
   const int row = blockDim.x * blockIdx.x + threadIdx.x;
   const int col = blockDim.y * blockIdx.y + threadIdx.y;
   if (row < source.rows && col < source.cols) {
     // Tries offsetting up, down, left and right.
-    tryNeighborOffset(source, target, nextNNF, previousNNF, patchSize, row, col, offset, 0);
-    tryNeighborOffset(source, target, nextNNF, previousNNF, patchSize, row, col, -offset, 0);
-    tryNeighborOffset(source, target, nextNNF, previousNNF, patchSize, row, col, 0, offset);
-    tryNeighborOffset(source, target, nextNNF, previousNNF, patchSize, row, col, 0, -offset);
+    tryNeighborOffset(source, target, nextNNF, previousNNF, patchSize, row, col, offset, 0,
+                      optionalBlacklist);
+    tryNeighborOffset(source, target, nextNNF, previousNNF, patchSize, row, col, -offset, 0,
+                      optionalBlacklist);
+    tryNeighborOffset(source, target, nextNNF, previousNNF, patchSize, row, col, 0, offset,
+                      optionalBlacklist);
+    tryNeighborOffset(source, target, nextNNF, previousNNF, patchSize, row, col, 0, -offset,
+                      optionalBlacklist);
   }
 }
 
@@ -114,12 +149,15 @@ __global__ void propagationPassKernel(const Image<T> source, const Image<T> targ
  * @param patchSize the patch width/height
  * @param radius the radius to randomly search within
  * @param random the pseudorandom number generator's state
+ * @param optionalBlacklist An optional blacklist (NNF that goes in the other direction). If a
+ * location in the blacklist has a valid mapping, it should not be mapped to. A blacklist with zero
+ * dimensions is ignored.
  */
 template <typename T>
-__global__ void randomSearchPassKernel(const Image<T> source, const Image<T> target,
-                                       Image<NNFEntry> nextNNF, const Image<NNFEntry> previousNNF,
-                                       const int patchSize, const int radius,
-                                       Image<PCGState> random) {
+__global__ void
+randomSearchPassKernel(const Image<T> source, const Image<T> target, Image<NNFEntry> nextNNF,
+                       const Image<NNFEntry> previousNNF, const int patchSize, const int radius,
+                       Image<PCGState> random, const Image<NNFEntry> optionalBlacklist) {
   const int row = blockDim.x * blockIdx.x + threadIdx.x;
   const int col = blockDim.y * blockIdx.y + threadIdx.y;
   if (row < source.rows && col < source.cols) {
@@ -135,7 +173,8 @@ __global__ void randomSearchPassKernel(const Image<T> source, const Image<T> tar
     const int newTargetCol = Utilities::clamp(0, previousMapping->col + colShift, target.cols);
 
     // Tries the shifted patch.
-    tryPatch(source, target, nextNNF, previousNNF, patchSize, row, col, newTargetRow, newTargetCol);
+    tryPatch(source, target, nextNNF, previousNNF, patchSize, row, col, newTargetRow, newTargetCol,
+             optionalBlacklist);
   }
 }
 
@@ -184,6 +223,10 @@ void run(Image<NNFEntry> &nnf, const Image<NNFEntry> *blacklist, const Image<T> 
          numIterations, patchSize, blacklist ? "a" : "no");
   const float initialError = totalError(nnf);
 
+  // A zero-size NNF is used to represent a missing blacklist.
+  const Image<NNFEntry> dummyBlacklist(0, 0, 0);
+  const Image<NNFEntry> &optionalBlacklist = blacklist ? *blacklist : dummyBlacklist;
+
   // Calculates the block size.
   const int BLOCK_SIZE_2D = 16;
   const dim3 threadsPerBlock(BLOCK_SIZE_2D, BLOCK_SIZE_2D);
@@ -199,25 +242,25 @@ void run(Image<NNFEntry> &nnf, const Image<NNFEntry> *blacklist, const Image<T> 
   Image<NNFEntry> *nextNNF = &tempNNF;
   for (int iteration = 0; iteration < numIterations; iteration++) {
     // First, runs three propagation passes with offsets of 4, 2 and 1 respectively.
-    propagationPassKernel<T>
-        <<<numBlocks, threadsPerBlock>>>(from, to, *nextNNF, *previousNNF, patchSize, 4);
+    propagationPassKernel<T><<<numBlocks, threadsPerBlock>>>(from, to, *nextNNF, *previousNNF,
+                                                             patchSize, 4, optionalBlacklist);
     check(cudaDeviceSynchronize());
     swapNNFs(&previousNNF, &nextNNF);
 
-    propagationPassKernel<T>
-        <<<numBlocks, threadsPerBlock>>>(from, to, *nextNNF, *previousNNF, patchSize, 2);
+    propagationPassKernel<T><<<numBlocks, threadsPerBlock>>>(from, to, *nextNNF, *previousNNF,
+                                                             patchSize, 2, optionalBlacklist);
     check(cudaDeviceSynchronize());
     swapNNFs(&previousNNF, &nextNNF);
 
-    propagationPassKernel<T>
-        <<<numBlocks, threadsPerBlock>>>(from, to, *nextNNF, *previousNNF, patchSize, 1);
+    propagationPassKernel<T><<<numBlocks, threadsPerBlock>>>(from, to, *nextNNF, *previousNNF,
+                                                             patchSize, 1, optionalBlacklist);
     check(cudaDeviceSynchronize());
     swapNNFs(&previousNNF, &nextNNF);
 
     // Next, runs a number of random search passes.
     for (int radius = std::max(from.rows, from.cols) / 2; radius > 1; radius /= 2) {
-      randomSearchPassKernel<T><<<numBlocks, threadsPerBlock>>>(from, to, *nextNNF, *previousNNF,
-                                                                patchSize, radius, random);
+      randomSearchPassKernel<T><<<numBlocks, threadsPerBlock>>>(
+          from, to, *nextNNF, *previousNNF, patchSize, radius, random, optionalBlacklist);
       check(cudaDeviceSynchronize());
       swapNNFs(&previousNNF, &nextNNF);
     }

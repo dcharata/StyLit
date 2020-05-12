@@ -7,6 +7,7 @@
 #include "NNF.cuh"
 #include "PatchMatch.cuh"
 #include "RandomInitializer.cuh"
+#include "ReverseToForwardNNF.cuh"
 
 #include <algorithm>
 #include <cuda_runtime.h>
@@ -50,8 +51,7 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
 
   // Randomizes the NNFs and populates B' at the coarsest pyramid level.
   const int coarsestLevel = input.numLevels - 1;
-  NNF::randomize<T>(forward.levels[coarsestLevel], random, b.levels[coarsestLevel],
-                    a.levels[coarsestLevel], input.patchSize);
+  NNF::invalidate(forward.levels[coarsestLevel]);
   NNF::randomize<T>(reverse.levels[coarsestLevel], random, a.levels[coarsestLevel],
                     b.levels[coarsestLevel], input.patchSize);
   Applicator::apply<T>(forward.levels[coarsestLevel], b.levels[coarsestLevel],
@@ -60,14 +60,30 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
 
   // Runs StyLit across the pyramid, starting with the lowest level.
   for (int level = coarsestLevel; level >= 0; level--) {
-    // At this stage, all NNFs and images (A, B, A', B') should be populated.
-    // Improves the NNF.
-    PatchMatch::run(forward.levels[level], nullptr, b.levels[level], a.levels[level], random,
-                    input.patchSize, 6);
+    // At this stage, the images (A, B, A', B') should be populated.
+    // The reverse NNF should be randomized or prepopulated, depending on the pyramid level.
+    // The forward NNF should be entirely empty (invalid).
+    const int GIVING_UP_THRESHOLD = 10;
+    const float STOPPING_THRESHOLD = 0.9f;
+    int pixelsMapped = 0;
+    for (int i = 0; i < GIVING_UP_THRESHOLD; i++) {
+      // Improves the NNF.
+      PatchMatch::run(reverse.levels[level], &forward.levels[level], a.levels[level],
+                      b.levels[level], random, input.patchSize, 6);
+      pixelsMapped += ReverseToForwardNNF::transfer(reverse.levels[level], forward.levels[level]);
+      const float fractionFilled =
+          (float)pixelsMapped / (forward.levels[level].rows * forward.levels[level].cols);
+      if (fractionFilled > STOPPING_THRESHOLD) {
+        printf("StyLitCUDA: Stopped generating reverse NNFs after %d iterations because forward "
+               "NNF is %f percent full (threshold: %f percent).\n",
+               i + 1, fractionFilled * 100.f, STOPPING_THRESHOLD * 100.f);
+        break;
+      }
+    }
 
     // Upscales or applies the improved NNF, depending on the pyramid level.
     if (level) {
-      NNF::upscale(forward.levels[level], forward.levels[level - 1], input.patchSize);
+      NNF::upscale(reverse.levels[level], reverse.levels[level - 1], input.patchSize);
       Applicator::apply<T>(forward.levels[level - 1], b.levels[level - 1], a.levels[level - 1],
                            input.b.numChannels, input.b.numChannels + input.bPrime.numChannels,
                            input.patchSize);
