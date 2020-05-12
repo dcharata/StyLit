@@ -32,21 +32,25 @@ public:
         ImageCoordinates from{ row, col };
         const FeatureVector<float, 1> &featureVector =
             mask.source.getConstPixel(row, col);
-        //        ImageCoordinates to{ randi(0, nnf.targetDimensions.rows),
-        //                             randi(0, nnf.targetDimensions.col) };
-        //        nnf.setMapping(from, to);
+        ImageCoordinates to{ randi(0, nnf.targetDimensions.rows),
+                             randi(0, nnf.targetDimensions.col) };
+        nnf.setMapping(from, to);
 
-        if (featureVector[0] > 0.4) {
-          int randIndex = randi(0, pyramidLevel.targetWhite.size());
-          ImageCoordinates to{ pyramidLevel.targetWhite[randIndex].row,
-                               pyramidLevel.targetWhite[randIndex].col };
-          nnf.setMapping(from, to);
-        } else {
-          int randIndex = randi(0, pyramidLevel.targetBlack.size());
-          ImageCoordinates to{ pyramidLevel.targetBlack[randIndex].row,
-                               pyramidLevel.targetBlack[randIndex].col };
-          nnf.setMapping(from, to);
-        }
+        //        if (featureVector[0] > 0.4) {
+        //          int randIndex = randi(0, pyramidLevel.targetWhite.size());
+        //          ImageCoordinates to{
+        // pyramidLevel.targetWhite[randIndex].row,
+        //                               pyramidLevel.targetWhite[randIndex].col
+        // };
+        //          nnf.setMapping(from, to);
+        //        } else {
+        //          int randIndex = randi(0, pyramidLevel.targetBlack.size());
+        //          ImageCoordinates to{
+        // pyramidLevel.targetBlack[randIndex].row,
+        //                               pyramidLevel.targetBlack[randIndex].col
+        // };
+        //          nnf.setMapping(from, to);
+        //        }
       }
     }
   }

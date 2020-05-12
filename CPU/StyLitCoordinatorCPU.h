@@ -86,20 +86,21 @@ public:
     //      }
     //    }
 
-    // Adding Target Mask pixels at Level 0
-    for (int row = 0; row < pyramid.levels[0].mask.target.dimensions.rows;
-         row++) {
-      for (int col = 0; col < pyramid.levels[0].mask.target.dimensions.cols;
-           col++) {
-        ImageCoordinates from{ row, col };
-        const FeatureVector<float, 1> &featureVector =
-            pyramid.levels[0].mask.target.getConstPixel(row, col);
-        if (featureVector[0] > 0.4)
-          pyramid.levels[0].targetWhite.emplace_back(from);
-        else
-          pyramid.levels[0].targetBlack.emplace_back(from);
-      }
-    }
+    //    // Adding Target Mask pixels at Level 0
+    //    for (int row = 0; row < pyramid.levels[0].mask.target.dimensions.rows;
+    //         row++) {
+    //      for (int col = 0; col <
+    // pyramid.levels[0].mask.target.dimensions.cols;
+    //           col++) {
+    //        ImageCoordinates from{ row, col };
+    //        const FeatureVector<float, 1> &featureVector =
+    //            pyramid.levels[0].mask.target.getConstPixel(row, col);
+    //        if (featureVector[0] > 0.4)
+    //          pyramid.levels[0].targetWhite.emplace_back(from);
+    //        else
+    //          pyramid.levels[0].targetBlack.emplace_back(from);
+    //      }
+    //    }
 
     // Adds the guide and style weights.
     unsigned int guideChannel = 0;
@@ -188,20 +189,22 @@ public:
       //        }
       //      }
 
-      // Adding Target Mask pixels at Level : level
-      for (int row = 0; row < pyramid.levels[level].mask.target.dimensions.rows;
-           row++) {
-        for (int col = 0;
-             col < pyramid.levels[level].mask.target.dimensions.cols; col++) {
-          ImageCoordinates from{ row, col };
-          const FeatureVector<float, 1> &featureVector =
-              pyramid.levels[level].mask.target.getConstPixel(row, col);
-          if (featureVector[0] > 0.4)
-            pyramid.levels[level].targetWhite.emplace_back(from);
-          else
-            pyramid.levels[level].targetBlack.emplace_back(from);
-        }
-      }
+      //      // Adding Target Mask pixels at Level : level
+      //      for (int row = 0; row <
+      // pyramid.levels[level].mask.target.dimensions.rows;
+      //           row++) {
+      //        for (int col = 0;
+      //             col < pyramid.levels[level].mask.target.dimensions.cols;
+      // col++) {
+      //          ImageCoordinates from{ row, col };
+      //          const FeatureVector<float, 1> &featureVector =
+      //              pyramid.levels[level].mask.target.getConstPixel(row, col);
+      //          if (featureVector[0] > 0.4)
+      //            pyramid.levels[level].targetWhite.emplace_back(from);
+      //          else
+      //            pyramid.levels[level].targetBlack.emplace_back(from);
+      //        }
+      //      }
     }
     printTime("Done downscaling A, B and A'.");
 

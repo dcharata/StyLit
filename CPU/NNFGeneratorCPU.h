@@ -69,6 +69,7 @@ private:
     // the source dimensions of the forward NNF are the dimesions of the target
     int patchesFilled = 0;
     bool firstIteration = true;
+
     const int forwardNNFSize =
         pyramidLevel.forwardNNF.sourceDimensions.area(); // NEEDS CHANGES WITH
                                                          // MASK
