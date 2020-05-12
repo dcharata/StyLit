@@ -34,7 +34,8 @@ public:
    */
   bool generateNNF(const Configuration &configuration,
                    Pyramid<T, numGuideChannels, numStyleChannels> &pyramid,
-                   int level, std::vector<float> &budgets) {
+                   int level, std::vector<float> &budgets,
+                   ImagePair<float, 1> &mask) {
     // The pyramid level must be valid.
     Q_ASSERT(level >= 0 && level < int(pyramid.levels.size()));
 
@@ -46,7 +47,8 @@ public:
     Q_ASSERT(pyramid.levels[level].reverseNNF.sourceDimensions ==
              pyramid.levels[level].forwardNNF.targetDimensions);
 
-    return implementationOfGenerateNNF(configuration, pyramid, level, budgets);
+    return implementationOfGenerateNNF(configuration, pyramid, level, budgets,
+                                       mask);
   }
 
 protected:
@@ -64,7 +66,7 @@ protected:
   virtual bool implementationOfGenerateNNF(
       const Configuration &configuration,
       Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int level,
-      std::vector<float> &budgets) = 0;
+      std::vector<float> &budgets, ImagePair<float, 1> &mask) = 0;
 };
 
 #endif // NNFGENERATOR_H

@@ -37,12 +37,14 @@ public:
    * @return true if patch matching succeeds; otherwise false
    */
   bool patchMatch(const Configuration &configuration, NNF &nnf,
-                  const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int level,
-                  bool makeReverseNNF, bool initRandom, NNFError &nnfError, bool initError,
-                  std::vector<float> &omega, const ImageDimensions omegaDimensions, NNF *const blacklist = nullptr) {
-    return implementationOfPatchMatch(configuration, nnf, pyramid, level,
-                                      makeReverseNNF, initRandom, nnfError, initError,
-                                      omega, omegaDimensions, blacklist);
+                  const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid,
+                  int level, bool makeReverseNNF, bool initRandom,
+                  NNFError &nnfError, bool initError, std::vector<float> &omega,
+                  const ImageDimensions omegaDimensions,
+                  ImagePair<float, 1> &mask, NNF *const blacklist = nullptr) {
+    return implementationOfPatchMatch(
+        configuration, nnf, pyramid, level, makeReverseNNF, initRandom,
+        nnfError, initError, omega, omegaDimensions, mask, blacklist);
   }
 
 protected:
@@ -68,7 +70,8 @@ protected:
       const Configuration &configuration, NNF &nnf,
       const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int level,
       bool makeReverseNNF, bool initRandom, NNFError &nnfError, bool initError,
-      std::vector<float> &omega, const ImageDimensions omegaDimensions, NNF *const blacklist = nullptr) = 0;
+      std::vector<float> &omega, const ImageDimensions omegaDimensions,
+      ImagePair<float, 1> &mask, NNF *const blacklist = nullptr) = 0;
 };
 
 #endif // PATCHMATCHER_H

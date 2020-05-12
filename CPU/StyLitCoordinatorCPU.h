@@ -9,6 +9,7 @@
 #include "NNFGeneratorCPU.h"
 #include "NNFUpscalerCPU.h"
 #include "Utilities/ImageIO.h"
+#include "Algorithm/ImagePair.h"
 
 #include <QString>
 #include <iostream>
@@ -34,7 +35,7 @@ public:
     printTime("Starting runStyLit in StyLitCoordinatorCPU.");
     Pyramid<float, numGuideChannels, numStyleChannels> pyramid;
 
-    //srand(4);
+    // srand(4);
 
     // Gets the highest pyramid level's dimensions.
     ImageDimensions sourceDimensions;
@@ -53,11 +54,49 @@ public:
     // Creates and reads in the highest pyramid level.
     pyramid.levels.emplace_back(sourceDimensions, targetDimensions);
     if (!ImageIO::readPyramidLevel<numGuideChannels, numStyleChannels>(
-            configuration, pyramid.levels[0])) {
+             configuration, pyramid.levels[0])) {
       std::cerr << "Could not read input images." << std::endl;
       return false;
     }
     printTime("Done reading A, B and A'.");
+
+    // Read Source Mask
+    ImageIO::readImage<1>("Blender/output/600x456/source_mask.png",
+                          pyramid.levels[0].mask.source, ImageFormat::BW, 0);
+    // Read Target Mask
+    ImageIO::readImage<1>("Blender/output/600x456/target_mask.png",
+                          pyramid.levels[0].mask.target, ImageFormat::BW, 0);
+    printTime("Done reading source and target mask at lowest level.");
+
+    // Adding Source Mask pixels at Level 0
+    for (int row = 0; row < pyramid.levels[0].mask.source.dimensions.rows;
+         row++) {
+      for (int col = 0; col < pyramid.levels[0].mask.source.dimensions.cols;
+           col++) {
+        ImageCoordinates from{ row, col };
+        const FeatureVector<float, 1> &featureVector =
+            pyramid.levels[0].mask.source.getConstPixel(row, col);
+        if (featureVector[0] > 0.4)
+          pyramid.levels[0].sourceWhite.emplace_back(from);
+        else
+          pyramid.levels[0].sourceBlack.emplace_back(from);
+      }
+    }
+
+    // Adding Target Mask pixels at Level 0
+    for (int row = 0; row < pyramid.levels[0].mask.target.dimensions.rows;
+         row++) {
+      for (int col = 0; col < pyramid.levels[0].mask.target.dimensions.cols;
+           col++) {
+        ImageCoordinates from{ row, col };
+        const FeatureVector<float, 1> &featureVector =
+            pyramid.levels[0].mask.target.getConstPixel(row, col);
+        if (featureVector[0] > 0.4)
+          pyramid.levels[0].targetWhite.emplace_back(from);
+        else
+          pyramid.levels[0].targetBlack.emplace_back(from);
+      }
+    }
 
     // Adds the guide and style weights.
     unsigned int guideChannel = 0;
@@ -84,6 +123,7 @@ public:
     // Downscales the pyramid levels.
     DownscalerCPU<float, numGuideChannels> guideDownscaler;
     DownscalerCPU<float, numStyleChannels> styleDownscaler;
+    DownscalerCPU<float, 1> maskDownscaler;
     int factor = 2;
     for (int level = 1; level < configuration.numPyramidLevels; level++) {
       // Calculates the pyramid level's image size and checks its validity.
@@ -121,6 +161,42 @@ public:
       styleDownscaler.downscale(configuration,
                                 pyramid.levels[level - 1].style.source,
                                 pyramid.levels[level].style.source);
+      maskDownscaler.downscale(configuration,
+                               pyramid.levels[level - 1].mask.source,
+                               pyramid.levels[level].mask.source);
+      maskDownscaler.downscale(configuration,
+                               pyramid.levels[level - 1].mask.target,
+                               pyramid.levels[level].mask.target);
+      //      printTime("Done dpwnscaling at level: " + QString::number(level));
+      // Adding Source Mask pixels at Level : level
+      for (int row = 0; row < pyramid.levels[level].mask.source.dimensions.rows;
+           row++) {
+        for (int col = 0;
+             col < pyramid.levels[level].mask.source.dimensions.cols; col++) {
+          ImageCoordinates from{ row, col };
+          const FeatureVector<float, 1> &featureVector =
+              pyramid.levels[level].mask.source.getConstPixel(row, col);
+          if (featureVector[0] > 0.4)
+            pyramid.levels[level].sourceWhite.emplace_back(from);
+          else
+            pyramid.levels[level].sourceBlack.emplace_back(from);
+        }
+      }
+
+      // Adding Target Mask pixels at Level : level
+      for (int row = 0; row < pyramid.levels[level].mask.target.dimensions.rows;
+           row++) {
+        for (int col = 0;
+             col < pyramid.levels[level].mask.target.dimensions.cols; col++) {
+          ImageCoordinates from{ row, col };
+          const FeatureVector<float, 1> &featureVector =
+              pyramid.levels[level].mask.target.getConstPixel(row, col);
+          if (featureVector[0] > 0.4)
+            pyramid.levels[level].targetWhite.emplace_back(from);
+          else
+            pyramid.levels[level].targetBlack.emplace_back(from);
+        }
+      }
     }
     printTime("Done downscaling A, B and A'.");
 
@@ -131,7 +207,10 @@ public:
     // initialized NNF
     PatchMatcherCPU<float, numGuideChannels, numStyleChannels> patchMatcher;
     patchMatcher.randomlyInitializeNNF(
-        pyramid.levels[int(pyramid.levels.size()) - 1].forwardNNF);
+        pyramid.levels[int(pyramid.levels.size()) - 1].forwardNNF,
+        pyramid.levels[int(pyramid.levels.size()) - 1].mask,
+        pyramid.levels[int(pyramid.levels.size()) - 1]);
+
     nnfApplicator.applyNNF(configuration,
                            pyramid.levels[int(pyramid.levels.size()) - 1]);
 
@@ -146,16 +225,20 @@ public:
       if (level < int(pyramid.levels.size()) - 1) {
         // If not at the coarsest level, upscales the NNF and applies it to make
         // the next-finest B'.
-        PyramidLevel<float, numGuideChannels, numStyleChannels>
-            &previousPyramidLevel = pyramid.levels[level + 1];
+        PyramidLevel<float, numGuideChannels, numStyleChannels> &
+        previousPyramidLevel = pyramid.levels[level + 1];
         nnfUpscaler.upscaleNNF(configuration, previousPyramidLevel.forwardNNF,
                                pyramidLevel.forwardNNF);
         nnfApplicator.applyNNF(configuration, pyramidLevel);
       }
 
       std::vector<float> budgets;
-      for (int i = 0; i < configuration.numOptimizationIterationsPerPyramidLevel; i++) {
-        generator.generateNNF(configuration, pyramid, level, budgets);
+      for (int i = 0;
+           i < configuration.numOptimizationIterationsPerPyramidLevel; i++) {
+        // if (level > 0)
+
+        generator.generateNNF(configuration, pyramid, level, budgets,
+                              pyramid.levels[level].mask);
         printTime("Done with generating NNF.");
         nnfApplicator.applyNNF(configuration, pyramidLevel);
         printTime("Done applying NNF.");

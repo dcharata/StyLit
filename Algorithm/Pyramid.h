@@ -13,7 +13,7 @@
 template <typename T, unsigned int numGuideChannels,
           unsigned int numStyleChannels>
 struct Pyramid {
-  std::vector<PyramidLevel<T, numGuideChannels, numStyleChannels>> levels;
+  std::vector<PyramidLevel<T, numGuideChannels, numStyleChannels> > levels;
   ChannelWeights<numGuideChannels> guideWeights;
   ChannelWeights<numStyleChannels> styleWeights;
 };
