@@ -51,7 +51,7 @@ public:
     // Creates and reads in the highest pyramid level.
     pyramid.levels.emplace_back(sourceDimensions, targetDimensions);
     if (!ImageIO::readPyramidLevel<numGuideChannels, numStyleChannels>(
-            configuration, pyramid.levels[0])) {
+             configuration, pyramid.levels[0])) {
       std::cerr << "Could not read input images." << std::endl;
       return false;
     }
@@ -158,8 +158,8 @@ public:
       if (level < int(pyramid.levels.size()) - 1) {
         // If not at the coarsest level, upscales the NNF and applies it to make
         // the next-finest B'.
-        PyramidLevel<float, numGuideChannels, numStyleChannels>
-            &previousPyramidLevel = pyramid.levels[level + 1];
+        PyramidLevel<float, numGuideChannels, numStyleChannels> &
+        previousPyramidLevel = pyramid.levels[level + 1];
         nnfUpscaler.upscaleNNF(configuration, previousPyramidLevel.forwardNNF,
                                pyramidLevel.forwardNNF);
         nnfApplicator.applyNNF(configuration, pyramidLevel);
@@ -174,7 +174,7 @@ public:
       }
 
       // Saves an image.
-      QString location = QString(PROJECT_PATH) + QString("Results/result");
+      QString location = configuration.targetStyleImagePaths[0];
       location += QString::number(level);
       location += ".png";
       ImageIO::writeImage<numStyleChannels>(location, pyramidLevel.style.target,
