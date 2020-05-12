@@ -67,7 +67,7 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
 
     // Upscales or applies the improved NNF, depending on the pyramid level.
     if (level) {
-      NNF::upscale(forward.levels[level], forward.levels[level - 1]);
+      NNF::upscale(forward.levels[level], forward.levels[level - 1], input.patchSize);
       Applicator::apply<T>(forward.levels[level - 1], b.levels[level - 1], a.levels[level - 1],
                            input.b.numChannels, input.b.numChannels + input.bPrime.numChannels,
                            input.patchSize);
@@ -79,10 +79,9 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
   }
 
   // Copies B' back to the caller.
-  // TODO: (this is currently configured to export the lowest resolution)
   std::vector<InterfaceImage<T>> bImagesPrime(1);
   bImagesPrime[0] = input.bPrime;
-  b.levels[1].retrieveChannels(bImagesPrime, input.b.numChannels);
+  b.levels[0].retrieveChannels(bImagesPrime, input.b.numChannels);
 }
 
 template <typename T> Coordinator<T>::~Coordinator() { random.free(); }

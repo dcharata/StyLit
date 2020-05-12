@@ -18,7 +18,7 @@ void randomize(Image<NNFEntry> &nnf, Image<PCGState> &random, const Image<T> &fr
  * @param from the NNF to read from (1x size)
  * @param to the NNF to write to (2x size)
  */
-void upscale(const Image<NNFEntry> &from, Image<NNFEntry> &to);
+void upscale(const Image<NNFEntry> &from, Image<NNFEntry> &to, const int patchSize);
 
 } /* namespace NNF */
 } /* namespace StyLitCUDA */

@@ -197,7 +197,7 @@ void run(Image<NNFEntry> &nnf, const Image<NNFEntry> *blacklist, const Image<T> 
   // Runs iterations of PatchMatch.
   Image<NNFEntry> *previousNNF = &nnf;
   Image<NNFEntry> *nextNNF = &tempNNF;
-  for (int iteration = 0; iteration < 1; iteration++) {
+  for (int iteration = 0; iteration < numIterations; iteration++) {
     // First, runs three propagation passes with offsets of 4, 2 and 1 respectively.
     propagationPassKernel<T>
         <<<numBlocks, threadsPerBlock>>>(from, to, *nextNNF, *previousNNF, patchSize, 4);

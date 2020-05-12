@@ -55,7 +55,7 @@ template void randomize(Image<NNFEntry> &nnf, Image<PCGState> &random, const Ima
 template void randomize(Image<NNFEntry> &nnf, Image<PCGState> &random, const Image<float> &from,
                         const Image<float> &to, const int patchSize);
 
-__global__ void upscaleKernel(const Image<NNFEntry> from, Image<NNFEntry> to) {
+__global__ void upscaleKernel(const Image<NNFEntry> from, Image<NNFEntry> to, const int patchSize) {
   const int toRow = blockDim.x * blockIdx.x + threadIdx.x;
   const int toCol = blockDim.y * blockIdx.y + threadIdx.y;
   if (toRow < to.rows && toCol < to.cols) {
@@ -63,13 +63,14 @@ __global__ void upscaleKernel(const Image<NNFEntry> from, Image<NNFEntry> to) {
     const int fromCol = Utilities::clamp(0, toCol / 2, from.cols);
     const NNFEntry *fromEntry = from.constAt(fromRow, fromCol);
     NNFEntry *toEntry = to.at(toRow, toCol);
-    toEntry->row = fromEntry->row * 2 + (toRow % 2);
-    toEntry->col = fromEntry->col * 2 + (toCol % 2);
+    const int halfPatch = patchSize / 2;
+    toEntry->row = Utilities::clamp(halfPatch, fromEntry->row * 2 + (toRow % 2), to.rows - halfPatch);
+    toEntry->col = Utilities::clamp(halfPatch, fromEntry->col * 2 + (toCol % 2), to.cols - halfPatch);
     toEntry->error = fromEntry->error;
   }
 }
 
-void upscale(const Image<NNFEntry> &from, Image<NNFEntry> &to) {
+void upscale(const Image<NNFEntry> &from, Image<NNFEntry> &to, const int patchSize) {
   assert(to.rows / 2 == from.rows && to.cols / 2 == from.cols);
   printf("StyLitCUDA: Upscaling NNF with dimensions [%d, %d] to dimensions [%d, %d].\n", from.rows,
          from.cols, to.rows, to.cols);
@@ -81,7 +82,7 @@ void upscale(const Image<NNFEntry> &from, Image<NNFEntry> &to) {
                        Utilities::divideRoundUp(to.cols, threadsPerBlock.y));
 
   // Runs the kernel that randomizes NNF entries.
-  upscaleKernel<<<numBlocks, threadsPerBlock>>>(from, to);
+  upscaleKernel<<<numBlocks, threadsPerBlock>>>(from, to, patchSize);
   check(cudaDeviceSynchronize());
 }
 
