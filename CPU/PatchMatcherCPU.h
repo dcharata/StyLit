@@ -45,23 +45,28 @@ public:
                             const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel,
                             const ChannelWeights<numGuideChannels> &guideWeights,
                             const ChannelWeights<numStyleChannels> &styleWeights,
-                            ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels> &calc) {
+                            ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels> &calc,
+                            const NNF *blacklist) {
     for (int row = 0; row < nnfError.nnf.sourceDimensions.rows; row++) {
       for (int col = 0; col < nnfError.nnf.sourceDimensions.cols; col++) {
         float error = 0;
-        if (makeReverseNNF) {
-          ImageCoordinates coords{row, col};
-          calc.calculateError(configuration, pyramidLevel, coords, nnf.getMapping(coords), guideWeights, styleWeights, error);
+        if (blacklist != nullptr && blacklist->getMapping(nnf.getMapping(ImageCoordinates{row,col})) == ImageCoordinates::FREE_PATCH) {
+          nnfError.error(row, col) = FeatureVector<float,1>(BIG_ERROR);
         } else {
-          ImageCoordinates coords{row, col};
-          calc.calculateError(configuration, pyramidLevel, nnf.getMapping(coords), coords, guideWeights, styleWeights, error);
+          if (makeReverseNNF) {
+            ImageCoordinates coords{row, col};
+            calc.calculateError(configuration, pyramidLevel, coords, nnf.getMapping(coords), guideWeights, styleWeights, error);
+          } else {
+            ImageCoordinates coords{row, col};
+            calc.calculateError(configuration, pyramidLevel, nnf.getMapping(coords), coords, guideWeights, styleWeights, error);
+          }
+          nnfError.error(row, col) = FeatureVector<float, 1>(error);
         }
-        nnfError.error(row, col) = FeatureVector<float, 1>(error);
       }
     }
   }
 
-  void initOmega(Configuration &configuration, std::vector<float> &omega, ImageDimensions dims, int PATCH_SIZE) {
+  void initOmega(const Configuration &configuration, std::vector<float> &omega, ImageDimensions dims, int PATCH_SIZE) {
     omega.assign(dims.rows*dims.cols, 0);
     for (int row = 0; row < dims.rows; row++) {
       for (int col = 0; col < dims.cols; col++) {
@@ -113,7 +118,7 @@ private:
     if (initError) {
       //initNNFError(nnfError);
       ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels> errorCalc = ErrorCalculatorCPU<T, numGuideChannels, numStyleChannels>();
-      initNNFErrorProperly(configuration, nnfError, nnf, makeReverseNNF, pyramidLevel, guideWeights, styleWeights, errorCalc);
+      initNNFErrorProperly(configuration, nnfError, nnf, makeReverseNNF, pyramidLevel, guideWeights, styleWeights, errorCalc, blacklist);
     }
 
     // precompute the search step radii
@@ -347,7 +352,7 @@ private:
     }
   }
 
-  inline float computeOmegaValue(Configuration &configuration, const std::vector<float> &omega, int row, int col, ImageDimensions dims, int PATCH_SIZE) {
+  inline float computeOmegaValue(const Configuration &configuration, const std::vector<float> &omega, int row, int col, ImageDimensions dims, int PATCH_SIZE) {
     if (configuration.omegaWeight <= 0) {
       return 0.0f;
     }
@@ -367,7 +372,7 @@ private:
     return mult * ret;
   }
 
-  inline void updateOmegaValue(Configuration &configuration, std::vector<float> &omega, int row, int col, ImageDimensions dims, int PATCH_SIZE, int change) {
+  inline void updateOmegaValue(const Configuration &configuration, std::vector<float> &omega, int row, int col, ImageDimensions dims, int PATCH_SIZE, int change) {
     if (configuration.omegaWeight <= 0) {
       return;
     }

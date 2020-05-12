@@ -184,6 +184,17 @@ bool ConfigurationParser::parseSettings(const QJsonValue &settings,
     return false;
   }
 
+  QJsonValue nnfGenerationStoppingCriterion =
+      settingsObject.value(QString("nnfGenerationStoppingCriterion"));
+  if (!parseFloat(nnfGenerationStoppingCriterion, configuration.nnfGenerationStoppingCriterion)) {
+    cerr << "Could not parse \"nnfGenerationStoppingCriterion\" in \"settings\"." << endl;
+    return false;
+  }
+  if (configuration.nnfGenerationStoppingCriterion < 0 || configuration.nnfGenerationStoppingCriterion > 1) {
+    cerr << "nnfGenerationStoppingCriterion must be in [0,1]" << endl;
+    return false;
+  }
+
   QJsonValue omegaWeight =
       settingsObject.value(QString("omegaWeight"));
   if (!parseFloat(omegaWeight, configuration.omegaWeight)) {

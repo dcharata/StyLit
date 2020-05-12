@@ -22,12 +22,13 @@
   "settings": {
     "guideImageFormats": ["rgb", "bw", "rgb", "rgb"],
     "styleImageFormats": ["rgb"],
-    "guideImageWeights": [2, 2, 2, 2],
+    "guideImageWeights": [.5, .5, .5, .5],
     "styleImageWeights": [1],
     "patchSize": 5,
     "numPatchMatchIterations": 6,
     "numPyramidLevels": 6,
-    "numOptimizationIterationsPerPyramidLevel": 6,
+    "numOptimizationIterationsPerPyramidLevel": 1,
+    "nnfGenerationStoppingCriterion": .95,
     "omegaWeight": 0
   }
 }

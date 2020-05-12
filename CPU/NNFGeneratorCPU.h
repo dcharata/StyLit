@@ -30,7 +30,6 @@ public:
   ~NNFGeneratorCPU() = default;
 
 private:
-  float NNF_GENERATION_STOPPING_CRITERION = 0.0;
   const int MAX_ITERATIONS = 12;
 
   /**
@@ -69,7 +68,7 @@ private:
     bool firstIteration = true;
     const int forwardNNFSize = pyramidLevel.forwardNNF.sourceDimensions.area();
     int iteration = 0;
-    while (patchesFilled < float(forwardNNFSize) * NNF_GENERATION_STOPPING_CRITERION && iteration < MAX_ITERATIONS) {
+    while (patchesFilled < float(forwardNNFSize) * configuration.nnfGenerationStoppingCriterion && iteration < MAX_ITERATIONS) {
 
       std::cout << "*************************" << std::endl;
       std::cout << "Fraction of patches filled: " << patchesFilled << " / "
@@ -88,7 +87,7 @@ private:
         firstIteration = false;
       } else {
         patchMatcher.patchMatch(configuration, pyramidLevel.reverseNNF, pyramid,
-                                level, true, false, nnfError, false, omega, pyramidLevel.guide.target.dimensions, &blacklist);
+                                level, true, true, nnfError, true, omega, pyramidLevel.guide.target.dimensions, &blacklist);
       }
 
       std::cout << "getting knee point" << std::endl;

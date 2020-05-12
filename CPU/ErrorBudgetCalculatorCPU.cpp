@@ -114,6 +114,12 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
 
   float meanError = totalError / vecerror.size();
 
+  std::cout << "meanError " << meanError << std::endl;
+
+  std::cout << "vecErrorSize " << vecerror.size() << std::endl;
+
+  std::cout << "totalError " << totalError << std::endl;
+
   // writes the errors to CSV for graphing
   // std::ofstream
   // outFile("/Users/davidcharatan/Documents/StyLitBin/errors.csv");
@@ -138,6 +144,7 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
       idx++;
       validSamples++;
     }
+    //std::cout << vecerror[i].first << std::endl;
   }
 
   int n = 2; // number of parameters
@@ -179,9 +186,11 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
                  a / b); // this is the case that should normally happen
   }
 
+  std::cout << "kneepoint " << kneepoint << std::endl;
+
   // get the kneepoint index
   // we need to multply by the number of pixels to undo the normalization
-  int kneepointIndex = std::max<int>(0, std::min<int>(int(kneepoint * validSamples), validSamples - 1));
+  int kneepointIndex = std::max<int>(0, std::min<int>(int(kneepoint * (validSamples)), validSamples - 1));
   std::cout << "Kneepoint index: " << kneepointIndex << std::endl;
 
   // we need to multiply by the mean error to undo the normalization
