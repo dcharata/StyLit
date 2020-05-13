@@ -23,13 +23,33 @@ public:
   PatchMatcherCPU() = default;
   ~PatchMatcherCPU() = default;
 
-  void randomlyInitializeNNF(NNF &nnf) {
-    for (int col = 0; col < nnf.sourceDimensions.cols; col++) {
-      for (int row = 0; row < nnf.sourceDimensions.rows; row++) {
+  void randomlyInitializeNNF(
+      NNF &nnf,
+      const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel) {
+    for (int row = 0; row < nnf.sourceDimensions.rows; row++) {
+      for (int col = 0; col < nnf.sourceDimensions.cols; col++) {
         ImageCoordinates from{ row, col };
+        const FeatureVector<float, 1> &featureVector =
+            pyramidLevel.mask.source.getConstPixel(row, col);
         ImageCoordinates to{ randi(0, nnf.targetDimensions.rows),
                              randi(0, nnf.targetDimensions.col) };
         nnf.setMapping(from, to);
+
+        //        if (featureVector[0] > 0.4) {
+        //          int randIndex = randi(0, pyramidLevel.targetWhite.size());
+        //          ImageCoordinates to{
+        // pyramidLevel.targetWhite[randIndex].row,
+        //                               pyramidLevel.targetWhite[randIndex].col
+        // };
+        //          nnf.setMapping(from, to);
+        //        } else {
+        //          int randIndex = randi(0, pyramidLevel.targetBlack.size());
+        //          ImageCoordinates to{
+        // pyramidLevel.targetBlack[randIndex].row,
+        //                               pyramidLevel.targetBlack[randIndex].col
+        // };
+        //          nnf.setMapping(from, to);
+        //        }
       }
     }
   }
@@ -72,7 +92,7 @@ private:
     const ChannelWeights<numStyleChannels> styleWeights = pyramid.styleWeights;
 
     if (initRandom) {
-      randomlyInitializeNNF(nnf);
+      randomlyInitializeNNF(nnf, pyramidLevel);
     }
 
     for (int i = 0; i < numIterations; i++) {

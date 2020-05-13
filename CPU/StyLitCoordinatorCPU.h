@@ -57,6 +57,46 @@ public:
     }
     printTime("Done reading A, B and A'.");
 
+    // Read Source Mask
+    // test/original_src/examples/1/source_
+    // Blender/output/600x456/source_
+    ImageIO::readImage<1>("test/original_src/examples/1/source_mask.png",
+                          pyramid.levels[0].mask.source, ImageFormat::BW, 0);
+    // Read Target Mask
+    ImageIO::readImage<1>("test/original_src/examples/1/target_mask.png",
+                          pyramid.levels[0].mask.target, ImageFormat::BW, 0);
+    printTime("Done reading source and target mask at lowest level.");
+
+    // Adding Source Mask pixels at Level 0
+    for (int row = 0; row < pyramid.levels[0].mask.source.dimensions.rows;
+         row++) {
+      for (int col = 0; col < pyramid.levels[0].mask.source.dimensions.cols;
+           col++) {
+        ImageCoordinates from{ row, col };
+        const FeatureVector<float, 1> &featureVector =
+            pyramid.levels[0].mask.source.getConstPixel(row, col);
+        if (featureVector[0] > 0.4)
+          pyramid.levels[0].sourceWhite.emplace_back(from);
+        else
+          pyramid.levels[0].sourceBlack.emplace_back(from);
+      }
+    }
+
+    // Adding Target Mask pixels at Level 0
+    for (int row = 0; row < pyramid.levels[0].mask.target.dimensions.rows;
+         row++) {
+      for (int col = 0; col < pyramid.levels[0].mask.target.dimensions.cols;
+           col++) {
+        ImageCoordinates from{ row, col };
+        const FeatureVector<float, 1> &featureVector =
+            pyramid.levels[0].mask.target.getConstPixel(row, col);
+        if (featureVector[0] > 0.4)
+          pyramid.levels[0].targetWhite.emplace_back(from);
+        else
+          pyramid.levels[0].targetBlack.emplace_back(from);
+      }
+    }
+
     // Adds the guide and style weights.
     unsigned int guideChannel = 0;
     for (unsigned int i = 0; i < configuration.guideImageFormats.size(); i++) {
@@ -82,6 +122,7 @@ public:
     // Downscales the pyramid levels.
     DownscalerCPU<float, numGuideChannels> guideDownscaler;
     DownscalerCPU<float, numStyleChannels> styleDownscaler;
+    DownscalerCPU<float, 1> maskDownscaler;
     int factor = 2;
     for (int level = 1; level < configuration.numPyramidLevels; level++) {
       // Calculates the pyramid level's image size and checks its validity.
@@ -119,6 +160,42 @@ public:
       styleDownscaler.downscale(configuration,
                                 pyramid.levels[level - 1].style.source,
                                 pyramid.levels[level].style.source);
+      maskDownscaler.downscale(configuration,
+                               pyramid.levels[level - 1].mask.source,
+                               pyramid.levels[level].mask.source);
+      maskDownscaler.downscale(configuration,
+                               pyramid.levels[level - 1].mask.target,
+                               pyramid.levels[level].mask.target);
+
+      // Adding Source Mask pixels at Level : level
+      for (int row = 0; row < pyramid.levels[level].mask.source.dimensions.rows;
+           row++) {
+        for (int col = 0;
+             col < pyramid.levels[level].mask.source.dimensions.cols; col++) {
+          ImageCoordinates from{ row, col };
+          const FeatureVector<float, 1> &featureVector =
+              pyramid.levels[level].mask.source.getConstPixel(row, col);
+          if (featureVector[0] > 0.4)
+            pyramid.levels[level].sourceWhite.emplace_back(from);
+          else
+            pyramid.levels[level].sourceBlack.emplace_back(from);
+        }
+      }
+
+      // Adding Target Mask pixels at Level : level
+      for (int row = 0; row < pyramid.levels[level].mask.target.dimensions.rows;
+           row++) {
+        for (int col = 0;
+             col < pyramid.levels[level].mask.target.dimensions.cols; col++) {
+          ImageCoordinates from{ row, col };
+          const FeatureVector<float, 1> &featureVector =
+              pyramid.levels[level].mask.target.getConstPixel(row, col);
+          if (featureVector[0] > 0.4)
+            pyramid.levels[level].targetWhite.emplace_back(from);
+          else
+            pyramid.levels[level].targetBlack.emplace_back(from);
+        }
+      }
     }
     printTime("Done downscaling A, B and A'.");
 
@@ -129,7 +206,8 @@ public:
     // initialized NNF
     PatchMatcherCPU<float, numGuideChannels, numStyleChannels> patchMatcher;
     patchMatcher.randomlyInitializeNNF(
-        pyramid.levels[int(pyramid.levels.size()) - 1].forwardNNF);
+        pyramid.levels[int(pyramid.levels.size()) - 1].forwardNNF,
+        pyramid.levels[int(pyramid.levels.size()) - 1]);
     nnfApplicator.applyNNF(configuration,
                            pyramid.levels[int(pyramid.levels.size()) - 1]);
 
