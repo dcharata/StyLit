@@ -12,7 +12,7 @@
       "test/original_src/examples/2/target_fullgi.png",
       "test/original_src/examples/2/target_indirb.png"
     ],
-    "sourceStyleImagePaths": ["test/original_src/examples/2/source_style.png"]
+    "sourceStyleImagePaths": ["test/original_src/examples/1/source_style.png"]
   },
   "outputs": {
     "targetStyleImagePaths": [

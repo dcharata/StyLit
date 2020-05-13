@@ -14,7 +14,7 @@ namespace NNF {
 
 template <typename T>
 __global__ void randomizeKernel(Image<NNFEntry> nnf, Image<PCGState> random, const Image<T> from,
-                                const Image<T> to, const int patchSize, const Vec<float> guideWeights, const Vec<float> styleWeights) {
+                                const Image<T> to, const int patchSize, const Vec<float> weights) {
   const int row = blockDim.x * blockIdx.x + threadIdx.x;
   const int col = blockDim.y * blockIdx.y + threadIdx.y;
   if (row < nnf.rows && col < nnf.cols) {
@@ -27,13 +27,13 @@ __global__ void randomizeKernel(Image<NNFEntry> nnf, Image<PCGState> random, con
     entry->row = mappedRow;
     entry->col = mappedCol;
     entry->error = Error::calculate(from, to, Coordinates(row, col),
-                                    Coordinates(mappedRow, mappedCol), patchSize, guideWeights, styleWeights);
+                                    Coordinates(mappedRow, mappedCol), patchSize, weights.deviceData);
   }
 }
 
 template <typename T>
 void randomize(Image<NNFEntry> &nnf, Image<PCGState> &random, const Image<T> &from,
-               const Image<T> &to, const int patchSize, const Vec<float> &guideWeights, const Vec<float> &styleWeights) {
+               const Image<T> &to, const int patchSize, const Vec<float> &weights) {
   assert(nnf.rows <= random.rows && nnf.cols <= random.cols);
   printf("StyLitCUDA: Randomly initializing NNF with dimensions [%d, %d] using array of random "
          "states with dimensions [%d, %d].\n",
@@ -46,30 +46,30 @@ void randomize(Image<NNFEntry> &nnf, Image<PCGState> &random, const Image<T> &fr
                        Utilities::divideRoundUp(nnf.cols, threadsPerBlock.y));
 
   // Runs the kernel that randomizes NNF entries.
-  randomizeKernel<<<numBlocks, threadsPerBlock>>>(nnf, random, from, to, patchSize, guideWeights, styleWeights);
+  randomizeKernel<<<numBlocks, threadsPerBlock>>>(nnf, random, from, to, patchSize, weights);
   check(cudaDeviceSynchronize());
 }
 
 template void randomize(Image<NNFEntry> &nnf, Image<PCGState> &random, const Image<int> &from,
-                        const Image<int> &to, const int patchSize, const Vec<float> &guideWeights, const Vec<float> &styleWeights);
+                        const Image<int> &to, const int patchSize, const Vec<float> &weights);
 template void randomize(Image<NNFEntry> &nnf, Image<PCGState> &random, const Image<float> &from,
-                        const Image<float> &to, const int patchSize, const Vec<float> &guideWeights, const Vec<float> &styleWeights);
+                        const Image<float> &to, const int patchSize, const Vec<float> &weights);
 
 template <typename T>
 __global__ void recalculateErrorsKernel(Image<NNFEntry> nnf, const Image<T> from, const Image<T> to,
-                                        const int patchSize, const Vec<float> guideWeights, const Vec<float> styleWeights) {
+                                        const int patchSize, const Vec<float> weights) {
   const int row = blockDim.x * blockIdx.x + threadIdx.x;
   const int col = blockDim.y * blockIdx.y + threadIdx.y;
   if (row < nnf.rows && col < nnf.cols) {
     NNFEntry *entry = nnf.at(row, col);
     entry->error = Error::calculate(from, to, Coordinates(row, col),
-                                    Coordinates(entry->row, entry->col), patchSize, guideWeights, styleWeights);
+                                    Coordinates(entry->row, entry->col), patchSize, weights.deviceData);
   }
 }
 
 template <typename T>
 void recalculateErrors(Image<NNFEntry> &nnf, const Image<T> &from, const Image<T> &to,
-                       const int patchSize, const Vec<float> &guideWeights, const Vec<float> &styleWeights) {
+                       const int patchSize, const Vec<float> &weights) {
   printf("StyLitCUDA: Recalculating errors for NNF with dimensions [%d, %d].\n", nnf.rows,
          nnf.cols);
 
@@ -80,14 +80,14 @@ void recalculateErrors(Image<NNFEntry> &nnf, const Image<T> &from, const Image<T
                        Utilities::divideRoundUp(nnf.cols, threadsPerBlock.y));
 
   // Runs the kernel that recalculates NNF error entries.
-  recalculateErrorsKernel<<<numBlocks, threadsPerBlock>>>(nnf, from, to, patchSize, guideWeights, styleWeights);
+  recalculateErrorsKernel<<<numBlocks, threadsPerBlock>>>(nnf, from, to, patchSize, weights);
   check(cudaDeviceSynchronize());
 }
 
 template void recalculateErrors(Image<NNFEntry> &nnf, const Image<int> &from, const Image<int> &to,
-                                const int patchSize, const Vec<float> &guideWeights, const Vec<float> &styleWeights);
+                                const int patchSize, const Vec<float> &weights);
 template void recalculateErrors(Image<NNFEntry> &nnf, const Image<float> &from,
-                                const Image<float> &to, const int patchSize, const Vec<float> &guideWeights, const Vec<float> &styleWeights);
+                                const Image<float> &to, const int patchSize, const Vec<float> &weights);
 
 __global__ void upscaleKernel(const Image<NNFEntry> from, Image<NNFEntry> to, const int patchSize) {
   const int toRow = blockDim.x * blockIdx.x + threadIdx.x;

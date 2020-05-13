@@ -13,13 +13,11 @@ namespace NNF {
 
 template <typename T>
 void randomize(Image<NNFEntry> &nnf, Image<PCGState> &random, const Image<T> &from,
-               const Image<T> &to, const int patchSize, const Vec<float> &guideWeights,
-               const Vec<float> &styleWeights);
+               const Image<T> &to, const int patchSize, const Vec<float> &weights);
 
 template <typename T>
 void recalculateErrors(Image<NNFEntry> &nnf, const Image<T> &from, const Image<T> &to,
-                       const int patchSize, const Vec<float> &guideWeights,
-                       const Vec<float> &styleWeights);
+                       const int patchSize, const Vec<float> &weights);
 
 // Invalid rows/columns point to -1.
 const int INVALID = -1;

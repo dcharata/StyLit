@@ -10,8 +10,7 @@ namespace Error {
 
 template <typename T>
 __device__ float calculate(const Image<T> &x, const Image<T> &y, Coordinates inX, Coordinates inY,
-                           const int patchSize, const Vec<float> &guideWeights,
-                           const Vec<float> &styleWeights);
+                           const int patchSize, const float *weights);
 
 } /* namespace Error */
 } /* namespace StyLitCUDA */

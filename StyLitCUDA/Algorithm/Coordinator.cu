@@ -27,12 +27,17 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
       forward(input.b.rows, input.b.cols, 1, input.numLevels),
       reverse(input.a.rows, input.a.cols, 1, input.numLevels) {
   // Sets up the weights.
-  Vec<float> guideWeights(input.a.numChannels);
-  Vec<float> styleWeights(input.aPrime.numChannels);
-  guideWeights.deviceAllocate();
-  styleWeights.deviceAllocate();
-  guideWeights.toDevice(input.guideWeights);
-  styleWeights.toDevice(input.styleWeights);
+  std::vector<float> hostWeights;
+  for (int i = 0; i < input.a.numChannels + input.aPrime.numChannels; i++) {
+    if (i < input.a.numChannels) {
+      hostWeights.push_back(input.guideWeights[i]);
+    } else {
+      hostWeights.push_back(input.styleWeights[i - input.a.numChannels]);
+    }
+  }
+  Vec<float> weights(input.a.numChannels + input.aPrime.numChannels);
+  weights.deviceAllocate();
+  weights.toDevice(hostWeights.data());
 
   const int NUM_PATCH_MATCH_ITERATIONS = 6;
   const int NUM_OPTIMIZATIONS_PER_LEVEL = 6;
@@ -63,7 +68,7 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
   const int coarsestLevel = input.numLevels - 1;
 
   NNF::randomize<T>(reverse.levels[coarsestLevel], random, a.levels[coarsestLevel],
-                    b.levels[coarsestLevel], input.patchSize, guideWeights, styleWeights);
+                    b.levels[coarsestLevel], input.patchSize, weights);
   Applicator::apply<T>(forward.levels[coarsestLevel], b.levels[coarsestLevel],
                        a.levels[coarsestLevel], input.b.numChannels,
                        input.b.numChannels + input.bPrime.numChannels, input.patchSize);
@@ -96,7 +101,7 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
       for (int i = 0; i < GIVING_UP_THRESHOLD; i++) {
         // Improves the NNF.
         PatchMatch::run(curReverse, &curForward, curA, curB, random, input.patchSize,
-                        NUM_PATCH_MATCH_ITERATIONS, guideWeights, styleWeights);
+                        NUM_PATCH_MATCH_ITERATIONS, weights);
 
         // The reverse NNF after the first iteration is the ideal reverse NNF, since it's completely
         // unaffected by the blacklist. It's copied to bestReverseNNF for later use (since the
@@ -119,13 +124,13 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
       Image<NNFEntry> tempForward(curForward.rows, curForward.cols, 1);
       tempForward.allocate();
       if (level == coarsestLevel) {
-        NNF::randomize(tempForward, random, curB, curA, input.patchSize, guideWeights, styleWeights);
+        NNF::randomize(tempForward, random, curB, curA, input.patchSize, weights);
       } else {
         NNF::upscale(forward.levels[level + 1], tempForward, input.patchSize);
-        NNF::recalculateErrors(tempForward, curB, curA, input.patchSize, guideWeights, styleWeights);
+        NNF::recalculateErrors(tempForward, curB, curA, input.patchSize, weights);
       }
       PatchMatch::run(tempForward, nullptr, curB, curA, random, input.patchSize,
-                      NUM_PATCH_MATCH_ITERATIONS, guideWeights, styleWeights);
+                      NUM_PATCH_MATCH_ITERATIONS, weights);
       ReverseToForwardNNF::fill(tempForward, curForward);
       tempForward.free();
 
@@ -160,8 +165,7 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
   std::vector<InterfaceImage<T>> bImagesPrime(1);
   bImagesPrime[0] = input.bPrime;
   b.levels[0].retrieveChannels(bImagesPrime, input.b.numChannels);
-  guideWeights.deviceFree();
-  styleWeights.deviceFree();
+  weights.deviceFree();
 }
 
 template <typename T> Coordinator<T>::~Coordinator() { random.free(); }

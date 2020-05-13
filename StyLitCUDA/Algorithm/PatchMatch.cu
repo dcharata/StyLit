@@ -39,7 +39,7 @@ __device__ void tryPatch(const Image<T> &source, const Image<T> &target, Image<N
                          const Image<NNFEntry> &previousNNF, const int patchSize,
                          const int sourceRow, const int sourceCol, const int targetRow,
                          const int targetCol, const Image<NNFEntry> &optionalBlacklist,
-                         const Vec<float> &guideWeights, const Vec<float> &styleWeights) {
+                         const float *weights) {
   // Calculates the error for the new mapping and compares it with the existing error.
   const float oldError = previousNNF.constAt(sourceRow, sourceCol)->error;
   float newError;
@@ -53,13 +53,12 @@ __device__ void tryPatch(const Image<T> &source, const Image<T> &target, Image<N
       newError = fmax;
     } else {
       newError = Error::calculate(source, target, Coordinates(sourceRow, sourceCol),
-                                  Coordinates(targetRow, targetCol), patchSize, guideWeights,
-                                  styleWeights);
+                                  Coordinates(targetRow, targetCol), patchSize, weights);
     }
   } else {
     newError =
         Error::calculate(source, target, Coordinates(sourceRow, sourceCol),
-                         Coordinates(targetRow, targetCol), patchSize, guideWeights, styleWeights);
+                         Coordinates(targetRow, targetCol), patchSize, weights);
   }
 
   if (newError < oldError) {
@@ -93,7 +92,7 @@ __device__ void tryNeighborOffset(const Image<T> &source, const Image<T> &target
                                   const int patchSize, const int sourceRow, const int sourceCol,
                                   const int rowOffset, const int colOffset,
                                   const Image<NNFEntry> &optionalBlacklist,
-                                  const Vec<float> &guideWeights, const Vec<float> &styleWeights) {
+                                  const float *weights) {
   // Gets the neighbor's mapping.
   const int neighborRow = Utilities::clamp(0, sourceRow + rowOffset, source.rows);
   const int neighborCol = Utilities::clamp(0, sourceCol + colOffset, source.cols);
@@ -105,7 +104,7 @@ __device__ void tryNeighborOffset(const Image<T> &source, const Image<T> &target
 
   // Tries the mapping.
   tryPatch(source, target, nextNNF, previousNNF, patchSize, sourceRow, sourceCol, targetRow,
-           targetCol, optionalBlacklist, guideWeights, styleWeights);
+           targetCol, optionalBlacklist, weights);
 }
 
 /**
@@ -126,20 +125,19 @@ template <typename T>
 __global__ void
 propagationPassKernel(const Image<T> source, const Image<T> target, Image<NNFEntry> nextNNF,
                       const Image<NNFEntry> previousNNF, const int patchSize, const int offset,
-                      const Image<NNFEntry> optionalBlacklist, const Vec<float> guideWeights,
-                      const Vec<float> styleWeights) {
+                      const Image<NNFEntry> optionalBlacklist, const Vec<float> weights) {
   const int row = blockDim.x * blockIdx.x + threadIdx.x;
   const int col = blockDim.y * blockIdx.y + threadIdx.y;
   if (row < source.rows && col < source.cols) {
     // Tries offsetting up, down, left and right.
     tryNeighborOffset(source, target, nextNNF, previousNNF, patchSize, row, col, offset, 0,
-                      optionalBlacklist, guideWeights, styleWeights);
+                      optionalBlacklist, weights.deviceData);
     tryNeighborOffset(source, target, nextNNF, previousNNF, patchSize, row, col, -offset, 0,
-                      optionalBlacklist, guideWeights, styleWeights);
+                      optionalBlacklist, weights.deviceData);
     tryNeighborOffset(source, target, nextNNF, previousNNF, patchSize, row, col, 0, offset,
-                      optionalBlacklist, guideWeights, styleWeights);
+                      optionalBlacklist, weights.deviceData);
     tryNeighborOffset(source, target, nextNNF, previousNNF, patchSize, row, col, 0, -offset,
-                      optionalBlacklist, guideWeights, styleWeights);
+                      optionalBlacklist, weights.deviceData);
   }
 }
 
@@ -163,9 +161,22 @@ __global__ void
 randomSearchPassKernel(const Image<T> source, const Image<T> target, Image<NNFEntry> nextNNF,
                        const Image<NNFEntry> previousNNF, const int patchSize, const int radius,
                        Image<PCGState> random, const Image<NNFEntry> optionalBlacklist,
-                       const Vec<float> guideWeights, const Vec<float> styleWeights) {
+                       const Vec<float> weights) {
   const int row = blockDim.x * blockIdx.x + threadIdx.x;
   const int col = blockDim.y * blockIdx.y + threadIdx.y;
+//
+//  extern __shared__ char test[];
+//  float *testptr = (float *)test;
+//  if (row == 0 && col == 0) {
+//    for (int i = 0; i < guideWeights.size; i++) {
+//      testptr[i] = guideWeights.deviceData[i];
+//    }
+//    for (int i = 0; i < styleWeights.size; i++) {
+//      testptr[i + guideWeights.size] = styleWeights.deviceData[i];
+//    }
+//  }
+//  __syncthreads();
+
   if (row < source.rows && col < source.cols) {
     // Gets the current mapping.
     const NNFEntry *previousMapping = previousNNF.constAt(row, col);
@@ -180,7 +191,7 @@ randomSearchPassKernel(const Image<T> source, const Image<T> target, Image<NNFEn
 
     // Tries the shifted patch.
     tryPatch(source, target, nextNNF, previousNNF, patchSize, row, col, newTargetRow, newTargetCol,
-             optionalBlacklist, guideWeights, styleWeights);
+             optionalBlacklist, weights.deviceData);
   }
 }
 
@@ -224,7 +235,7 @@ float totalError(const Image<NNFEntry> &nnf) {
 template <typename T>
 void run(Image<NNFEntry> &nnf, const Image<NNFEntry> *blacklist, const Image<T> &from,
          const Image<T> &to, const Image<PCGState> &random, const int patchSize,
-         const int numIterations, const Vec<float> &guideWeights, const Vec<float> &styleWeights) {
+         const int numIterations, const Vec<float> &weights) {
   printf("StyLitCUDA: Running PatchMatch with %d iterations, patch size %d, and %s blacklist.\n",
          numIterations, patchSize, blacklist ? "a" : "no");
   const float initialError = totalError(nnf);
@@ -250,19 +261,19 @@ void run(Image<NNFEntry> &nnf, const Image<NNFEntry> *blacklist, const Image<T> 
     // First, runs three propagation passes with offsets of 4, 2 and 1 respectively.
     propagationPassKernel<T><<<numBlocks, threadsPerBlock>>>(from, to, *nextNNF, *previousNNF,
                                                              patchSize, 4, optionalBlacklist,
-                                                             guideWeights, styleWeights);
+                                                             weights);
     check(cudaDeviceSynchronize());
     swapNNFs(&previousNNF, &nextNNF);
 
     propagationPassKernel<T><<<numBlocks, threadsPerBlock>>>(from, to, *nextNNF, *previousNNF,
                                                              patchSize, 2, optionalBlacklist,
-                                                             guideWeights, styleWeights);
+                                                             weights);
     check(cudaDeviceSynchronize());
     swapNNFs(&previousNNF, &nextNNF);
 
     propagationPassKernel<T><<<numBlocks, threadsPerBlock>>>(from, to, *nextNNF, *previousNNF,
                                                              patchSize, 1, optionalBlacklist,
-                                                             guideWeights, styleWeights);
+                                                             weights);
     check(cudaDeviceSynchronize());
     swapNNFs(&previousNNF, &nextNNF);
 
@@ -270,7 +281,7 @@ void run(Image<NNFEntry> &nnf, const Image<NNFEntry> *blacklist, const Image<T> 
     for (int radius = std::max(from.rows, from.cols) / 2; radius > 1; radius /= 2) {
       randomSearchPassKernel<T>
           <<<numBlocks, threadsPerBlock>>>(from, to, *nextNNF, *previousNNF, patchSize, radius,
-                                           random, optionalBlacklist, guideWeights, styleWeights);
+                                           random, optionalBlacklist, weights);
       check(cudaDeviceSynchronize());
       swapNNFs(&previousNNF, &nextNNF);
     }
@@ -293,13 +304,11 @@ void run(Image<NNFEntry> &nnf, const Image<NNFEntry> *blacklist, const Image<T> 
 
 template void run(Image<NNFEntry> &nnf, const Image<NNFEntry> *blacklist, const Image<int> &from,
                   const Image<int> &to, const Image<PCGState> &random, const int patchSize,
-                  const int numIterations, const Vec<float> &guideWeights,
-                  const Vec<float> &styleWeights);
+                  const int numIterations, const Vec<float> &weights);
 
 template void run(Image<NNFEntry> &nnf, const Image<NNFEntry> *blacklist, const Image<float> &from,
                   const Image<float> &to, const Image<PCGState> &random, const int patchSize,
-                  const int numIterations, const Vec<float> &guideWeights,
-                  const Vec<float> &styleWeights);
+                  const int numIterations, const Vec<float> &weights);
 
 } /* namespace PatchMatch */
 } /* namespace StyLitCUDA */
