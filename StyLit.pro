@@ -4,14 +4,19 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17 c++1z
 
+#unix:{
 #QMAKE_CXXFLAGS += -fopenmp
 #LIBS += -fopenmp
+#}
 
-macx: {
-QMAKE_CXXFLAGS += -Xpreprocessor -fopenmp -lomp -I/usr/local/include
-QMAKE_LFLAGS += -lomp
-LIBS += -L /usr/local/lib /usr/local/lib/libomp.dylib
-}
+QMAKE_CXXFLAGS += -fopenmp
+LIBS += -fopenmp
+
+#macx: {
+#QMAKE_CXXFLAGS += -Xpreprocessor -fopenmp -lomp -I/usr/local/include
+#QMAKE_LFLAGS += -lomp
+#LIBS += -L /usr/local/lib /usr/local/lib/libomp.dylib
+#}
 
 #DEFINES += EIGEN_NO_DEBUG
 
@@ -51,7 +56,8 @@ SOURCES += \
     MainWindow.cpp \
     CPU/NNFUpscalerCPU.cpp\
     Tests/TestImageResize.cpp \
-    Tests/TestNNFUpscalerCPU.cpp
+    Tests/TestNNFUpscalerCPU.cpp \
+    StyLitGUI.cpp
 
 HEADERS += \
     Algorithm/ChannelWeights.h \
@@ -101,7 +107,8 @@ HEADERS += \
     CPU/DownscalerCPU.h \
     Tests/TestImageResize.h \
     Tests/TestNNFUpscalerCPU.h \
-    Utilities/parasort.h
+    Utilities/parasort.h \
+    StyLitGUI.h
 
 FORMS += \
     MainWindow.ui
