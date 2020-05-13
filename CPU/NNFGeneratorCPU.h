@@ -80,14 +80,15 @@ private:
                                     pyramidLevel.guide.source.dimensions);
 
       std::vector<float> omega;
-      patchMatcher.initOmega(configuration, omega, pyramidLevel.guide.target.dimensions, configuration.patchSize);
+      patchMatcher.initOmega(configuration, omega, pyramidLevel.guide.target.dimensions, pyramidLevel.guide.source.dimensions,
+                             pyramidLevel.reverseNNF, configuration.patchSize);
       if (firstIteration) {
         patchMatcher.patchMatch(configuration, pyramidLevel.reverseNNF, pyramid,
                                 level, true, true, nnfError, true, omega, pyramidLevel.guide.target.dimensions, nullptr);
         firstIteration = false;
       } else {
         patchMatcher.patchMatch(configuration, pyramidLevel.reverseNNF, pyramid,
-                                level, true, true, nnfError, true, omega, pyramidLevel.guide.target.dimensions, &blacklist);
+                                level, true, false, nnfError, true, omega, pyramidLevel.guide.target.dimensions, &blacklist);
       }
 
       std::cout << "getting knee point" << std::endl;
@@ -141,13 +142,13 @@ private:
       iteration++;
     }
 
-
     // if the level's forward NNf is not completely full, make a new forward NNF
     // from patchmatch and use that to fill up the holes in the level's forward
     // NNF
-    if (patchesFilled < forwardNNFSize) {
+    if (patchesFilled < forwardNNFSize && configuration.nnfGenerationStoppingCriterion > 0) {
       std::vector<float> finalOmega;
-      patchMatcher.initOmega(configuration, finalOmega, pyramidLevel.guide.source.dimensions, configuration.patchSize);
+      patchMatcher.initOmega(configuration, finalOmega, pyramidLevel.guide.source.dimensions, pyramidLevel.guide.target.dimensions,
+                             pyramidLevel.forwardNNF, configuration.patchSize);
       NNFError nnfErrorFinal(pyramidLevel.forwardNNF);
       NNF forwardNNFFinal = NNF(pyramidLevel.guide.target.dimensions,
                                 pyramidLevel.guide.source.dimensions);
@@ -162,6 +163,21 @@ private:
                 currentPatch, forwardNNFFinal.getMapping(currentPatch));
           }
         }
+      }
+    } else { // if configuration.nnfGenerationStoppingCriterion is zero (so we are just using forward NNFs)
+      std::vector<float> finalOmega;
+      patchMatcher.initOmega(configuration, finalOmega, pyramidLevel.guide.source.dimensions, pyramidLevel.guide.target.dimensions,
+                             pyramidLevel.forwardNNF, configuration.patchSize);
+      NNFError nnfErrorFinal(pyramidLevel.forwardNNF);
+      if (firstOptimizationIteration && level == configuration.numPyramidLevels - 1) {
+        patchMatcher.patchMatch(configuration, pyramidLevel.forwardNNF, pyramid,
+                                level, false, true, nnfErrorFinal, true, finalOmega,
+                                pyramidLevel.guide.source.dimensions);
+        budgets.push_back(0);
+      } else {
+        patchMatcher.patchMatch(configuration, pyramidLevel.forwardNNF, pyramid,
+                                level, false, false, nnfErrorFinal, true, finalOmega,
+                                pyramidLevel.guide.source.dimensions);
       }
     }
 

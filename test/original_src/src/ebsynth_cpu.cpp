@@ -40,7 +40,7 @@ A2f nnfError(const A2V2i& NNF,
 {
   A2f E(size(NNF));
 
-  #pragma omp parallel for schedule(static)
+  //#pragma omp parallel for schedule(static)
   for(int y=0;y<NNF.height();y++)
   for(int x=0;x<NNF.width();x++)
   {
@@ -506,7 +506,9 @@ static int patchOmega(const int patchWidth,const V2i& bxy,const A2i& Omega)
     }
     ptr += ofs;
   }
-
+  if ((std::rand() % 1000000) == 0) {
+    std::cout << "count " << sum << std::endl;
+  }
   return sum;
 }
 
@@ -520,11 +522,6 @@ bool tryPatch(FUNC patchError,const V2i& sizeA,int patchWidth,const V2i& axy,con
 
   if ((newErr+lambda*newOcc) < (curErr+lambda*curOcc))
   {
-    if ((std::rand() % 10000) == 0) {
-      std::cout << "omegaBest " << omegaBest << std::endl;
-      std::cout << "new " << newErr << " " << lambda*newOcc << std::endl;
-      std::cout << "curr " << curErr << " " << lambda*curOcc << std::endl;
-    }
     updateOmega(Omega,sizeA,patchWidth,axy,bxy   ,+1);
     updateOmega(Omega,sizeA,patchWidth,axy,N(axy),-1);
     N(axy) = bxy;
@@ -557,10 +554,6 @@ void patchmatch(const V2i&  sizeA,
   irad.push_back((sizeB(0) > sizeB(1) ? sizeB(0) : sizeB(1)));
 
   while (irad.back() != 1) irad.push_back(int(std::pow(sra, int(irad.size())) * irad[0]));
-  std::cout << "******************************";
-  for (int i = 0; i < irad.size(); i++) {
-    std::cout << irad[i] << std::endl;
-  }
 
   const int nir = int(irad.size());
 
@@ -592,7 +585,7 @@ void patchmatch(const V2i&  sizeA,
 #ifdef __APPLE__
     dispatch_apply(numTiles,gcdq,^(size_t blockIdx)
 #else
-    #pragma omp parallel num_threads(numTiles)
+    //#pragma omp parallel num_threads(numTiles)
 #endif
     {
       const bool odd = (iter%2 == 0);
@@ -848,7 +841,6 @@ void ebsynthCpu(int    numStyleChannels,
 
     for (int voteIter=0;voteIter<numSearchVoteItersPerLevel[level];voteIter++)
     {
-      std::cout << "num optimizations" << numSearchVoteItersPerLevel[level] << std::endl;
       Vec<NS,float> styleWeightsVec;
       for(int i=0;i<NS;i++) { styleWeightsVec[i] = styleWeights[i]; }
 
@@ -966,8 +958,6 @@ void ebsynthCpu(int    numStyleChannels,
         */
       }
     }
-    std::cout << "CALLS" << std::endl;
-    std::cout << calls << std::endl;
     if (level==levelCount-1 && (extraPass3x3==0 || (extraPass3x3!=0 && inExtraPass)))
     {
       if (outputNnfData!=NULL) { copy(&outputNnfData,pyramid[level].NNF); }

@@ -25,10 +25,10 @@
     "guideImageWeights": [.5, .5, .5, .5],
     "styleImageWeights": [1],
     "patchSize": 5,
-    "numPatchMatchIterations": 6,
+    "numPatchMatchIterations": 4,
     "numPyramidLevels": 6,
-    "numOptimizationIterationsPerPyramidLevel": 1,
+    "numOptimizationIterationsPerPyramidLevel": 6,
     "nnfGenerationStoppingCriterion": .95,
-    "omegaWeight": 0
+    "omegaWeight": .02
   }
 }

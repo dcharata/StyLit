@@ -66,11 +66,12 @@ public:
     }
   }
 
-  void initOmega(const Configuration &configuration, std::vector<float> &omega, ImageDimensions dims, int PATCH_SIZE) {
+  void initOmega(const Configuration &configuration, std::vector<float> &omega, ImageDimensions dims, ImageDimensions nnfShape, NNF &nnf, int PATCH_SIZE) {
     omega.assign(dims.rows*dims.cols, 0);
-    for (int row = 0; row < dims.rows; row++) {
-      for (int col = 0; col < dims.cols; col++) {
-        updateOmegaValue(configuration, omega,row,col,dims,PATCH_SIZE, 1);
+    for (int row = 0; row < nnfShape.rows; row++) {
+      for (int col = 0; col < nnfShape.cols; col++) {
+        ImageCoordinates coords = nnf.getMapping(ImageCoordinates{row, col});
+        updateOmegaValue(configuration, omega, coords.row, coords.col, dims, PATCH_SIZE, 1);
       }
     }
   }
@@ -369,6 +370,9 @@ private:
         }
       }
     }
+    if ((std::rand() % 10000) == 0) {
+      //std::cout << "count " << ret << std::endl;
+    }
     return mult * ret;
   }
 
@@ -381,7 +385,7 @@ private:
          rowOffset++) {
       for (int colOffset = -HALF_PATCH_SIZE; colOffset <= HALF_PATCH_SIZE;
            colOffset++) {
-        if (ImageCoordinates{row + rowOffset,col + colOffset}.within(dims)) {
+        if (ImageCoordinates{row + rowOffset, col + colOffset}.within(dims)) {
           omega[(row + rowOffset) * dims.cols + (col + colOffset)] += change;
         }
       }
