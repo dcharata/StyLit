@@ -9,7 +9,8 @@ namespace Error {
 
 template <typename T>
 __device__ float calculate(const Image<T> &x, const Image<T> &y, Coordinates inX, Coordinates inY,
-                           const int patchSize) {
+                           const int patchSize, const Vec<float> &guideWeights,
+                           const Vec<float> &styleWeights) {
   // Clamps the patch coordinates so that every pixel inside a patch is in bounds.
   const int halfPatch = patchSize / 2;
   const int xRowLimit = x.rows - halfPatch;
@@ -32,7 +33,11 @@ __device__ float calculate(const Image<T> &x, const Image<T> &y, Coordinates inX
       const T *yVector = y.constAt(yPatchRow, yPatchCol);
       for (int channel = 0; channel < x.numChannels; channel++) {
         const float difference = xVector[channel] - yVector[channel];
-        error += difference * difference;
+        if (channel > guideWeights.size) {
+          error += difference * difference * styleWeights.deviceData[channel - guideWeights.size];
+        } else {
+          error += difference * difference * guideWeights.deviceData[channel];
+        }
       }
     }
   }
@@ -40,9 +45,11 @@ __device__ float calculate(const Image<T> &x, const Image<T> &y, Coordinates inX
 }
 
 template __device__ float calculate(const Image<int> &x, const Image<int> &y, Coordinates inX,
-                                    Coordinates inY, const int patchSize);
+                                    Coordinates inY, const int patchSize,
+                                    const Vec<float> &guideWeights, const Vec<float> &styleWeights);
 template __device__ float calculate(const Image<float> &x, const Image<float> &y, Coordinates inX,
-                                    Coordinates inY, const int patchSize);
+                                    Coordinates inY, const int patchSize,
+                                    const Vec<float> &guideWeights, const Vec<float> &styleWeights);
 
 } /* namespace Error */
 } /* namespace StyLitCUDA */

@@ -1,18 +1,18 @@
 {
   "inputs": {
     "sourceGuideImagePaths": [
-      "test/original_src/examples/1/source_dirdif.png",
-      "test/original_src/examples/1/source_dirspc.png",
-      "test/original_src/examples/1/source_fullgi.png",
-      "test/original_src/examples/1/source_indirb.png"
+      "test/original_src/examples/2/source_dirdif.png",
+      "test/original_src/examples/2/source_dirspc.png",
+      "test/original_src/examples/2/source_fullgi.png",
+      "test/original_src/examples/2/source_indirb.png"
     ],
     "targetGuideImagePaths": [
-      "test/original_src/examples/1/target_dirdif.png",
-      "test/original_src/examples/1/target_dirspc.png",
-      "test/original_src/examples/1/target_fullgi.png",
-      "test/original_src/examples/1/target_indirb.png"
+      "test/original_src/examples/2/target_dirdif.png",
+      "test/original_src/examples/2/target_dirspc.png",
+      "test/original_src/examples/2/target_fullgi.png",
+      "test/original_src/examples/2/target_indirb.png"
     ],
-    "sourceStyleImagePaths": ["test/original_src/examples/1/source_style.png"]
+    "sourceStyleImagePaths": ["test/original_src/examples/2/source_style.png"]
   },
   "outputs": {
     "targetStyleImagePaths": [

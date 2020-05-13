@@ -52,22 +52,20 @@ public:
     }
 
     // Adds the guide and style weights.
-    /*unsigned int guideChannel = 0;
+    std::vector<float> guideWeights;
+    std::vector<float> styleWeights;
     for (unsigned int i = 0; i < configuration.guideImageFormats.size(); i++) {
       const int numChannels = ImageFormatTools::numChannels(configuration.guideImageFormats[i]);
       for (int j = 0; j < numChannels; j++) {
-        // pyramid.guideWeights[guideChannel++] = configuration.guideImageWeights[i];
+        guideWeights.push_back(configuration.guideImageWeights[i]);
       }
     }
-    Q_ASSERT(guideChannel == numGuideChannels);
-    unsigned int styleChannel = 0;
     for (unsigned int i = 0; i < configuration.styleImageFormats.size(); i++) {
       const int numChannels = ImageFormatTools::numChannels(configuration.styleImageFormats[i]);
       for (int j = 0; j < numChannels; j++) {
-        // pyramid.styleWeights[styleChannel++] = configuration.styleImageWeights[i];
+        styleWeights.push_back(configuration.styleImageWeights[i]);
       }
     }
-    Q_ASSERT(styleChannel == numStyleChannels);*/
 
     // Translates everything to a format that StyLitCUDA understands.
     StyLitCUDA::InterfaceInput<float> input;
@@ -93,6 +91,9 @@ public:
 
     input.numLevels = configuration.numPyramidLevels;
     input.patchSize = configuration.patchSize;
+
+    input.guideWeights = guideWeights.data();
+    input.styleWeights = styleWeights.data();
 
     const int ret = StyLitCUDA_runStyLitCUDA_float(input);
     printf("StyLitCUDA return value: %d\n", ret);

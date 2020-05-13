@@ -4,6 +4,7 @@
 #include "../Utilities/Coordinates.cuh"
 #include "../Utilities/Image.cuh"
 #include "../Utilities/PyramidImage.cuh"
+#include "../Utilities/Vec.cuh"
 #include "NNFEntry.h"
 #include "PCG.cuh"
 
@@ -12,11 +13,13 @@ namespace NNF {
 
 template <typename T>
 void randomize(Image<NNFEntry> &nnf, Image<PCGState> &random, const Image<T> &from,
-               const Image<T> &to, const int patchSize);
+               const Image<T> &to, const int patchSize, const Vec<float> &guideWeights,
+               const Vec<float> &styleWeights);
 
 template <typename T>
 void recalculateErrors(Image<NNFEntry> &nnf, const Image<T> &from, const Image<T> &to,
-                       const int patchSize);
+                       const int patchSize, const Vec<float> &guideWeights,
+                       const Vec<float> &styleWeights);
 
 // Invalid rows/columns point to -1.
 const int INVALID = -1;

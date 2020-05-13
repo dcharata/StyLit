@@ -2,6 +2,7 @@
 
 #include "../Utilities/Image.cuh"
 #include "../Utilities/Utilities.cuh"
+#include "../Utilities/Vec.cuh"
 #include "Applicator.cuh"
 #include "Downscaler.cuh"
 #include "NNF.cuh"
@@ -25,6 +26,14 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
       random(std::max(input.a.rows, input.b.rows), std::max(input.a.cols, input.b.cols), 1),
       forward(input.b.rows, input.b.cols, 1, input.numLevels),
       reverse(input.a.rows, input.a.cols, 1, input.numLevels) {
+  // Sets up the weights.
+  Vec<float> guideWeights(input.a.numChannels);
+  Vec<float> styleWeights(input.aPrime.numChannels);
+  guideWeights.deviceAllocate();
+  styleWeights.deviceAllocate();
+  guideWeights.toDevice(input.guideWeights);
+  styleWeights.toDevice(input.styleWeights);
+
   const int NUM_PATCH_MATCH_ITERATIONS = 6;
   const int NUM_OPTIMIZATIONS_PER_LEVEL = 6;
 
@@ -54,13 +63,17 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
   const int coarsestLevel = input.numLevels - 1;
 
   NNF::randomize<T>(reverse.levels[coarsestLevel], random, a.levels[coarsestLevel],
-                    b.levels[coarsestLevel], input.patchSize);
+                    b.levels[coarsestLevel], input.patchSize, guideWeights, styleWeights);
   Applicator::apply<T>(forward.levels[coarsestLevel], b.levels[coarsestLevel],
                        a.levels[coarsestLevel], input.b.numChannels,
                        input.b.numChannels + input.bPrime.numChannels, input.patchSize);
 
   // Runs StyLit across the pyramid, starting with the lowest level.
   for (int level = coarsestLevel; level >= 0; level--) {
+    printf("\u001B[32m==========================================================\n");
+    printf("StyLitCUDA: Calculating pyramid level %d (0 is the finest).\n", level);
+    printf("==========================================================\u001B[0m\n");
+
     // Defines some things to make the code below more legible.
     Image<NNFEntry> &curReverse = reverse.levels[level];
     Image<NNFEntry> &curForward = forward.levels[level];
@@ -83,11 +96,11 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
       for (int i = 0; i < GIVING_UP_THRESHOLD; i++) {
         // Improves the NNF.
         PatchMatch::run(curReverse, &curForward, curA, curB, random, input.patchSize,
-                        NUM_PATCH_MATCH_ITERATIONS);
+                        NUM_PATCH_MATCH_ITERATIONS, guideWeights, styleWeights);
 
         // The reverse NNF after the first iteration is the ideal reverse NNF, since it's completely
-        // unaffected by the blacklist. It's copied to bestReverseNNF for later use (since the reverse
-        // NNF is upscaled, and we want the best one).
+        // unaffected by the blacklist. It's copied to bestReverseNNF for later use (since the
+        // reverse NNF is upscaled, and we want the best one).
         if (i == 0) {
           cudaMemcpy2D(bestReverseNNF.deviceData, bestReverseNNF.pitch, curReverse.deviceData,
                        curReverse.pitch, curReverse.cols * sizeof(NNFEntry), curReverse.rows,
@@ -99,27 +112,27 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
           break;
         }
       }
-      printf("StyLitCUDA: NNF is %f percent full (target: %f percent).\n", fractionFilled * 100.f, STOPPING_THRESHOLD * 100.f);
+      printf("StyLitCUDA: NNF is %f percent full (target: %f percent).\n", fractionFilled * 100.f,
+             STOPPING_THRESHOLD * 100.f);
 
       // Generates a forward NNF and uses it to fill the remaining entries in the NNF.
       Image<NNFEntry> tempForward(curForward.rows, curForward.cols, 1);
       tempForward.allocate();
       if (level == coarsestLevel) {
-        NNF::randomize(tempForward, random, curB, curA, input.patchSize);
+        NNF::randomize(tempForward, random, curB, curA, input.patchSize, guideWeights, styleWeights);
       } else {
         NNF::upscale(forward.levels[level + 1], tempForward, input.patchSize);
-        NNF::recalculateErrors(tempForward, curB, curA, input.patchSize);
+        NNF::recalculateErrors(tempForward, curB, curA, input.patchSize, guideWeights, styleWeights);
       }
       PatchMatch::run(tempForward, nullptr, curB, curA, random, input.patchSize,
-                      NUM_PATCH_MATCH_ITERATIONS);
+                      NUM_PATCH_MATCH_ITERATIONS, guideWeights, styleWeights);
       ReverseToForwardNNF::fill(tempForward, curForward);
       tempForward.free();
 
       if (optimization != NUM_OPTIMIZATIONS_PER_LEVEL - 1) {
         // Updates B' and stays on this pyramid level.
-        Applicator::apply<T>(curForward, curB, curA,
-                             input.b.numChannels, input.b.numChannels + input.bPrime.numChannels,
-                             input.patchSize);
+        Applicator::apply<T>(curForward, curB, curA, input.b.numChannels,
+                             input.b.numChannels + input.bPrime.numChannels, input.patchSize);
       } else {
         // Prepares for the next pyramid level.
         if (level) {
@@ -147,6 +160,8 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
   std::vector<InterfaceImage<T>> bImagesPrime(1);
   bImagesPrime[0] = input.bPrime;
   b.levels[0].retrieveChannels(bImagesPrime, input.b.numChannels);
+  guideWeights.deviceFree();
+  styleWeights.deviceFree();
 }
 
 template <typename T> Coordinator<T>::~Coordinator() { random.free(); }

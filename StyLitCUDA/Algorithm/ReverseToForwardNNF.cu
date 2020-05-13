@@ -3,6 +3,7 @@
 #include "../Utilities/Utilities.cuh"
 #include "NNF.cuh"
 
+#include <array>
 #include <cuda_runtime.h>
 #include <limits>
 #include <stdio.h>
@@ -53,7 +54,19 @@ int transfer(Image<NNFEntry> &reverse, Image<NNFEntry> &forward) {
   memoryToHost(forward, forwardHost);
 
   // TODO: Find a real knee point :)
-  // For now, the knee point is based on the average of the valid mappings.
+  // Super simple fake knee point based on max:
+  /*float max = 0;
+  for (int row = 0; row < reverse.rows; row++) {
+    for (int col = 0; col < reverse.cols; col++) {
+      const NNFEntry *entry = &reverseHost[row * reverse.cols + col];
+      if (entry->error < 0.1f * std::numeric_limits<float>::max() && entry->error > max) {
+        max = entry->error;
+      }
+    }
+  }
+  const float kneePoint = max * 0.01f;*/
+
+  // Fake knee point based on mean:
   double sum = 0.;
   for (int row = 0; row < reverse.rows; row++) {
     for (int col = 0; col < reverse.cols; col++) {

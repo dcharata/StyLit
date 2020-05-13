@@ -1,0 +1,31 @@
+{
+  "inputs": {
+    "sourceGuideImagePaths": [
+      "Examples/Octane/Sphere/full.png",
+      "Examples/Octane/Sphere/specular.png",
+      "Examples/Octane/Sphere/edge.png"
+    ],
+    "targetGuideImagePaths": [
+      "Examples/Octane/Plant/full.png",
+      "Examples/Octane/Plant/specular.png",
+      "Examples/Octane/Plant/edge.png"
+    ],
+    "sourceStyleImagePaths": ["Examples/Octane/Sphere/style2.png"]
+  },
+  "outputs": {
+    "targetStyleImagePaths": [
+      "test/original_src/examples/lowres_1/bin/target_style.png"
+    ]
+  },
+  "settings": {
+    "guideImageFormats": ["rgb", "bw", "bw"],
+    "styleImageFormats": ["rgb"],
+    "guideImageWeights": [2, 2, 2],
+    "styleImageWeights": [1],
+    "patchSize": 5,
+    "numPatchMatchIterations": 6,
+    "numPyramidLevels": 6,
+    "numOptimizationIterationsPerPyramidLevel": 6,
+    "coordinatorType": "CUDA"
+  }
+}

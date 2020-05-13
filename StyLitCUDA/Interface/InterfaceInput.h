@@ -20,6 +20,12 @@ template <typename T> struct InterfaceInput {
   // This should have space allocated for the highest-resolution version of B'.
   InterfaceImage<T> bPrime;
 
+  // The guide weights.
+  float *guideWeights;
+
+  // The style weights.
+  float *styleWeights;
+
   int numLevels;
 
   int patchSize;
