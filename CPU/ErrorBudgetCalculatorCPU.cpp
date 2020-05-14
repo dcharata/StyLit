@@ -115,12 +115,6 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
 
   float meanError = totalError / vecerror.size();
 
-  std::cout << "meanError " << meanError << std::endl;
-
-  std::cout << "vecErrorSize " << vecerror.size() << std::endl;
-
-  std::cout << "totalError " << totalError << std::endl;
-
   // writes the errors to CSV for graphing
   // std::ofstream
   // outFile("/Users/davidcharatan/Documents/StyLitBin/errors.csv");
@@ -166,16 +160,11 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
   functor.n = n;
 
   Eigen::LevenbergMarquardt<LMFunctor, double> lm(functor);
-  std::cout << "minimizing" << std::endl;
   lm.minimize(params); // TODO: Use the status for something.
-  std::cout << "minimizing" << std::endl;
 
   // calculate the knee point
   double a = params(0);
   double b = params(1);
-
-  std::cout << "Value of a: " << a << std::endl;
-  std::cout << "Value of b: " << b << std::endl;
 
   double kneepoint;
   if (b < 0) {
@@ -188,13 +177,10 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
                  a / b); // this is the case that should normally happen
   }
 
-  std::cout << "kneepoint " << kneepoint << std::endl;
-
   // get the kneepoint index
   // we need to multply by the number of pixels to undo the normalization
   int kneepointIndex = std::max<int>(
       0, std::min<int>(int(kneepoint * (validSamples)), validSamples - 1));
-  std::cout << "Kneepoint index: " << kneepointIndex << std::endl;
 
   // we need to multiply by the mean error to undo the normalization
   errorBudget = measuredValues(kneepointIndex, 1) * meanError;

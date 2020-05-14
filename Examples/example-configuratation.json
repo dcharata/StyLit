@@ -28,7 +28,7 @@
     "numPatchMatchIterations": 4,
     "numPyramidLevels": 6,
     "numOptimizationIterationsPerPyramidLevel": 6,
-    "nnfGenerationStoppingCriterion": .95,
+    "nnfGenerationStoppingCriterion": 0,
     "omegaWeight": .02
   }
 }
