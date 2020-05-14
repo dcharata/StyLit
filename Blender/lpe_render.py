@@ -14,7 +14,8 @@ import os
 
 import argparse 
 import math
-
+import json
+from math import radians
 
 class Blender():
     def __init__(self):
@@ -57,7 +58,16 @@ def get_objs_in_directory(path):
     return objs
 
 def execute_blender(img_type, guide, model_pth, output_pth, 
-                        resolution, samples, device):
+                        resolution, samples, device, data):
+    
+    light = bpy.data.objects['Light']
+    light.location = data['Light']['location']
+    light.rotation_euler = [radians(x) for x in data['Light']['rotation']]
+
+    camera = bpy.data.objects['Camera']
+    camera.location = data['Camera']['location']
+    camera.rotation_euler = [radians(x) for x in data['Camera']['rotation']]
+
     blender_instance = Blender()
     if model_pth != "Sphere":
         blender_instance.import_model(model_pth)
@@ -120,6 +130,11 @@ def main():
         help="CPU / GPU",
     )
 
+    parser.add_argument(
+        "-j", "--json", dest="json", type=str, required=True,
+        help="json input",
+    )
+
     args = parser.parse_args(argv)
 
     if not argv:
@@ -141,8 +156,10 @@ def main():
         print("Invalid .obj path: Path does not exist.")
         return 
 
+    with open(args.json) as f:
+        data = json.load(f)
 
-    execute_blender(args.type, args.guide, args.model, args.output_dir, args.resolution, args.samples, args.device)
+    execute_blender(args.type, args.guide, args.model, args.output_dir, args.resolution, args.samples, args.device, data)
 
 if __name__ == "__main__":
     main()
