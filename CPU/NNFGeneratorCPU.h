@@ -13,7 +13,7 @@
 struct Configuration;
 
 bool generatorComparator(const std::pair<float, ImageCoordinates> lhs,
-                const std::pair<float, ImageCoordinates> rhs) {
+                         const std::pair<float, ImageCoordinates> rhs) {
   return lhs.first < rhs.first;
 }
 
@@ -68,10 +68,11 @@ private:
     bool firstIteration = true;
     const int forwardNNFSize = pyramidLevel.forwardNNF.sourceDimensions.area();
     int iteration = 0;
-    while (patchesFilled < float(forwardNNFSize) * configuration.nnfGenerationStoppingCriterion && iteration < MAX_ITERATIONS) {
+    while (patchesFilled < float(forwardNNFSize) *
+                               configuration.nnfGenerationStoppingCriterion &&
+           iteration < MAX_ITERATIONS) {
 
-      std::cout << "*************************" << std::endl;
-      std::cout << "Fraction of patches filled: " << patchesFilled << " / "
+      std::cout << "Fraction of forward NNF filled: " << patchesFilled << " / "
                 << float(forwardNNFSize) << std::endl;
 
       NNFError nnfError(pyramidLevel.reverseNNF);
@@ -80,26 +81,33 @@ private:
                                     pyramidLevel.guide.source.dimensions);
 
       std::vector<float> omega;
-      patchMatcher.initOmega(configuration, omega, pyramidLevel.guide.target.dimensions, pyramidLevel.guide.source.dimensions,
+      patchMatcher.initOmega(configuration, omega,
+                             pyramidLevel.guide.target.dimensions,
+                             pyramidLevel.guide.source.dimensions,
                              pyramidLevel.reverseNNF, configuration.patchSize);
       if (firstIteration) {
         patchMatcher.patchMatch(configuration, pyramidLevel.reverseNNF, pyramid,
-                                level, true, true, nnfError, true, omega, pyramidLevel.guide.target.dimensions, nullptr);
+                                level, true, true, nnfError, true, omega,
+                                pyramidLevel.guide.target.dimensions, nullptr);
         firstIteration = false;
       } else {
         patchMatcher.patchMatch(configuration, pyramidLevel.reverseNNF, pyramid,
-                                level, true, false, nnfError, true, omega, pyramidLevel.guide.target.dimensions, &blacklist);
+                                level, true, true, nnfError, true, omega,
+                                pyramidLevel.guide.target.dimensions,
+                                &blacklist);
       }
 
-      std::cout << "getting knee point" << std::endl;
       std::vector<std::pair<float, ImageCoordinates>> sortedCoordinates;
       float totalError = 0;
       getSortedCoordinates(sortedCoordinates, nnfError, totalError);
 
-      // calculate the error budget if we are in the first optimization iteration of this pyramid level
+      // calculate the error budget if we are in the first optimization
+      // iteration of this pyramid level
       float budget = 0;
       if (firstOptimizationIteration) {
-        budgetCalc.calculateErrorBudget(configuration, sortedCoordinates, nnfError, totalError, budget, &blacklist);
+        budgetCalc.calculateErrorBudget(configuration, sortedCoordinates,
+                                        nnfError, totalError, budget,
+                                        &blacklist);
         budgets.push_back(budget);
       } else {
         budget = budgets[std::min<int>(iteration, budgets.size() - 1)];
@@ -114,7 +122,6 @@ private:
       int notFreeCount = 0;
       int numAddedToForwardNNFInIteration = 0;
       int recentlyTakenCount = 0;
-      std::cout << "allocating" << std::endl;
       while (pastError < budget && i < int(sortedCoordinates.size())) {
         ImageCoordinates coords = sortedCoordinates[i].second;
         // if coords does not map to a blacklisted pixel, then we can create
@@ -137,23 +144,25 @@ private:
         }
         i++;
       }
-      std::cout << "done" << std::endl;
-
       iteration++;
     }
 
     // if the level's forward NNf is not completely full, make a new forward NNF
     // from patchmatch and use that to fill up the holes in the level's forward
     // NNF
-    if (patchesFilled < forwardNNFSize && configuration.nnfGenerationStoppingCriterion > 0) {
+    if (patchesFilled < forwardNNFSize &&
+        configuration.nnfGenerationStoppingCriterion > 0) {
       std::vector<float> finalOmega;
-      patchMatcher.initOmega(configuration, finalOmega, pyramidLevel.guide.source.dimensions, pyramidLevel.guide.target.dimensions,
+      patchMatcher.initOmega(configuration, finalOmega,
+                             pyramidLevel.guide.source.dimensions,
+                             pyramidLevel.guide.target.dimensions,
                              pyramidLevel.forwardNNF, configuration.patchSize);
       NNFError nnfErrorFinal(pyramidLevel.forwardNNF);
       NNF forwardNNFFinal = NNF(pyramidLevel.guide.target.dimensions,
                                 pyramidLevel.guide.source.dimensions);
-      patchMatcher.patchMatch(configuration, forwardNNFFinal, pyramid,
-                              level, false, true, nnfErrorFinal, true, finalOmega, pyramidLevel.guide.source.dimensions);
+      patchMatcher.patchMatch(configuration, forwardNNFFinal, pyramid, level,
+                              false, true, nnfErrorFinal, true, finalOmega,
+                              pyramidLevel.guide.source.dimensions);
       for (int row = 0; row < forwardNNFFinal.sourceDimensions.rows; row++) {
         for (int col = 0; col < forwardNNFFinal.sourceDimensions.cols; col++) {
           ImageCoordinates currentPatch{row, col};
@@ -164,19 +173,28 @@ private:
           }
         }
       }
-    } else { // if configuration.nnfGenerationStoppingCriterion is zero (so we are just using forward NNFs)
+    } else { // if configuration.nnfGenerationStoppingCriterion is zero (so we
+      // are just using forward NNFs and we are following the ebsynth
+      // algorithm)
       std::vector<float> finalOmega;
-      patchMatcher.initOmega(configuration, finalOmega, pyramidLevel.guide.source.dimensions, pyramidLevel.guide.target.dimensions,
+      patchMatcher.initOmega(configuration, finalOmega,
+                             pyramidLevel.guide.source.dimensions,
+                             pyramidLevel.guide.target.dimensions,
                              pyramidLevel.forwardNNF, configuration.patchSize);
       NNFError nnfErrorFinal(pyramidLevel.forwardNNF);
-      if (firstOptimizationIteration && level == configuration.numPyramidLevels - 1) {
+      if (firstOptimizationIteration &&
+          level == configuration.numPyramidLevels - 1) {
         patchMatcher.patchMatch(configuration, pyramidLevel.forwardNNF, pyramid,
-                                level, false, true, nnfErrorFinal, true, finalOmega,
+                                level, false, true, nnfErrorFinal, true,
+                                finalOmega,
                                 pyramidLevel.guide.source.dimensions);
-        budgets.push_back(0);
+        budgets.push_back(
+            0); // add an element to budgets so firstOptimizationIteration is
+                // false the next time we go through this code
       } else {
         patchMatcher.patchMatch(configuration, pyramidLevel.forwardNNF, pyramid,
-                                level, false, false, nnfErrorFinal, true, finalOmega,
+                                level, false, false, nnfErrorFinal, true,
+                                finalOmega,
                                 pyramidLevel.guide.source.dimensions);
       }
     }
@@ -184,21 +202,25 @@ private:
     return true;
   }
 
-  void getSortedCoordinates(std::vector<std::pair<float, ImageCoordinates>> &sortedCoordinates,
-                            NNFError &nnfError, float &totalError) {
+  void getSortedCoordinates(
+      std::vector<std::pair<float, ImageCoordinates>> &sortedCoordinates,
+      NNFError &nnfError, float &totalError) {
     totalError = 0;
-    sortedCoordinates.reserve(nnfError.nnf.sourceDimensions.cols * nnfError.nnf.sourceDimensions.rows);
+    sortedCoordinates.reserve(nnfError.nnf.sourceDimensions.cols *
+                              nnfError.nnf.sourceDimensions.rows);
     for (int row = 0; row < nnfError.nnf.sourceDimensions.rows; row++) {
       for (int col = 0; col < nnfError.nnf.sourceDimensions.cols; col++) {
-        if (nnfError.error(row, col)(0,0) < std::numeric_limits<float>::max() - 1) {
-          sortedCoordinates.push_back(std::pair(nnfError.error(row, col)(0,0), ImageCoordinates{row, col}));
-          totalError += nnfError.error(row,col)(0,0);
+        if (nnfError.error(row, col)(0, 0) <
+            std::numeric_limits<float>::max() - 1) {
+          sortedCoordinates.push_back(std::pair(nnfError.error(row, col)(0, 0),
+                                                ImageCoordinates{row, col}));
+          totalError += nnfError.error(row, col)(0, 0);
         }
       }
     }
-    std::sort(sortedCoordinates.begin(), sortedCoordinates.end(), &generatorComparator);
+    std::sort(sortedCoordinates.begin(), sortedCoordinates.end(),
+              &generatorComparator);
   }
-
 };
 
 #endif // NNFGENERATORCPU_H

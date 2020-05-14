@@ -103,7 +103,8 @@ bool comparator(const std::pair<int, float> lhs,
 // ----------------------------------------------------------------------------------------
 
 bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
-    const Configuration &config, const std::vector<std::pair<float, ImageCoordinates>> &vecerror,
+    const Configuration &config,
+    const std::vector<std::pair<float, ImageCoordinates>> &vecerror,
     const NNFError &nnferror, const float totalError, float &errorBudget,
     const NNF *const blacklist) {
 
@@ -134,17 +135,18 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
   int idx = 0;
   int validSamples = 0;
   for (unsigned int i = 0; i < vecerror.size(); i++) {
-    if (i % ((height * width) / (NUM_SAMPLES - 1)) == 0 && (vecerror[i].first < 100.0f)) {
+    if (i % ((height * width) / (NUM_SAMPLES - 1)) == 0 &&
+        (vecerror[i].first < 100.0f)) {
       // normalize the x axis
       measuredValues(idx, 0) = float(i) * x_scale;
-      //measuredValues(i, 0) = float(i) / float(vecerror.size());
+      // measuredValues(i, 0) = float(i) / float(vecerror.size());
 
       // normalize the y axis
       measuredValues(idx, 1) = (double)vecerror[i].first / double(meanError);
       idx++;
       validSamples++;
     }
-    //std::cout << vecerror[i].first << std::endl;
+    // std::cout << vecerror[i].first << std::endl;
   }
 
   int n = 2; // number of parameters
@@ -190,7 +192,8 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
 
   // get the kneepoint index
   // we need to multply by the number of pixels to undo the normalization
-  int kneepointIndex = std::max<int>(0, std::min<int>(int(kneepoint * (validSamples)), validSamples - 1));
+  int kneepointIndex = std::max<int>(
+      0, std::min<int>(int(kneepoint * (validSamples)), validSamples - 1));
   std::cout << "Kneepoint index: " << kneepointIndex << std::endl;
 
   // we need to multiply by the mean error to undo the normalization

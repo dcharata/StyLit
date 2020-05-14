@@ -34,7 +34,7 @@ public:
     printTime("Starting runStyLit in StyLitCoordinatorCPU.");
     Pyramid<float, numGuideChannels, numStyleChannels> pyramid;
 
-    //srand(4);
+    // srand(4);
 
     // Gets the highest pyramid level's dimensions.
     ImageDimensions sourceDimensions;
@@ -154,7 +154,8 @@ public:
       }
 
       std::vector<float> budgets;
-      for (int i = 0; i < configuration.numOptimizationIterationsPerPyramidLevel; i++) {
+      for (int i = 0;
+           i < configuration.numOptimizationIterationsPerPyramidLevel; i++) {
         generator.generateNNF(configuration, pyramid, level, budgets);
         printTime("Done with generating NNF.");
         nnfApplicator.applyNNF(configuration, pyramidLevel);
