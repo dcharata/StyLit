@@ -62,10 +62,10 @@ public:
     // Read Source Mask
     // test/original_src/examples/1/source_
     // Blender/output/600x456/source_
-    ImageIO::readImage<1>("test/original_src/examples/lowres_1/source_mask.png",
+    ImageIO::readImage<1>("test/original_src/examples/1/source_mask.png",
                           pyramid.levels[0].mask.source, ImageFormat::BW, 0);
     // Read Target Mask
-    ImageIO::readImage<1>("test/original_src/examples/lowres_1/target_mask.png",
+    ImageIO::readImage<1>("test/original_src/examples/1/target_mask.png",
                           pyramid.levels[0].mask.target, ImageFormat::BW, 0);
     printTime("Done reading source and target mask at lowest level.");
 
@@ -79,30 +79,13 @@ public:
             pyramid.levels[0].mask.source.getConstPixel(row, col);
         const FeatureVector<float, 1> &featureVectorTarget =
             pyramid.levels[0].mask.target.getConstPixel(row, col);
-        if (featureVectorSource[0] > 0.4 || featureVectorTarget[0] > 0.4)
+        if (featureVectorSource[0] > 0 || featureVectorTarget[0] > 0)
           pyramid.levels[0].unionForeground.emplace_back(from);
         else
           pyramid.levels[0].unionBackground.emplace_back(from);
       }
     }
 
-    //    // Adding Target Mask pixels at Level 0
-    //    for (int row = 0; row < pyramid.levels[0].mask.target.dimensions.rows;
-    //         row++) {
-    //      for (int col = 0; col <
-    // pyramid.levels[0].mask.target.dimensions.cols;
-    //           col++) {
-    //        ImageCoordinates from{ row, col };
-    //        const FeatureVector<float, 1> &featureVectorSource =
-    //            pyramid.levels[0].mask.source.getConstPixel(row, col);
-    //        const FeatureVector<float, 1> &featureVectorTarget =
-    //            pyramid.levels[0].mask.target.getConstPixel(row, col);
-    //        if (featureVectorSource[0] > 0.4 || featureVectorTarget[0] > 0.4)
-    //          pyramid.levels[0].targetWhite.emplace_back(from);
-    //        else
-    //          pyramid.levels[0].targetBlack.emplace_back(from);
-    //      }
-    //    }
     printTime("Done adding source and target pixels at level 0.");
 
     // Adds the guide and style weights.
@@ -185,29 +168,12 @@ public:
               pyramid.levels[level].mask.source.getConstPixel(row, col);
           const FeatureVector<float, 1> &featureVectorTarget =
               pyramid.levels[level].mask.target.getConstPixel(row, col);
-          if (featureVectorSource[0] > 0.4 || featureVectorTarget[0] > 0.4)
+          if (featureVectorSource[0] > 0 || featureVectorTarget[0] > 0)
             pyramid.levels[level].unionForeground.emplace_back(from);
           else
             pyramid.levels[level].unionBackground.emplace_back(from);
         }
       }
-
-      //      // Adding Target Mask pixels at Level : level
-      //      for (int row = 0; row <
-      // pyramid.levels[level].mask.target.dimensions.rows;
-      //           row++) {
-      //        for (int col = 0;
-      //             col < pyramid.levels[level].mask.target.dimensions.cols;
-      // col++) {
-      //          ImageCoordinates from{ row, col };
-      //          const FeatureVector<float, 1> &featureVector =
-      //              pyramid.levels[level].mask.target.getConstPixel(row, col);
-      //          if (featureVector[0] > 0.4)
-      //            pyramid.levels[level].targetWhite.emplace_back(from);
-      //          else
-      //            pyramid.levels[level].targetBlack.emplace_back(from);
-      //        }
-      //      }
     }
     printTime("Done downscaling A, B and A'.");
 

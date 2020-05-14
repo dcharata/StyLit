@@ -70,6 +70,7 @@ private:
     //    const int forwardNNFSize =
     //    (level >= 0) ? pyramidLevel.forwardNNF.sourceDimensions.area()
     //                 : pyramidLevel.unionForeground.size();
+
     int iteration = 0;
     while (patchesFilled < float(forwardNNFSize) *
                                configuration.nnfGenerationStoppingCriterion &&

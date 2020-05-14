@@ -21,10 +21,6 @@ struct PyramidLevel {
   ImagePair<T, 1> mask;
   NNF forwardNNF; // this is the target sized array of source indices
   NNF reverseNNF; // this is the source sized array of target indices
-  std::vector<ImageCoordinates> sourceWhite;
-  std::vector<ImageCoordinates> sourceBlack;
-  std::vector<ImageCoordinates> targetWhite;
-  std::vector<ImageCoordinates> targetBlack;
   std::vector<ImageCoordinates> unionForeground;
   std::vector<ImageCoordinates> unionBackground;
 };

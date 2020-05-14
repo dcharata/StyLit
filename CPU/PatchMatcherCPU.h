@@ -40,7 +40,7 @@ public:
         const FeatureVector<float, 1> &featureVectorTarget =
             pyramidLevel.mask.target.getConstPixel(row, col);
 
-        if (featureVectorSource[0] > 0.4 || featureVectorTarget[0] > 0.4) {
+        if (featureVectorSource[0] > 0 || featureVectorTarget[0] > 0) {
           int randIndex = randi(0, pyramidLevel.unionForeground.size());
           ImageCoordinates to{ pyramidLevel.unionForeground[randIndex].row,
                                pyramidLevel.unionForeground[randIndex].col };
@@ -174,13 +174,20 @@ private:
 #pragma omp parallel for schedule(dynamic)
       for (int row = 0; row < numNNFRows; row++) {
         for (int col = 0; col < numNNFCols; col++) {
-          propagationStep(configuration, row, col, makeReverseNNF,
-                          iterationIsOdd, nnf, pyramidLevel, guideWeights,
-                          styleWeights, nnfError, omega, omegaDimensions,
-                          blacklist);
-          searchStep(configuration, row, col, makeReverseNNF, nnf, pyramidLevel,
-                     guideWeights, styleWeights, radii, nnfError, omega,
-                     omegaDimensions, blacklist);
+          const FeatureVector<float, 1> &featureVectorSource =
+              pyramidLevel.mask.source.getConstPixel(row, col);
+          const FeatureVector<float, 1> &featureVectorTarget =
+              pyramidLevel.mask.target.getConstPixel(row, col);
+          if (level >= 1 ||
+              (featureVectorSource[0] > 0 || featureVectorTarget[0] > 0)) {
+            propagationStep(configuration, row, col, makeReverseNNF,
+                            iterationIsOdd, nnf, pyramidLevel, guideWeights,
+                            styleWeights, nnfError, omega, omegaDimensions,
+                            blacklist);
+            searchStep(configuration, row, col, makeReverseNNF, nnf,
+                       pyramidLevel, guideWeights, styleWeights, radii,
+                       nnfError, omega, omegaDimensions, blacklist);
+          }
         }
       }
     }
