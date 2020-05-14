@@ -59,14 +59,14 @@ def get_objs_in_directory(path):
 
 def execute_blender(img_type, guide, model_pth, output_pth, 
                         resolution, samples, device, data):
-    
-    light = bpy.data.objects['Light']
-    light.location = data['Light']['location']
-    light.rotation_euler = [radians(x) for x in data['Light']['rotation']]
+    if data:
+        light = bpy.data.objects['Light']
+        light.location = data['Light']['location']
+        light.rotation_euler = [radians(x) for x in data['Light']['rotation']]
 
-    camera = bpy.data.objects['Camera']
-    camera.location = data['Camera']['location']
-    camera.rotation_euler = [radians(x) for x in data['Camera']['rotation']]
+        camera = bpy.data.objects['Camera']
+        camera.location = data['Camera']['location']
+        camera.rotation_euler = [radians(x) for x in data['Camera']['rotation']]
 
     blender_instance = Blender()
     if model_pth != "Sphere":
@@ -131,7 +131,7 @@ def main():
     )
 
     parser.add_argument(
-        "-j", "--json", dest="json", type=str, required=True,
+        "-j", "--json", dest="json", type=str, required=False,
         help="json input",
     )
 
@@ -156,8 +156,11 @@ def main():
         print("Invalid .obj path: Path does not exist.")
         return 
 
-    with open(args.json) as f:
-        data = json.load(f)
+    data = None
+
+    if args.json:
+        with open(args.json) as f:
+            data = json.load(f)
 
     execute_blender(args.type, args.guide, args.model, args.output_dir, args.resolution, args.samples, args.device, data)
 
