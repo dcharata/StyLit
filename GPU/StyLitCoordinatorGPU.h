@@ -94,6 +94,8 @@ public:
 
     input.guideWeights = guideWeights.data();
     input.styleWeights = styleWeights.data();
+    input.patchMatchIterations = configuration.numPyramidLevels;
+    input.optimizationIterations = configuration.numOptimizationIterationsPerPyramidLevel;
 
     const int ret = StyLitCUDA_runStyLitCUDA_float(input);
     printf("StyLitCUDA return value: %d\n", ret);

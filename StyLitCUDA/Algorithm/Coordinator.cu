@@ -39,8 +39,8 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
   weights.deviceAllocate();
   weights.toDevice(hostWeights.data());
 
-  const int NUM_PATCH_MATCH_ITERATIONS = 6;
-  const int NUM_OPTIMIZATIONS_PER_LEVEL = 6;
+  const int NUM_PATCH_MATCH_ITERATIONS = input.patchMatchIterations;
+  const int NUM_OPTIMIZATIONS_PER_LEVEL = input.optimizationIterations;
 
   // Loads the images into A and B.
   // A contains both A and A'.

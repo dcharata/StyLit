@@ -29,6 +29,10 @@ template <typename T> struct InterfaceInput {
   int numLevels;
 
   int patchSize;
+
+  int patchMatchIterations;
+
+  int optimizationIterations;
 };
 
 } /* namespace StyLitCUDA */

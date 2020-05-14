@@ -4,6 +4,7 @@
 #include <QImage>
 #include <QRgb>
 #include <QString>
+#include <iostream>
 
 #include "Algorithm/Image.h"
 #include "Algorithm/ImageDimensions.h"
@@ -121,6 +122,7 @@ bool readImage(const QString &path, Image<float, numChannels> &image,
         break;
       default:
         // If the image format is unrecognized, reading fails.
+        std::cerr << "Unrecognized format." << std::endl;
         return false;
       }
     }
@@ -181,6 +183,7 @@ bool writeImage(const QString &path, Image<float, numChannels> &image,
         break;
       default:
         // If the image format is unrecognized, reading fails.
+        std::cerr << "Unrecognized format." << std::endl;
         return false;
       }
       qImage.setPixel(col, row, pixel);
@@ -200,6 +203,7 @@ bool readFeatureVectorImage(Image<float, numChannels> &image, const std::vector<
     const QString &path = paths[i];
     const int formatChannels = ImageFormatTools::numChannels(format);
     if (!ImageIO::readImage(path, image, format, numFilledChannels)) {
+      std::cerr << "Failed image read." << std::endl;
       return false;
     }
     numFilledChannels += formatChannels;
