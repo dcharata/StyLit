@@ -1,0 +1,30 @@
+{
+  "inputs": {
+    "sourceGuideImagePaths": [
+      "Blender/output/240x182/source_b.png",
+      "Blender/output/240x182/source_c.png",
+      "Blender/output/240x182/source_a.png"
+    ],
+    "targetGuideImagePaths": [
+      "Blender/output/240x182/target_b.png",
+      "Blender/output/240x182/target_c.png",
+      "Blender/output/240x182/target_a.png"
+    ],
+    "sourceStyleImagePaths": ["Blender/output/240x182/source_style.png"]
+  },
+  "outputs": {
+    "targetStyleImagePaths": [
+      "test/original_src/examples/lowres_1/bin/target_style.png"
+    ]
+  },
+  "settings": {
+    "guideImageFormats": ["rgb", "bw", "rgb"],
+    "styleImageFormats": ["rgb"],
+    "guideImageWeights": [2, 2, 2],
+    "styleImageWeights": [1],
+    "patchSize": 5,
+    "numPatchMatchIterations": 6,
+    "numPyramidLevels": 5,
+    "numOptimizationIterationsPerPyramidLevel": 1
+  }
+}

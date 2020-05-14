@@ -2,6 +2,7 @@
 #define PATCHMATCHER_H
 
 #include "Algorithm/Pyramid.h"
+#include "Algorithm/NNFError.h"
 #include "Configuration/Configuration.h"
 
 class NNF;
@@ -36,12 +37,12 @@ public:
    * @return true if patch matching succeeds; otherwise false
    */
   bool patchMatch(const Configuration &configuration, NNF &nnf,
-                  const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid,
-                  int numIterations, int level, bool makeReverseNNF,
-                  bool initRandom, const NNF *const blacklist = nullptr) {
-    return implementationOfPatchMatch(configuration, nnf, pyramid,
-                                      numIterations, level, makeReverseNNF,
-                                      initRandom, blacklist);
+                  const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int level,
+                  bool makeReverseNNF, bool initRandom, NNFError &nnfError, bool initError,
+                  std::vector<float> &omega, const ImageDimensions omegaDimensions, NNF *const blacklist = nullptr) {
+    return implementationOfPatchMatch(configuration, nnf, pyramid, level,
+                                      makeReverseNNF, initRandom, nnfError, initError,
+                                      omega, omegaDimensions, blacklist);
   }
 
 protected:
@@ -65,9 +66,9 @@ protected:
    */
   virtual bool implementationOfPatchMatch(
       const Configuration &configuration, NNF &nnf,
-      const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid,
-      int numIterations, int level, bool makeReverseNNF, bool initRandom,
-      const NNF *const blacklist = nullptr) = 0;
+      const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int level,
+      bool makeReverseNNF, bool initRandom, NNFError &nnfError, bool initError,
+      std::vector<float> &omega, const ImageDimensions omegaDimensions, NNF *const blacklist = nullptr) = 0;
 };
 
 #endif // PATCHMATCHER_H

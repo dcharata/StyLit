@@ -1,0 +1,34 @@
+{
+  "inputs": {
+    "sourceGuideImagePaths": [
+      "Blender/output/600x456/source_b.png",
+      "Blender/output/600x456/source_c.png",
+      "Blender/output/600x456/source_a.png"
+    ],
+    "targetGuideImagePaths": [
+      "Blender/output/600x456/target_b.png",
+      "Blender/output/600x456/target_c.png",
+      "Blender/output/600x456/target_a.png"
+    ],
+    "sourceStyleImagePaths": ["Blender/output/600x456/source_style.png"],
+    "sourceMask": ["Blender/output/600x456/source_mask.png"],
+    "targetMask": ["Blender/output/600x456/target_mask.png"]
+  },
+  "outputs": {
+    "targetStyleImagePaths": [
+      "./"
+    ]
+  },
+  "settings": {
+    "guideImageFormats": ["rgb", "bw", "rgb"],
+    "styleImageFormats": ["rgb"],
+    "sourceMaskImageFormats": ["bw"],
+    "targetMaskImageFormats": ["bw"],
+    "guideImageWeights": [2, 2, 2],
+    "styleImageWeights": [1],
+    "patchSize": 5,
+    "numPatchMatchIterations": 5,
+    "numPyramidLevels": 5,
+    "numOptimizationIterationsPerPyramidLevel": 1
+  }
+}

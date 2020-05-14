@@ -53,6 +53,10 @@ struct Configuration {
 
   // the number of optimization iterations per pyramid level
   int numOptimizationIterationsPerPyramidLevel = 0;
+
+  float nnfGenerationStoppingCriterion = .95;
+
+  float omegaWeight = 0;
 };
 
 #endif // CONFIGURATION_H

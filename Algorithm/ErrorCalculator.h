@@ -37,7 +37,8 @@ public:
       const ImageCoordinates &sourceCoordinates,
       const ImageCoordinates &targetCoordinates,
       const ChannelWeights<numGuideChannels> &guideWeights,
-      const ChannelWeights<numStyleChannels> &styleWeights, float &error) {
+      const ChannelWeights<numStyleChannels> &styleWeights,
+      float &error) {
     Q_ASSERT(pyramidLevel.guide.source.dimensions ==
              pyramidLevel.style.source.dimensions);
     Q_ASSERT(pyramidLevel.guide.target.dimensions ==

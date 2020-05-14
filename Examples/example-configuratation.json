@@ -16,17 +16,19 @@
   },
   "outputs": {
     "targetStyleImagePaths": [
-      "test/original_src/examples/lowres_1/bin/target_style.png"
+      "Results/target_style"
     ]
   },
   "settings": {
     "guideImageFormats": ["rgb", "bw", "rgb", "rgb"],
     "styleImageFormats": ["rgb"],
-    "guideImageWeights": [2, 2, 2, 2],
+    "guideImageWeights": [.5, .5, .5, .5],
     "styleImageWeights": [1],
     "patchSize": 5,
-    "numPatchMatchIterations": 6,
+    "numPatchMatchIterations": 4,
     "numPyramidLevels": 6,
-    "numOptimizationIterationsPerPyramidLevel": 6
+    "numOptimizationIterationsPerPyramidLevel": 6,
+    "nnfGenerationStoppingCriterion": 0,
+    "omegaWeight": .02
   }
 }
