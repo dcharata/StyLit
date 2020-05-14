@@ -164,18 +164,6 @@ randomSearchPassKernel(const Image<T> source, const Image<T> target, Image<NNFEn
                        const Vec<float> weights) {
   const int row = blockDim.x * blockIdx.x + threadIdx.x;
   const int col = blockDim.y * blockIdx.y + threadIdx.y;
-//
-//  extern __shared__ char test[];
-//  float *testptr = (float *)test;
-//  if (row == 0 && col == 0) {
-//    for (int i = 0; i < guideWeights.size; i++) {
-//      testptr[i] = guideWeights.deviceData[i];
-//    }
-//    for (int i = 0; i < styleWeights.size; i++) {
-//      testptr[i + guideWeights.size] = styleWeights.deviceData[i];
-//    }
-//  }
-//  __syncthreads();
 
   if (row < source.rows && col < source.cols) {
     // Gets the current mapping.

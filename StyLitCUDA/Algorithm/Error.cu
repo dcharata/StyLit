@@ -33,11 +33,6 @@ __device__ float calculate(const Image<T> &x, const Image<T> &y, Coordinates inX
       for (int channel = 0; channel < x.numChannels; channel++) {
         const float difference = xVector[channel] - yVector[channel];
         error += difference * difference * weights[channel];
-        /*if (channel > guideWeights.size) {
-          error += difference * difference * styleWeights.deviceData[channel - guideWeights.size];
-        } else {
-          error += difference * difference * guideWeights.deviceData[channel];
-        }*/
       }
     }
   }
