@@ -13,13 +13,20 @@ template <typename T, unsigned int numGuideChannels,
 struct PyramidLevel {
   PyramidLevel(ImageDimensions sourceDims, ImageDimensions targetDims)
       : guide(sourceDims, targetDims), style(sourceDims, targetDims),
-        forwardNNF(targetDims, sourceDims), reverseNNF(sourceDims, targetDims) {
-  }
+        mask(sourceDims, targetDims), forwardNNF(targetDims, sourceDims),
+        reverseNNF(sourceDims, targetDims) {}
 
   ImagePair<T, numGuideChannels> guide;
   ImagePair<T, numStyleChannels> style;
+  ImagePair<T, 1> mask;
   NNF forwardNNF; // this is the target sized array of source indices
   NNF reverseNNF; // this is the source sized array of target indices
+  std::vector<ImageCoordinates> sourceWhite;
+  std::vector<ImageCoordinates> sourceBlack;
+  std::vector<ImageCoordinates> targetWhite;
+  std::vector<ImageCoordinates> targetBlack;
+  std::vector<ImageCoordinates> unionForeground;
+  std::vector<ImageCoordinates> unionBackground;
 };
 
 #endif // PYRAMIDLEVEL_H
