@@ -133,6 +133,11 @@ StyLitGUI::StyLitGUI(Configuration configuration)
           &StyLitGUI::startStyLit);
   buttonsLayout->addWidget(startStyLitButton);
 
+  runExpensiveStyLitButton = new QPushButton(tr("Refinement"), this);
+  connect(runExpensiveStyLitButton, &QPushButton::clicked, this,
+          &StyLitGUI::runExpensiveStyLit);
+  buttonsLayout->addWidget(runExpensiveStyLitButton);
+
   QPushButton *quitStyLitGUIButton = new QPushButton(tr("Quit"), this);
   quitStyLitGUIButton->setShortcut(Qt::CTRL + Qt::Key_Q);
   connect(quitStyLitGUIButton, &QPushButton::clicked, this, &QWidget::close);
@@ -150,6 +155,15 @@ StyLitGUI::StyLitGUI(Configuration configuration)
   H->setValue(200);
 
   updateCropRegion();
+
+  // Create timer for screen capture
+  timerCapture = new QTimer(this);
+  QObject::connect(timerCapture, SIGNAL(timeout()), this,
+                   SLOT(screenCapture()));
+
+  // Create timer for stylit
+  timerStyLit = new QTimer(this);
+  QObject::connect(timerStyLit, SIGNAL(timeout()), this, SLOT(runStyLitCPU()));
 
   setWindowTitle(tr("StyLitGUI"));
   resize(300, 200);
@@ -174,9 +188,9 @@ void StyLitGUI::screenCapture() {
   // Updates the screen capture on GUI
   updateStyLitGUILabel();
 
-  //  startStyLitButton->setDisabled(false);
-  //  if (hideThisWindowCheckBox->isChecked())
-  //    show();
+  //    startStyLitButton->setDisabled(false);
+  //    if (hideThisWindowCheckBox->isChecked())
+  //      show();
 }
 
 void StyLitGUI::runStyLitCPU() {
@@ -184,20 +198,49 @@ void StyLitGUI::runStyLitCPU() {
   ImplementationSelector::runWithConfiguration(configuration);
 }
 
+void StyLitGUI::runExpensiveStyLit() {
+  // Disable run expensive stylit button
+  runExpensiveStyLitButton->setDisabled(true);
+  // Stop StyLit
+  timerStyLit->stop();
+  std::cout << "Running Expensive Stylit" << std::endl;
+
+  // Switching to expensive configuration
+  int originalNumPatchMatchIterations = configuration.numPatchMatchIterations;
+  int originalNumOptimizationIterationsPerPyramidLevel =
+      configuration.numOptimizationIterationsPerPyramidLevel;
+  int originalMaskLevelOptimization = configuration.maskLevelOptimization;
+
+  configuration.numPatchMatchIterations = 6;
+  configuration.numOptimizationIterationsPerPyramidLevel = 6;
+  configuration.maskLevelOptimization = 1;
+  ImplementationSelector::runWithConfiguration(configuration);
+
+  // Stopping screen capture
+  timerCapture->stop();
+
+  // Enable start stylit button
+  startStyLitButton->setDisabled(false);
+  if (hideThisWindowCheckBox->isChecked())
+    show();
+
+  // Swap values
+  configuration.numPatchMatchIterations = originalNumPatchMatchIterations;
+  configuration.numOptimizationIterationsPerPyramidLevel =
+      originalNumOptimizationIterationsPerPyramidLevel;
+  configuration.maskLevelOptimization = originalMaskLevelOptimization;
+}
+
 void StyLitGUI::startStyLit() {
   if (hideThisWindowCheckBox->isChecked())
     hide();
   startStyLitButton->setDisabled(true);
+  runExpensiveStyLitButton->setDisabled(false);
 
   // Call Screen Capture with delay
-  QTimer *timerCapture = new QTimer(this);
-  QObject::connect(timerCapture, SIGNAL(timeout()), this,
-                   SLOT(screenCapture()));
   timerCapture->start(delaySpinBox->value() * 1000);
 
   // Call runStyLitCPU with delay
-  QTimer *timerStyLit = new QTimer(this);
-  QObject::connect(timerStyLit, SIGNAL(timeout()), this, SLOT(runStyLitCPU()));
   timerStyLit->start((delaySpinBox->value()) * 1000);
 }
 

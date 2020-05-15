@@ -82,6 +82,7 @@ private
 slots:
   void screenCapture();
   void runStyLitCPU();
+  void runExpensiveStyLit();
   void startStyLit();
   void updateCheckBox();
   void updateCropRegion();
@@ -92,6 +93,7 @@ private:
   Configuration configuration;
   QPixmap originalPixmap;
   QPixmap displayPixmap;
+  QPixmap outputPixmap;
   QPainter *paint;
   QPen *pen;
 
@@ -103,7 +105,11 @@ private:
   QSpinBox *H;
   QCheckBox *hideThisWindowCheckBox;
   QPushButton *startStyLitButton;
+  QPushButton *runExpensiveStyLitButton;
   QScreen *screen;
+
+  QTimer *timerCapture;
+  QTimer *timerStyLit;
 };
 //! [0]
 
