@@ -4,8 +4,10 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17 c++1z
 
-#QMAKE_CXXFLAGS += -fopenmp
-#LIBS += -fopenmp
+unix:{
+QMAKE_CXXFLAGS += -fopenmp
+LIBS += -fopenmp
+}
 
 unix:!macx{
 QMAKE_CXXFLAGS += -fopenmp

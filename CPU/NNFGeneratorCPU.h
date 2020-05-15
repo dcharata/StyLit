@@ -8,6 +8,7 @@
 #include "ErrorBudgetCalculatorCPU.h"
 #include "ErrorCalculatorCPU.h"
 #include "PatchMatcherCPU.h"
+//#include <parallel/algorithm>
 #include <iostream>
 
 struct Configuration;
@@ -67,6 +68,7 @@ private:
     int patchesFilled = 0;
     bool firstIteration = true;
     const int forwardNNFSize = pyramidLevel.forwardNNF.sourceDimensions.area();
+
     int iteration = 0;
     while (patchesFilled < float(forwardNNFSize) *
                                configuration.nnfGenerationStoppingCriterion &&
@@ -97,7 +99,7 @@ private:
                                 &blacklist);
       }
 
-      std::vector<std::pair<float, ImageCoordinates>> sortedCoordinates;
+      std::vector<std::pair<float, ImageCoordinates> > sortedCoordinates;
       float totalError = 0;
       getSortedCoordinates(sortedCoordinates, nnfError, totalError);
 
@@ -133,11 +135,11 @@ private:
               pyramidLevel.reverseNNF.getMapping(coords), coords);
           // record which iteration this target patch was added to blacklist
           blacklist.setMapping(pyramidLevel.reverseNNF.getMapping(coords),
-                               ImageCoordinates{iteration, iteration});
+                               ImageCoordinates{ iteration, iteration });
           pastError = sortedCoordinates[i].first;
           numAddedToForwardNNFInIteration++;
           patchesFilled++;
-        } else if (blacklistVal == ImageCoordinates{iteration, iteration}) {
+        } else if (blacklistVal == ImageCoordinates{ iteration, iteration }) {
           recentlyTakenCount++;
         } else {
           notFreeCount++;
@@ -165,7 +167,7 @@ private:
                               pyramidLevel.guide.source.dimensions);
       for (int row = 0; row < forwardNNFFinal.sourceDimensions.rows; row++) {
         for (int col = 0; col < forwardNNFFinal.sourceDimensions.cols; col++) {
-          ImageCoordinates currentPatch{row, col};
+          ImageCoordinates currentPatch{ row, col };
           ImageCoordinates blacklistVal = blacklist.getMapping(currentPatch);
           if (blacklistVal == ImageCoordinates::FREE_PATCH) {
             pyramidLevel.forwardNNF.setMapping(
@@ -174,6 +176,7 @@ private:
         }
       }
     } else { // if configuration.nnfGenerationStoppingCriterion is zero (so we
+
       // are just using forward NNFs and we are following the ebsynth
       // algorithm)
       std::vector<float> finalOmega;
@@ -203,7 +206,7 @@ private:
   }
 
   void getSortedCoordinates(
-      std::vector<std::pair<float, ImageCoordinates>> &sortedCoordinates,
+      std::vector<std::pair<float, ImageCoordinates> > &sortedCoordinates,
       NNFError &nnfError, float &totalError) {
     totalError = 0;
     sortedCoordinates.reserve(nnfError.nnf.sourceDimensions.cols *
@@ -213,13 +216,14 @@ private:
         if (nnfError.error(row, col)(0, 0) <
             std::numeric_limits<float>::max() - 1) {
           sortedCoordinates.push_back(std::pair(nnfError.error(row, col)(0, 0),
-                                                ImageCoordinates{row, col}));
+                                                ImageCoordinates{ row, col }));
           totalError += nnfError.error(row, col)(0, 0);
         }
       }
     }
     std::sort(sortedCoordinates.begin(), sortedCoordinates.end(),
               &generatorComparator);
+    //     __gnu_parallel::sort()
   }
 };
 

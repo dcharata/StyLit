@@ -53,11 +53,43 @@ public:
     // Creates and reads in the highest pyramid level.
     pyramid.levels.emplace_back(sourceDimensions, targetDimensions);
     if (!ImageIO::readPyramidLevel<numGuideChannels, numStyleChannels>(
-            configuration, pyramid.levels[0])) {
+             configuration, pyramid.levels[0])) {
       std::cerr << "Could not read input images." << std::endl;
       return false;
     }
     printTime("Done reading A, B and A'.");
+
+    // Adding foreground pixel coord form source mask at level 0.
+    // Using this during randomlyInitializeNNF.
+    for (int row = 0; row < pyramid.levels[0].guide.source.dimensions.rows;
+         row++) {
+      for (int col = 0; col < pyramid.levels[0].guide.source.dimensions.cols;
+           col++) {
+        ImageCoordinates from{ row, col };
+        const FeatureVector<float, numGuideChannels> &featureVectorSource =
+            pyramid.levels[0].guide.source.getConstPixel(row, col);
+        // Makes assumption that Mask is the last guidance channel
+        if (featureVectorSource[featureVectorSource.size() - 1] > 0)
+          pyramid.levels[0].unionForeground.emplace_back(from);
+      }
+    }
+
+    // Adding foreground pixel coord form target mask at level 0.
+    // Using this during randomlyInitializeNNF.
+    for (int row = 0; row < pyramid.levels[0].guide.target.dimensions.rows;
+         row++) {
+      for (int col = 0; col < pyramid.levels[0].guide.target.dimensions.cols;
+           col++) {
+        ImageCoordinates from{ row, col };
+        const FeatureVector<float, numGuideChannels> &featureVectorTarget =
+            pyramid.levels[0].guide.target.getConstPixel(row, col);
+        // Makes assumption that Mask is the last guidance channel
+        if (featureVectorTarget[featureVectorTarget.size() - 1] > 0)
+          pyramid.levels[0].unionForeground.emplace_back(from);
+      }
+    }
+
+    printTime("Done adding source and target pixels at level 0.");
 
     // Adds the guide and style weights.
     unsigned int guideChannel = 0;
@@ -121,6 +153,33 @@ public:
       styleDownscaler.downscale(configuration,
                                 pyramid.levels[level - 1].style.source,
                                 pyramid.levels[level].style.source);
+
+      // Adding foreground pixel coord form source mask at level > 0.
+      for (int row = 0;
+           row < pyramid.levels[level].guide.source.dimensions.rows; row++) {
+        for (int col = 0;
+             col < pyramid.levels[level].guide.source.dimensions.cols; col++) {
+          ImageCoordinates from{ row, col };
+          const FeatureVector<float, numGuideChannels> &featureVectorSource =
+              pyramid.levels[level].guide.source.getConstPixel(row, col);
+          // Makes assumption that Mask is the last guidance channel
+          if (featureVectorSource[featureVectorSource.size() - 1] > 0)
+            pyramid.levels[level].unionForeground.emplace_back(from);
+        }
+      }
+      // Adding foreground pixel coord form target mask at level > 0.
+      for (int row = 0;
+           row < pyramid.levels[level].guide.target.dimensions.rows; row++) {
+        for (int col = 0;
+             col < pyramid.levels[level].guide.target.dimensions.cols; col++) {
+          ImageCoordinates from{ row, col };
+          const FeatureVector<float, numGuideChannels> &featureVectorTarget =
+              pyramid.levels[level].guide.target.getConstPixel(row, col);
+          // Makes assumption that Mask is the last guidance channel
+          if (featureVectorTarget[featureVectorTarget.size() - 1] > 0)
+            pyramid.levels[level].unionForeground.emplace_back(from);
+        }
+      }
     }
     printTime("Done downscaling A, B and A'.");
 
@@ -131,7 +190,8 @@ public:
     // initialized NNF
     PatchMatcherCPU<float, numGuideChannels, numStyleChannels> patchMatcher;
     patchMatcher.randomlyInitializeNNF(
-        pyramid.levels[int(pyramid.levels.size()) - 1].forwardNNF);
+        pyramid.levels[int(pyramid.levels.size()) - 1].forwardNNF,
+        pyramid.levels[int(pyramid.levels.size()) - 1]);
     nnfApplicator.applyNNF(configuration,
                            pyramid.levels[int(pyramid.levels.size()) - 1]);
 
@@ -146,8 +206,8 @@ public:
       if (level < int(pyramid.levels.size()) - 1) {
         // If not at the coarsest level, upscales the NNF and applies it to make
         // the next-finest B'.
-        PyramidLevel<float, numGuideChannels, numStyleChannels>
-            &previousPyramidLevel = pyramid.levels[level + 1];
+        PyramidLevel<float, numGuideChannels, numStyleChannels> &
+        previousPyramidLevel = pyramid.levels[level + 1];
         nnfUpscaler.upscaleNNF(configuration, previousPyramidLevel.forwardNNF,
                                pyramidLevel.forwardNNF);
         nnfApplicator.applyNNF(configuration, pyramidLevel);

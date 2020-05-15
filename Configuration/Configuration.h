@@ -57,6 +57,8 @@ struct Configuration {
   float nnfGenerationStoppingCriterion = .95;
 
   float omegaWeight = 0;
+
+  int maskLevelOptimization = 0;
 };
 
 #endif // CONFIGURATION_H

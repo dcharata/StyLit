@@ -20,6 +20,9 @@ struct PyramidLevel {
   ImagePair<T, numStyleChannels> style;
   NNF forwardNNF; // this is the target sized array of source indices
   NNF reverseNNF; // this is the source sized array of target indices
+  std::vector<ImageCoordinates> unionForeground; // contains the coordinates of
+                                                 // foreground pixels from both
+                                                 // source and target
 };
 
 #endif // PYRAMIDLEVEL_H
