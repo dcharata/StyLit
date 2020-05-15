@@ -31,21 +31,29 @@ public:
     for (int row = 0; row < nnf.sourceDimensions.rows; row++) {
       for (int col = 0; col < nnf.sourceDimensions.cols; col++) {
         ImageCoordinates from{ row, col };
+
+        // Instead of randomly initializing NNFs
         //        ImageCoordinates to{ randi(0, nnf.targetDimensions.rows),
         //                             randi(0, nnf.targetDimensions.col) };
         //        nnf.setMapping(from, to);
 
-        const FeatureVector<float, 1> &featureVectorSource =
-            pyramidLevel.mask.source.getConstPixel(row, col);
-        const FeatureVector<float, 1> &featureVectorTarget =
-            pyramidLevel.mask.target.getConstPixel(row, col);
+        // Create one-one mapping for background pixels and random for
+        // foreground pixels. This random mapping is selected from the vector
+        // created in StyLitCoordinatorCPU.
+        const FeatureVector<float, numGuideChannels> &featureVectorSource =
+            pyramidLevel.guide.source.getConstPixel(row, col);
+        const FeatureVector<float, numGuideChannels> &featureVectorTarget =
+            pyramidLevel.guide.target.getConstPixel(row, col);
 
-        if (featureVectorSource[0] > 0 || featureVectorTarget[0] > 0) {
+        if (featureVectorSource[featureVectorSource.size() - 1] > 0 ||
+            featureVectorTarget[featureVectorTarget.size() - 1] > 0) {
           int randIndex = randi(0, pyramidLevel.unionForeground.size());
           ImageCoordinates to{ pyramidLevel.unionForeground[randIndex].row,
                                pyramidLevel.unionForeground[randIndex].col };
+          // Foreground mapping
           nnf.setMapping(from, to);
         } else {
+          // Background mapping
           nnf.setMapping(from, from);
         }
       }
@@ -174,12 +182,16 @@ private:
 #pragma omp parallel for schedule(dynamic)
       for (int row = 0; row < numNNFRows; row++) {
         for (int col = 0; col < numNNFCols; col++) {
-          const FeatureVector<float, 1> &featureVectorSource =
-              pyramidLevel.mask.source.getConstPixel(row, col);
-          const FeatureVector<float, 1> &featureVectorTarget =
-              pyramidLevel.mask.target.getConstPixel(row, col);
-          if (level >= 1 ||
-              (featureVectorSource[0] > 0 || featureVectorTarget[0] > 0)) {
+          // This is essentially it. Checking if the {row, col} of NNF
+          // corresponds to a foreground pixel in the mask.
+          const FeatureVector<float, numGuideChannels> &featureVectorSource =
+              pyramidLevel.guide.source.getConstPixel(row, col);
+          const FeatureVector<float, numGuideChannels> &featureVectorTarget =
+              pyramidLevel.guide.target.getConstPixel(row, col);
+          // Makes assumption that Mask is the last guidance channel
+          if (level >= configuration.maskLevelOptimization ||
+              (featureVectorSource[featureVectorSource.size() - 1] > 0 ||
+               featureVectorTarget[featureVectorTarget.size() - 1] > 0)) {
             propagationStep(configuration, row, col, makeReverseNNF,
                             iterationIsOdd, nnf, pyramidLevel, guideWeights,
                             styleWeights, nnfError, omega, omegaDimensions,

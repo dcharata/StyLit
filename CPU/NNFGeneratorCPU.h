@@ -8,6 +8,7 @@
 #include "ErrorBudgetCalculatorCPU.h"
 #include "ErrorCalculatorCPU.h"
 #include "PatchMatcherCPU.h"
+//#include <parallel/algorithm>
 #include <iostream>
 
 struct Configuration;
@@ -67,9 +68,6 @@ private:
     int patchesFilled = 0;
     bool firstIteration = true;
     const int forwardNNFSize = pyramidLevel.forwardNNF.sourceDimensions.area();
-    //    const int forwardNNFSize =
-    //    (level >= 0) ? pyramidLevel.forwardNNF.sourceDimensions.area()
-    //                 : pyramidLevel.unionForeground.size();
 
     int iteration = 0;
     while (patchesFilled < float(forwardNNFSize) *
@@ -226,6 +224,7 @@ private:
     }
     std::sort(sortedCoordinates.begin(), sortedCoordinates.end(),
               &generatorComparator);
+    //     __gnu_parallel::sort()
   }
 };
 

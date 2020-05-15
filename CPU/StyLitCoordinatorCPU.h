@@ -59,30 +59,33 @@ public:
     }
     printTime("Done reading A, B and A'.");
 
-    // Read Source Mask
-    // test/original_src/examples/1/source_
-    // Blender/output/600x456/source_
-    ImageIO::readImage<1>("test/original_src/examples/1/source_mask.png",
-                          pyramid.levels[0].mask.source, ImageFormat::BW, 0);
-    // Read Target Mask
-    ImageIO::readImage<1>("test/original_src/examples/1/target_mask.png",
-                          pyramid.levels[0].mask.target, ImageFormat::BW, 0);
-    printTime("Done reading source and target mask at lowest level.");
-
-    // Adding Source Mask pixels at Level 0
-    for (int row = 0; row < pyramid.levels[0].mask.source.dimensions.rows;
+    // Adding foreground pixel coord form source mask at level 0.
+    // Using this during randomlyInitializeNNF.
+    for (int row = 0; row < pyramid.levels[0].guide.source.dimensions.rows;
          row++) {
-      for (int col = 0; col < pyramid.levels[0].mask.source.dimensions.cols;
+      for (int col = 0; col < pyramid.levels[0].guide.source.dimensions.cols;
            col++) {
         ImageCoordinates from{ row, col };
-        const FeatureVector<float, 1> &featureVectorSource =
-            pyramid.levels[0].mask.source.getConstPixel(row, col);
-        const FeatureVector<float, 1> &featureVectorTarget =
-            pyramid.levels[0].mask.target.getConstPixel(row, col);
-        if (featureVectorSource[0] > 0 || featureVectorTarget[0] > 0)
+        const FeatureVector<float, numGuideChannels> &featureVectorSource =
+            pyramid.levels[0].guide.source.getConstPixel(row, col);
+        // Makes assumption that Mask is the last guidance channel
+        if (featureVectorSource[featureVectorSource.size() - 1] > 0)
           pyramid.levels[0].unionForeground.emplace_back(from);
-        else
-          pyramid.levels[0].unionBackground.emplace_back(from);
+      }
+    }
+
+    // Adding foreground pixel coord form target mask at level 0.
+    // Using this during randomlyInitializeNNF.
+    for (int row = 0; row < pyramid.levels[0].guide.target.dimensions.rows;
+         row++) {
+      for (int col = 0; col < pyramid.levels[0].guide.target.dimensions.cols;
+           col++) {
+        ImageCoordinates from{ row, col };
+        const FeatureVector<float, numGuideChannels> &featureVectorTarget =
+            pyramid.levels[0].guide.target.getConstPixel(row, col);
+        // Makes assumption that Mask is the last guidance channel
+        if (featureVectorTarget[featureVectorTarget.size() - 1] > 0)
+          pyramid.levels[0].unionForeground.emplace_back(from);
       }
     }
 
@@ -113,7 +116,6 @@ public:
     // Downscales the pyramid levels.
     DownscalerCPU<float, numGuideChannels> guideDownscaler;
     DownscalerCPU<float, numStyleChannels> styleDownscaler;
-    DownscalerCPU<float, 1> maskDownscaler;
     int factor = 2;
     for (int level = 1; level < configuration.numPyramidLevels; level++) {
       // Calculates the pyramid level's image size and checks its validity.
@@ -151,27 +153,31 @@ public:
       styleDownscaler.downscale(configuration,
                                 pyramid.levels[level - 1].style.source,
                                 pyramid.levels[level].style.source);
-      maskDownscaler.downscale(configuration,
-                               pyramid.levels[level - 1].mask.source,
-                               pyramid.levels[level].mask.source);
-      maskDownscaler.downscale(configuration,
-                               pyramid.levels[level - 1].mask.target,
-                               pyramid.levels[level].mask.target);
 
-      // Adding Source Mask pixels at Level : level
-      for (int row = 0; row < pyramid.levels[level].mask.source.dimensions.rows;
-           row++) {
+      // Adding foreground pixel coord form source mask at level > 0.
+      for (int row = 0;
+           row < pyramid.levels[level].guide.source.dimensions.rows; row++) {
         for (int col = 0;
-             col < pyramid.levels[level].mask.source.dimensions.cols; col++) {
+             col < pyramid.levels[level].guide.source.dimensions.cols; col++) {
           ImageCoordinates from{ row, col };
-          const FeatureVector<float, 1> &featureVectorSource =
-              pyramid.levels[level].mask.source.getConstPixel(row, col);
-          const FeatureVector<float, 1> &featureVectorTarget =
-              pyramid.levels[level].mask.target.getConstPixel(row, col);
-          if (featureVectorSource[0] > 0 || featureVectorTarget[0] > 0)
+          const FeatureVector<float, numGuideChannels> &featureVectorSource =
+              pyramid.levels[level].guide.source.getConstPixel(row, col);
+          // Makes assumption that Mask is the last guidance channel
+          if (featureVectorSource[featureVectorSource.size() - 1] > 0)
             pyramid.levels[level].unionForeground.emplace_back(from);
-          else
-            pyramid.levels[level].unionBackground.emplace_back(from);
+        }
+      }
+      // Adding foreground pixel coord form target mask at level > 0.
+      for (int row = 0;
+           row < pyramid.levels[level].guide.target.dimensions.rows; row++) {
+        for (int col = 0;
+             col < pyramid.levels[level].guide.target.dimensions.cols; col++) {
+          ImageCoordinates from{ row, col };
+          const FeatureVector<float, numGuideChannels> &featureVectorTarget =
+              pyramid.levels[level].guide.target.getConstPixel(row, col);
+          // Makes assumption that Mask is the last guidance channel
+          if (featureVectorTarget[featureVectorTarget.size() - 1] > 0)
+            pyramid.levels[level].unionForeground.emplace_back(from);
         }
       }
     }

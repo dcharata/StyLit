@@ -59,8 +59,7 @@ bool ConfigurationParser::parse(Configuration &configuration) {
       configuration.sourceGuideImagePaths.size() !=
           configuration.guideImageFormats.size()) {
     cerr << "The number of source guide image paths, target guide image paths "
-            "and guide formats must match."
-         << endl;
+            "and guide formats must match." << endl;
     return false;
   }
   if (configuration.sourceStyleImagePaths.size() !=
@@ -68,22 +67,19 @@ bool ConfigurationParser::parse(Configuration &configuration) {
       configuration.sourceStyleImagePaths.size() !=
           configuration.styleImageFormats.size()) {
     cerr << "The number of source style image paths, target style image paths "
-            "and style formats must match."
-         << endl;
+            "and style formats must match." << endl;
     return false;
   }
   if (configuration.sourceGuideImagePaths.size() !=
       configuration.guideImageWeights.size()) {
     cerr << "The number of guide image weights must match the number of guide "
-            "image paths."
-         << endl;
+            "image paths." << endl;
     return false;
   }
   if (configuration.sourceStyleImagePaths.size() !=
       configuration.styleImageWeights.size()) {
     cerr << "The number of style image weights must match the number of style "
-            "image paths."
-         << endl;
+            "image paths." << endl;
     return false;
   }
   return true;
@@ -106,8 +102,7 @@ bool ConfigurationParser::parseSettings(const QJsonValue &settings,
       !parseImageFormatArray(guideImageFormatStrings,
                              configuration.guideImageFormats)) {
     cerr << "Failed to parse a guide image format. The image format must be "
-            "one of rgb, rgba, bw or bwa."
-         << endl;
+            "one of rgb, rgba, bw or bwa." << endl;
     return false;
   }
 
@@ -119,8 +114,7 @@ bool ConfigurationParser::parseSettings(const QJsonValue &settings,
       !parseImageFormatArray(styleImageFormatStrings,
                              configuration.styleImageFormats)) {
     cerr << "Failed to parse a style image format. The image format must be "
-            "one of rgb, rgba, bw or bwa."
-         << endl;
+            "one of rgb, rgba, bw or bwa." << endl;
     return false;
   }
 
@@ -139,8 +133,7 @@ bool ConfigurationParser::parseSettings(const QJsonValue &settings,
                         configuration.numPatchMatchIterations) ||
       configuration.numPatchMatchIterations < 1) {
     cerr << "The number of PatchMatch iterations must be an integer greater "
-            "than 0."
-         << endl;
+            "than 0." << endl;
     return false;
   }
 
@@ -150,8 +143,7 @@ bool ConfigurationParser::parseSettings(const QJsonValue &settings,
   if (!parsePositiveInt(numPyramidLevels, configuration.numPyramidLevels) ||
       configuration.numPyramidLevels < 1) {
     cerr << "The number of pyramid levels must be an integer greater "
-            "than 0."
-         << endl;
+            "than 0." << endl;
     return false;
   }
 
@@ -159,12 +151,11 @@ bool ConfigurationParser::parseSettings(const QJsonValue &settings,
   QJsonValue numOptimizationIterationsPerPyramidLevel =
       settingsObject.value(QString("numOptimizationIterationsPerPyramidLevel"));
   if (!parsePositiveInt(
-          numOptimizationIterationsPerPyramidLevel,
-          configuration.numOptimizationIterationsPerPyramidLevel) ||
+           numOptimizationIterationsPerPyramidLevel,
+           configuration.numOptimizationIterationsPerPyramidLevel) ||
       configuration.numOptimizationIterationsPerPyramidLevel < 1) {
     cerr << "The number of optimization iterations per pyramid level must be "
-            "an integer greater than 0."
-         << endl;
+            "an integer greater than 0." << endl;
     return false;
   }
 
@@ -186,19 +177,32 @@ bool ConfigurationParser::parseSettings(const QJsonValue &settings,
 
   QJsonValue nnfGenerationStoppingCriterion =
       settingsObject.value(QString("nnfGenerationStoppingCriterion"));
-  if (!parseFloat(nnfGenerationStoppingCriterion, configuration.nnfGenerationStoppingCriterion)) {
-    cerr << "Could not parse \"nnfGenerationStoppingCriterion\" in \"settings\"." << endl;
+  if (!parseFloat(nnfGenerationStoppingCriterion,
+                  configuration.nnfGenerationStoppingCriterion)) {
+    cerr
+        << "Could not parse \"nnfGenerationStoppingCriterion\" in \"settings\"."
+        << endl;
     return false;
   }
-  if (configuration.nnfGenerationStoppingCriterion < 0 || configuration.nnfGenerationStoppingCriterion > 1) {
+  if (configuration.nnfGenerationStoppingCriterion < 0 ||
+      configuration.nnfGenerationStoppingCriterion > 1) {
     cerr << "nnfGenerationStoppingCriterion must be in [0,1]" << endl;
     return false;
   }
 
-  QJsonValue omegaWeight =
-      settingsObject.value(QString("omegaWeight"));
+  QJsonValue omegaWeight = settingsObject.value(QString("omegaWeight"));
   if (!parseFloat(omegaWeight, configuration.omegaWeight)) {
     cerr << "Could not parse \"omegaWeight\" in \"settings\"." << endl;
+    return false;
+  }
+
+  // Parses the level at which mask and Patch Match optimization should begin
+  QJsonValue maskLevelOptimization =
+      settingsObject.value(QString("maskLevelOptimization"));
+  if (!parsePositiveInt(maskLevelOptimization,
+                        configuration.maskLevelOptimization) ||
+      configuration.maskLevelOptimization < 0) {
+    cerr << "maskLevelOptimization must be an integer greater than 0." << endl;
     return false;
   }
 
@@ -375,8 +379,7 @@ bool ConfigurationParser::parsePositiveInt(const QJsonValue &source,
   const int value = source.toInt(-1);
   if (value < 0) {
     cerr << "Expected positive integer. Make sure the integer is not formatted "
-            "as a string."
-         << endl;
+            "as a string." << endl;
     return false;
   }
   destination = value;
@@ -384,12 +387,11 @@ bool ConfigurationParser::parsePositiveInt(const QJsonValue &source,
 }
 
 bool ConfigurationParser::parseFloat(const QJsonValue &source,
-                                           float &destination) {
+                                     float &destination) {
   const float value = float(source.toDouble(-1));
   if (value < 0) {
     cerr << "Expected positive float. Make sure the float is not formatted "
-            "as a string."
-         << endl;
+            "as a string." << endl;
     return false;
   }
   destination = value;
