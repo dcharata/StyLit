@@ -103,7 +103,8 @@ bool comparator(const std::pair<int, float> lhs,
 // ----------------------------------------------------------------------------------------
 
 bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
-    const Configuration &config, const std::vector<std::pair<float, ImageCoordinates>> &vecerror,
+    const Configuration &config,
+    const std::vector<std::pair<float, ImageCoordinates>> &vecerror,
     const NNFError &nnferror, const float totalError, float &errorBudget,
     const NNF *const blacklist) {
 
@@ -113,12 +114,6 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
   const int num_pixels = height * width;
 
   float meanError = totalError / vecerror.size();
-
-  std::cout << "meanError " << meanError << std::endl;
-
-  std::cout << "vecErrorSize " << vecerror.size() << std::endl;
-
-  std::cout << "totalError " << totalError << std::endl;
 
   // writes the errors to CSV for graphing
   // std::ofstream
@@ -134,17 +129,18 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
   int idx = 0;
   int validSamples = 0;
   for (unsigned int i = 0; i < vecerror.size(); i++) {
-    if (i % ((height * width) / (NUM_SAMPLES - 1)) == 0 && (vecerror[i].first < 100.0f)) {
+    if (i % ((height * width) / (NUM_SAMPLES - 1)) == 0 &&
+        (vecerror[i].first < 100.0f)) {
       // normalize the x axis
       measuredValues(idx, 0) = float(i) * x_scale;
-      //measuredValues(i, 0) = float(i) / float(vecerror.size());
+      // measuredValues(i, 0) = float(i) / float(vecerror.size());
 
       // normalize the y axis
       measuredValues(idx, 1) = (double)vecerror[i].first / double(meanError);
       idx++;
       validSamples++;
     }
-    //std::cout << vecerror[i].first << std::endl;
+    // std::cout << vecerror[i].first << std::endl;
   }
 
   int n = 2; // number of parameters
@@ -164,16 +160,11 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
   functor.n = n;
 
   Eigen::LevenbergMarquardt<LMFunctor, double> lm(functor);
-  std::cout << "minimizing" << std::endl;
   lm.minimize(params); // TODO: Use the status for something.
-  std::cout << "minimizing" << std::endl;
 
   // calculate the knee point
   double a = params(0);
   double b = params(1);
-
-  std::cout << "Value of a: " << a << std::endl;
-  std::cout << "Value of b: " << b << std::endl;
 
   double kneepoint;
   if (b < 0) {
@@ -186,12 +177,10 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
                  a / b); // this is the case that should normally happen
   }
 
-  std::cout << "kneepoint " << kneepoint << std::endl;
-
   // get the kneepoint index
   // we need to multply by the number of pixels to undo the normalization
-  int kneepointIndex = std::max<int>(0, std::min<int>(int(kneepoint * (validSamples)), validSamples - 1));
-  std::cout << "Kneepoint index: " << kneepointIndex << std::endl;
+  int kneepointIndex = std::max<int>(
+      0, std::min<int>(int(kneepoint * (validSamples)), validSamples - 1));
 
   // we need to multiply by the mean error to undo the normalization
   errorBudget = measuredValues(kneepointIndex, 1) * meanError;

@@ -74,8 +74,7 @@ private:
                                configuration.nnfGenerationStoppingCriterion &&
            iteration < MAX_ITERATIONS) {
 
-      std::cout << "*************************" << std::endl;
-      std::cout << "Fraction of patches filled: " << patchesFilled << " / "
+      std::cout << "Fraction of forward NNF filled: " << patchesFilled << " / "
                 << float(forwardNNFSize) << std::endl;
 
       NNFError nnfError(pyramidLevel.reverseNNF);
@@ -95,12 +94,11 @@ private:
         firstIteration = false;
       } else {
         patchMatcher.patchMatch(configuration, pyramidLevel.reverseNNF, pyramid,
-                                level, true, false, nnfError, true, omega,
+                                level, true, true, nnfError, true, omega,
                                 pyramidLevel.guide.target.dimensions,
                                 &blacklist);
       }
 
-      std::cout << "getting knee point" << std::endl;
       std::vector<std::pair<float, ImageCoordinates> > sortedCoordinates;
       float totalError = 0;
       getSortedCoordinates(sortedCoordinates, nnfError, totalError);
@@ -126,7 +124,6 @@ private:
       int notFreeCount = 0;
       int numAddedToForwardNNFInIteration = 0;
       int recentlyTakenCount = 0;
-      std::cout << "allocating" << std::endl;
       while (pastError < budget && i < int(sortedCoordinates.size())) {
         ImageCoordinates coords = sortedCoordinates[i].second;
         // if coords does not map to a blacklisted pixel, then we can create
@@ -149,8 +146,6 @@ private:
         }
         i++;
       }
-      std::cout << "done" << std::endl;
-
       iteration++;
     }
 
@@ -181,7 +176,9 @@ private:
         }
       }
     } else { // if configuration.nnfGenerationStoppingCriterion is zero (so we
-             // are just using forward NNFs)
+
+      // are just using forward NNFs and we are following the ebsynth
+      // algorithm)
       std::vector<float> finalOmega;
       patchMatcher.initOmega(configuration, finalOmega,
                              pyramidLevel.guide.source.dimensions,
@@ -194,7 +191,9 @@ private:
                                 level, false, true, nnfErrorFinal, true,
                                 finalOmega,
                                 pyramidLevel.guide.source.dimensions);
-        budgets.push_back(0);
+        budgets.push_back(
+            0); // add an element to budgets so firstOptimizationIteration is
+                // false the next time we go through this code
       } else {
         patchMatcher.patchMatch(configuration, pyramidLevel.forwardNNF, pyramid,
                                 level, false, false, nnfErrorFinal, true,

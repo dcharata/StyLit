@@ -9,6 +9,11 @@ QMAKE_CXXFLAGS += -fopenmp
 LIBS += -fopenmp
 }
 
+unix:!macx{
+QMAKE_CXXFLAGS += -fopenmp
+LIBS += -fopenmp
+}
+
 macx: {
 QMAKE_CXXFLAGS += -Xpreprocessor -fopenmp -lomp -I/usr/local/include
 QMAKE_LFLAGS += -lomp
