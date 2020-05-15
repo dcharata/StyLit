@@ -4,9 +4,11 @@
 #include "Configuration/ConfigurationParser.h"
 #include "ImplementationSelector.h"
 #include "Tests/TestMain.h"
+#include "StyLitGUI.h"
 
 #include <QApplication>
 #include <QCommandLineParser>
+#include <QScreen>
 #include <iostream>
 
 unsigned int StyLitCUDA_sanityCheckStyLitCUDA();
@@ -53,8 +55,7 @@ int main(int argc, char *argv[]) {
   }
   if (!parser.isSet(configurationFileOption)) {
     std::cerr << "You must specify a JSON configuration file using the "
-                 "--configuration flag."
-              << std::endl;
+                 "--configuration flag." << std::endl;
     return 1;
   }
 
@@ -67,12 +68,17 @@ int main(int argc, char *argv[]) {
   }
   configuration.print();
 
-  // If necessary, shows the UI.
-  MainWindow w;
-  if (parser.isSet(interfaceOption)) {
-    w.show();
-    return a.exec();
-  }
-  ImplementationSelector::runWithConfiguration(configuration);
-  return 0;
+  //  // If necessary, shows the UI.
+  //  MainWindow w;
+  //  if (parser.isSet(interfaceOption)) {
+  //    w.show();
+  //    return a.exec();
+  //  }
+
+  StyLitGUI stylit(configuration);
+  stylit.move(QPoint(100, 100));
+  stylit.show();
+
+  //  ImplementationSelector::runWithConfiguration(configuration);
+  return a.exec();
 }

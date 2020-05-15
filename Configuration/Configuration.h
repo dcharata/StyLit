@@ -56,6 +56,11 @@ struct Configuration {
 
   enum class CoordinatorType { CPU, CUDA };
   CoordinatorType coordinatorType = CoordinatorType::CPU;
+  float nnfGenerationStoppingCriterion = .95;
+
+  float omegaWeight = 0;
+
+  int maskLevelOptimization = 0;
 };
 
 #endif // CONFIGURATION_H

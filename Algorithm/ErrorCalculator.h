@@ -30,14 +30,18 @@ public:
    * @param error the out argument for the error
    * @return true if calculating the error succeeds; otherwise false
    */
-  bool calculateError(const Configuration &configuration,
-                      const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel,
-                      const ImageCoordinates &sourceCoordinates,
-                      const ImageCoordinates &targetCoordinates,
-                      const ChannelWeights<numGuideChannels> &guideWeights,
-                      const ChannelWeights<numStyleChannels> &styleWeights, float &error) {
-    Q_ASSERT(pyramidLevel.guide.source.dimensions == pyramidLevel.style.source.dimensions);
-    Q_ASSERT(pyramidLevel.guide.target.dimensions == pyramidLevel.style.target.dimensions);
+  bool calculateError(
+      const Configuration &configuration,
+      const PyramidLevel<T, numGuideChannels, numStyleChannels> &pyramidLevel,
+      const ImageCoordinates &sourceCoordinates,
+      const ImageCoordinates &targetCoordinates,
+      const ChannelWeights<numGuideChannels> &guideWeights,
+      const ChannelWeights<numStyleChannels> &styleWeights,
+      float &error) {
+    Q_ASSERT(pyramidLevel.guide.source.dimensions ==
+             pyramidLevel.style.source.dimensions);
+    Q_ASSERT(pyramidLevel.guide.target.dimensions ==
+             pyramidLevel.style.target.dimensions);
     Q_ASSERT(sourceCoordinates.within(pyramidLevel.guide.source.dimensions));
     Q_ASSERT(targetCoordinates.within(pyramidLevel.guide.target.dimensions));
     return implementationOfCalculateError(configuration, pyramidLevel, sourceCoordinates,

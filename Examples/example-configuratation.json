@@ -1,0 +1,37 @@
+{
+  "inputs": {
+    "sourceGuideImagePaths": [
+      "test/original_src/examples/1/source_dirdif.png",
+      "test/original_src/examples/1/source_dirspc.png",
+      "test/original_src/examples/1/source_fullgi.png",
+      "test/original_src/examples/1/source_indirb.png",
+      "test/original_src/examples/1/source_mask.png"
+    ],
+    "targetGuideImagePaths": [
+      "test/original_src/examples/1/target_dirdif.png",
+      "test/original_src/examples/1/target_dirspc.png",
+      "test/original_src/examples/1/target_fullgi.png",
+      "test/original_src/examples/1/target_indirb.png",
+      "test/original_src/examples/1/target_mask.png"
+    ],
+    "sourceStyleImagePaths": ["test/original_src/examples/1/source_style.png"]
+  },
+  "outputs": {
+    "targetStyleImagePaths": [
+      "./"
+    ]
+  },
+  "settings": {
+    "guideImageFormats": ["rgb", "bw", "rgb", "rgb", "bw"],
+    "styleImageFormats": ["rgb"],
+    "guideImageWeights": [0.5, 0.5, 0.5, 0.5, 0.0],
+    "styleImageWeights": [1],
+    "patchSize": 5,
+    "numPatchMatchIterations": 4,
+    "numPyramidLevels": 6,
+    "numOptimizationIterationsPerPyramidLevel": 6,
+    "nnfGenerationStoppingCriterion": 0,
+    "omegaWeight": .02,
+    "maskLevelOptimization": 1
+  }
+}

@@ -2,6 +2,7 @@
 #define ERRORBUDGETCALCULATOR_H
 
 #include <vector>
+#include "Algorithm/ImageDimensions.h"
 
 struct Configuration;
 struct NNFError;
@@ -28,8 +29,9 @@ public:
    * @return true if error budget calculation succeeds; otherwise false
    */
   bool calculateErrorBudget(const Configuration &configuration,
-                            std::vector<std::pair<int, float>> &vecerror, const NNFError &error,
-                            const float totalError, float &errorBudget,
+                            const std::vector<std::pair<float, ImageCoordinates>> &vecerror,
+                            const NNFError &error, const float totalError,
+                            float &errorBudget,
                             const NNF *const blacklist = nullptr) {
     return implementationOfCalculateErrorBudget(configuration, vecerror, error, totalError,
                                                 errorBudget, blacklist);
@@ -45,11 +47,11 @@ protected:
    * @param errorBudget the resulting error budget
    * @return true if error budget calculation succeeds; otherwise false
    */
-  virtual bool implementationOfCalculateErrorBudget(const Configuration &configuration,
-                                                    std::vector<std::pair<int, float>> &vecerror,
-                                                    const NNFError &error, const float totalError,
-                                                    float &errorBudget,
-                                                    const NNF *const blacklist = nullptr) = 0;
+  virtual bool implementationOfCalculateErrorBudget(
+      const Configuration &configuration,
+      const std::vector<std::pair<float, ImageCoordinates>> &vecerror, const NNFError &error,
+      const float totalError, float &errorBudget,
+      const NNF *const blacklist = nullptr) = 0;
 };
 
 #endif // ERRORBUDGETCALCULATOR_H

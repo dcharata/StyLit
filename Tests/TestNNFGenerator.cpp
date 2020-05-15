@@ -7,7 +7,6 @@
 #include <QFile>
 #include <QImage>
 #include "Algorithm/Pyramid.h"
-#include "CPU/NNFGeneratorCPU.h"
 #include <iostream>
 #include "CPU/NNFApplicatorCPU.h"
 
@@ -36,8 +35,8 @@ bool TestNNFGenerator::run() {
       TEST_ASSERT(ImageIO::readImage<3>(path1, pyramid.levels[0].style.source, ImageFormat::RGB, 0));
       TEST_ASSERT(ImageIO::readImage<3>(path2, pyramid.levels[0].guide.target, ImageFormat::RGB, 0));
       TEST_ASSERT(ImageIO::readImage<3>(path2, pyramid.levels[0].style.target, ImageFormat::RGB, 0));
-      NNFGeneratorCPU<float, 3, 3> generator;
-      generator.generateNNF(configuration, pyramid, 0);
+      //NNFGeneratorCPU<float, 3, 3> generator;
+      //generator.generateNNF(configuration, pyramid, 0);
       NNFApplicatorCPU<float, 3, 3> imageMaker;
       imageMaker.applyNNF(configuration, pyramid.levels[0]);
       ImageIO::writeImage("./Examples/NNFGeneratorTest1Output.png", pyramid.levels[0].style.target, ImageFormat::RGB, 0);

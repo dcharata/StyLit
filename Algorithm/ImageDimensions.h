@@ -48,6 +48,8 @@ struct ImageDimensions {
    */
   bool within(const ImageDimensions &dimensions) const;
 
+  bool patchWithin(const ImageDimensions &dimensions, int halfPatchSize) const;
+
   /**
    * @brief halfTheSizeOf Checks whether these ImageDimensions are half the
    * size of the specified imageDimensions in each dimension.

@@ -79,3 +79,6 @@ Examples/patchMatchTest1Output.png
 Examples/patchMatchTest2Output.png
 Examples/patchMatchTest3Output.png
 
+# Config files
+Examples/configuratation_*
+

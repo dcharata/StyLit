@@ -4,6 +4,25 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17 c++1z
 
+unix:{
+QMAKE_CXXFLAGS += -fopenmp
+LIBS += -fopenmp
+}
+
+unix:!macx{
+QMAKE_CXXFLAGS += -fopenmp
+LIBS += -fopenmp
+}
+
+macx: {
+QMAKE_CXXFLAGS += -Xpreprocessor -fopenmp -lomp -I/usr/local/include
+QMAKE_LFLAGS += -lomp
+LIBS += -L /usr/local/lib /usr/local/lib/libomp.dylib
+}
+
+#DEFINES += EIGEN_NO_DEBUG
+
+
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
 # depend on your compiler). Please consult the documentation of the
@@ -39,7 +58,8 @@ SOURCES += \
     MainWindow.cpp \
     CPU/NNFUpscalerCPU.cpp\
     Tests/TestImageResize.cpp \
-    Tests/TestNNFUpscalerCPU.cpp
+    Tests/TestNNFUpscalerCPU.cpp \
+    StyLitGUI.cpp
 
 HEADERS += \
     Algorithm/ChannelWeights.h \
@@ -89,7 +109,9 @@ HEADERS += \
     Utilities/ImageIO.h \
     CPU/DownscalerCPU.h \
     Tests/TestImageResize.h \
-    Tests/TestNNFUpscalerCPU.h
+    Tests/TestNNFUpscalerCPU.h \
+    Utilities/parasort.h \
+    StyLitGUI.h
 
 FORMS += \
     MainWindow.ui
@@ -104,4 +126,6 @@ LIBS += StyLitCUDA/Release/libStyLitCUDA.so
 
 # define the project file path so we can use relative paths
 DEFINES += PROJECT_PATH=\"\\\"$${_PRO_FILE_PWD_}/\\\"\"
+#QMAKE_CXXFLAGS_RELEASE -= -O2
+#QMAKE_CXXFLAGS_RELEASE += -O3
 

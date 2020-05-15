@@ -41,7 +41,7 @@ int TestMain::run() {
                            &testErrorBudget, &testNNFGenerator};
   */
   const int numTests = 1;
-  UnitTest *unitTests[] = {&testNNFGenerator};
+  UnitTest *unitTests[] = {&testPatchMatch};
 
   // Runs the tests and counts how many succeed.
   int numPasses = 0;
