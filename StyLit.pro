@@ -58,7 +58,8 @@ SOURCES += \
     MainWindow.cpp \
     CPU/NNFUpscalerCPU.cpp\
     Tests/TestImageResize.cpp \
-    Tests/TestNNFUpscalerCPU.cpp
+    Tests/TestNNFUpscalerCPU.cpp \
+    StyLitGUI.cpp
 
 HEADERS += \
     Algorithm/ChannelWeights.h \
@@ -108,7 +109,8 @@ HEADERS += \
     CPU/DownscalerCPU.h \
     Tests/TestImageResize.h \
     Tests/TestNNFUpscalerCPU.h \
-    Utilities/parasort.h
+    Utilities/parasort.h \
+    StyLitGUI.h
 
 FORMS += \
     MainWindow.ui
