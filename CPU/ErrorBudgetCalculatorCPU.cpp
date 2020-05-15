@@ -6,6 +6,12 @@
 #include <vector>
 
 #include "Algorithm/NNFError.h"
+#include "Configuration/Configuration.h"
+//#include "Utilities/parasort.h"
+//#include <parallel/algorithm>
+
+#include <fstream>
+#include <limits>
 
 // ----------------------------------------------------------------------------------------
 // hyperbolic function
@@ -96,41 +102,49 @@ bool comparator(const std::pair<int, float> lhs,
 
 // ----------------------------------------------------------------------------------------
 
-bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(const Configuration &config, std::vector<std::pair<int, float>> &vecerror,
-                                                                    const NNFError &nnferror, float &errorBudget) {
-  // we may not need configuration?
+bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(
+    const Configuration &config,
+    const std::vector<std::pair<float, ImageCoordinates>> &vecerror,
+    const NNFError &nnferror, const float totalError, float &errorBudget,
+    const NNF *const blacklist) {
 
   // read from the error image
-  int height = nnferror.error.dimensions.rows;
-  int width = nnferror.error.dimensions.cols;
-  int num_pixels = height * width;
-  for (int row = 0; row < height; row++) {
-    for (int col = 0; col < width; col++) {
-      vecerror.push_back(std::make_pair(row * width + col, nnferror.error.getConstPixel(row,col)[0]));
+  const int height = nnferror.error.dimensions.rows;
+  const int width = nnferror.error.dimensions.cols;
+  const int num_pixels = height * width;
+
+  float meanError = totalError / vecerror.size();
+
+  // writes the errors to CSV for graphing
+  // std::ofstream
+  // outFile("/Users/davidcharatan/Documents/StyLitBin/errors.csv");
+  // for (const auto &e : vecerror)
+  // outFile << e.second << ", ";
+  // outFile << std::endl;
+
+  int NUM_SAMPLES = 50;
+
+  Eigen::MatrixXd measuredValues(NUM_SAMPLES, 2); // pairs of (x, f(x))
+  double x_scale = 1.f / double(height * width);
+  int idx = 0;
+  int validSamples = 0;
+  for (unsigned int i = 0; i < vecerror.size(); i++) {
+    if (i % ((height * width) / (NUM_SAMPLES - 1)) == 0 &&
+        (vecerror[i].first < 100.0f)) {
+      // normalize the x axis
+      measuredValues(idx, 0) = float(i) * x_scale;
+      // measuredValues(i, 0) = float(i) / float(vecerror.size());
+
+      // normalize the y axis
+      measuredValues(idx, 1) = (double)vecerror[i].first / double(meanError);
+      idx++;
+      validSamples++;
     }
+    // std::cout << vecerror[i].first << std::endl;
   }
 
-  // sort the error vector
-  sort(vecerror.begin(), vecerror.end(), &comparator);
-
-  // convert to eigen matrix
-  // ref:
-  // https://medium.com/@sarvagya.vaish/levenberg-marquardt-optimization-part-2-5a71f7db27a0
-  Eigen::MatrixXd measuredValues(num_pixels, 2); // pairs of (x, f(x))
-  double x_scale = 1.f / (height * width);
-  for (int row = 0; row < height; row++) {
-    for (int col = 0; col < width; col++) {
-      int i = row * width + col;
-      measuredValues(i, 0) = i * x_scale;
-      measuredValues(i, 1) = (double)vecerror[i].second;
-    }
-  }
-
-  // fit the hyperbolic function
-  // use the Levenberg-Marquardt method to determine the parameters which
-  // minimize the sum of all squared residuals.
-  // f(ind) = (a-b*ind)^(-1)
   int n = 2; // number of parameters
+
   // 'params' is vector of length 'n' containing the initial values for the
   // parameters.
   Eigen::VectorXd params(n);
@@ -142,40 +156,34 @@ bool ErrorBudgetCalculatorCPU::implementationOfCalculateErrorBudget(const Config
   // Create a LevenbergMarquardt object and pass it the functor.
   LMFunctor functor;
   functor.measuredValues = measuredValues;
-  functor.m = num_pixels;
+  functor.m = validSamples; // num_pixels;
   functor.n = n;
 
   Eigen::LevenbergMarquardt<LMFunctor, double> lm(functor);
-  int status = lm.minimize(params);
-
-  // ----- start: for unit test - SHOULD REMOVE ------
-  std::cout << "LM optimization status: " << status << std::endl;
-  std::cout << "LM optimization iterations: " << lm.iter << std::endl;
-  std::cout << "estimated parameters: "
-            << "\ta: " << params(0) << "\tb: " << params(1) << std::endl;
-
-  Eigen::VectorXd gt_params(n);
-  gt_params(0) = 2.f;
-  gt_params(1) = 2.f;
-  std::cout << "ground-truth parameters: "
-            << "\ta: " << gt_params(0) << "\t\tb: " << gt_params(1)
-            << std::endl;
-  // ----- end: for unit test - SHOULD REMOVE ------
+  lm.minimize(params); // TODO: Use the status for something.
 
   // calculate the knee point
   double a = params(0);
   double b = params(1);
-  int kneepoint = (int)sqrtf(1.f / b) + a / b;
-  errorBudget = (float)vecerror[kneepoint].second;
 
-  // ----- start: for unit test - SHOULD REMOVE ------
-  std::cout << "estimated knee point: " << kneepoint << std::endl;
-  std::cout << "estimated error budget: " << errorBudget << std::endl;
+  double kneepoint;
+  if (b < 0) {
+    kneepoint = (sqrtf(1.f / b) + a / b);
+    std::cout << "the b term in the function-fitting step is negative, which "
+                 "shouldn't happen"
+              << std::endl;
+  } else {
+    kneepoint = (-sqrtf(1.f / b) +
+                 a / b); // this is the case that should normally happen
+  }
 
-  std::cout << "Note: should comment out these logs in "
-               "ErrorBudgetCalculator.cpp in runtime)"
-            << std::endl;
-  // ----- end: for unit test - SHOULD REMOVE ------
+  // get the kneepoint index
+  // we need to multply by the number of pixels to undo the normalization
+  int kneepointIndex = std::max<int>(
+      0, std::min<int>(int(kneepoint * (validSamples)), validSamples - 1));
+
+  // we need to multiply by the mean error to undo the normalization
+  errorBudget = measuredValues(kneepointIndex, 1) * meanError;
 
   return true;
 }

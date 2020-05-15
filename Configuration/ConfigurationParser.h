@@ -57,6 +57,16 @@ private:
                         std::vector<QString> &destination);
 
   /**
+   * @brief parseFloatArray Parses an array of floats.
+   * @param source a JSON value that contains the array
+   * @param destination a vector that is populated with the floats
+   * @return true if parsing uscceeded; false if source was not an array, if
+   * source contains non-float entries, or if source contains no entries
+   */
+  bool parseFloatArray(const QJsonValue &source,
+                       std::vector<float> &destination);
+
+  /**
    * @brief parseImageFormatArray Extracts the ImageFormats from an array of
    * strings.
    * @param strings the strings ("rgb", "bw", etc.)
@@ -75,6 +85,8 @@ private:
    * if it fails (e.g. because the source is empty or not an integer)
    */
   bool parsePositiveInt(const QJsonValue &source, int &destination);
+
+  bool parseFloat(const QJsonValue &source, float &destination);
 };
 
 #endif // CONFIGURATIONPARSER_H

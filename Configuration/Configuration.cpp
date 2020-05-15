@@ -35,24 +35,22 @@ void Configuration::print() {
   cout << endl;
 
   cout << "Guide image formats:" << endl;
-  for (const ImageFormat &imageFormat : guideImageFormats) {
-    cout << ImageFormatTools::imageFormatToString(imageFormat) << endl;
-  }
-  cout << endl;
-
-  cout << "Guide image formats:" << endl;
-  for (const ImageFormat &imageFormat : guideImageFormats) {
-    cout << ImageFormatTools::imageFormatToString(imageFormat) << endl;
+  for (unsigned int i = 0; i < guideImageFormats.size(); i++) {
+    cout << ImageFormatTools::imageFormatToString(guideImageFormats[i])
+         << " (weight: " << guideImageWeights[i] << ")" << endl;
   }
   cout << endl;
 
   cout << "Style image formats:" << endl;
-  for (const ImageFormat &imageFormat : styleImageFormats) {
-    cout << ImageFormatTools::imageFormatToString(imageFormat) << endl;
+  for (unsigned int i = 0; i < styleImageFormats.size(); i++) {
+    cout << ImageFormatTools::imageFormatToString(styleImageFormats[i])
+         << " (weight: " << styleImageWeights[i] << ")" << endl;
   }
   cout << endl;
 
   printf("Patch size: %d\n", patchSize);
   printf("Number of PatchMatch iterations: %d\n", numPatchMatchIterations);
   printf("Number of pyramid levels: %d\n", numPyramidLevels);
+  printf("Number of optimization iterations per pyramid level: %d\n",
+         numOptimizationIterationsPerPyramidLevel);
 }

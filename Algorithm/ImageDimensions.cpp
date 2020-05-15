@@ -1,5 +1,7 @@
 #include "ImageDimensions.h"
 
+const ImageDimensions ImageDimensions::FREE_PATCH = ImageDimensions{-1,-1};
+
 ImageDimensions::ImageDimensions() : rows(-1), cols(-1) {}
 
 ImageDimensions::ImageDimensions(int rows, int cols) : rows(rows), cols(cols) {}
@@ -8,6 +10,10 @@ int ImageDimensions::area() const { return rows * cols; }
 
 bool ImageDimensions::within(const ImageDimensions &dimensions) const {
   return row >= 0 && col >= 0 && row < dimensions.rows && col < dimensions.cols;
+}
+
+bool ImageDimensions::patchWithin(const ImageDimensions &dimensions, int halfPatchSize) const {
+  return row - halfPatchSize >= 0 && col - halfPatchSize >=0 && row + halfPatchSize < dimensions.rows && col + halfPatchSize < dimensions.cols;
 }
 
 bool ImageDimensions::halfTheSizeOf(const ImageDimensions &dimensions) const {

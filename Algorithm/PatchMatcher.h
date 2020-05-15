@@ -1,8 +1,9 @@
 #ifndef PATCHMATCHER_H
 #define PATCHMATCHER_H
 
-#include "Configuration/Configuration.h"
 #include "Algorithm/Pyramid.h"
+#include "Algorithm/NNFError.h"
+#include "Configuration/Configuration.h"
 
 class NNF;
 
@@ -12,7 +13,8 @@ class NNF;
  * NNFs (nearest-neighbor fields). The NNF must have the size of the domain and
  * will map to indices in the codomain.
  */
-template <typename T, unsigned int numGuideChannels, unsigned int numStyleChannels>
+template <typename T, unsigned int numGuideChannels,
+          unsigned int numStyleChannels>
 class PatchMatcher {
 public:
   PatchMatcher() = default;
@@ -23,8 +25,8 @@ public:
    * currently doesn't do any error checks, but I included it so that
    * PatchMatcher's format is the same as that of Downscaler, NNFUpscaler, etc.
    * @param configuration the configuration StyLit is running
-   * @param nnf the NNF that should be improved with PatchMatch, size of domain images,
-   *        maps to indices in codomain images
+   * @param nnf the NNF that should be improved with PatchMatch, size of domain
+   * images, maps to indices in codomain images
    * @param pyramid the image pyramid
    * @param level the level of the pyramid for which an NNF is being generated
    * @param make_reverse_nnf indicates whether a reverse or forward nnf is
@@ -35,9 +37,12 @@ public:
    * @return true if patch matching succeeds; otherwise false
    */
   bool patchMatch(const Configuration &configuration, NNF &nnf,
-                  const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int numIterations,
-                  int level, bool makeReverseNNF, bool initRandom, const NNF *const blacklist = nullptr) {
-    implementationOfPatchMatch(configuration, nnf, pyramid, numIterations, level, makeReverseNNF, initRandom, blacklist);
+                  const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int level,
+                  bool makeReverseNNF, bool initRandom, NNFError &nnfError, bool initError,
+                  std::vector<float> &omega, const ImageDimensions omegaDimensions, NNF *const blacklist = nullptr) {
+    return implementationOfPatchMatch(configuration, nnf, pyramid, level,
+                                      makeReverseNNF, initRandom, nnfError, initError,
+                                      omega, omegaDimensions, blacklist);
   }
 
 protected:
@@ -46,8 +51,8 @@ protected:
    * currently doesn't do any error checks, but I included it so that
    * PatchMatcher's format is the same as that of Downscaler, NNFUpscaler, etc.
    * @param configuration the configuration StyLit is running
-   * @param nnf the NNF that should be improved with PatchMatch, size of domain images,
-   *        maps to indices in codomain images
+   * @param nnf the NNF that should be improved with PatchMatch, size of domain
+   * images, maps to indices in codomain images
    * @param pyramid the image pyramid
    * @param level the level of the pyramid for which an NNF is being generated
    * @param makeReverseNNF indicates whether a reverse or forward nnf is
@@ -59,9 +64,11 @@ protected:
    * have already been mapped shouldn't be mapped again.
    * @return true if patch matching succeeds; otherwise false
    */
-  virtual bool implementationOfPatchMatch(const Configuration &configuration, NNF &nnf,
-                                          const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int numIterations,
-                                          int level, bool makeReverseNNF, bool initRandom, const NNF *const blacklist = nullptr) = 0;
+  virtual bool implementationOfPatchMatch(
+      const Configuration &configuration, NNF &nnf,
+      const Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int level,
+      bool makeReverseNNF, bool initRandom, NNFError &nnfError, bool initError,
+      std::vector<float> &omega, const ImageDimensions omegaDimensions, NNF *const blacklist = nullptr) = 0;
 };
 
 #endif // PATCHMATCHER_H

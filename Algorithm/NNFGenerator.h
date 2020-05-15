@@ -4,6 +4,8 @@
 #include "Pyramid.h"
 #include "PyramidLevel.h"
 
+#include <QtGlobal>
+
 struct Configuration;
 
 /**
@@ -26,12 +28,25 @@ public:
    * that of Downscaler, NNFUpscaler, etc.
    * @param configuration the configuration StyLit is running
    * @param pyramid the image pyramid
-   * @param level the level of the pyramid for which the forward NNF is being generated
+   * @param level the level of the pyramid for which the forward NNF is being
+   * generated
    * @return true if NNF generation succeeds; otherwise false
    */
   bool generateNNF(const Configuration &configuration,
-                   Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int level) {
-    return implementationOfGenerateNNF(configuration, pyramid, level);
+                   Pyramid<T, numGuideChannels, numStyleChannels> &pyramid,
+                   int level, std::vector<float> &budgets) {
+    // The pyramid level must be valid.
+    Q_ASSERT(level >= 0 && level < int(pyramid.levels.size()));
+
+    // The NNFs must be properly initialized.
+    Q_ASSERT(pyramid.levels[level].forwardNNF.sourceDimensions.area() > 0);
+    Q_ASSERT(pyramid.levels[level].forwardNNF.targetDimensions.area() > 0);
+    Q_ASSERT(pyramid.levels[level].reverseNNF.sourceDimensions ==
+             pyramid.levels[level].forwardNNF.sourceDimensions);
+    Q_ASSERT(pyramid.levels[level].reverseNNF.sourceDimensions ==
+             pyramid.levels[level].forwardNNF.targetDimensions);
+
+    return implementationOfGenerateNNF(configuration, pyramid, level, budgets);
   }
 
 protected:
@@ -42,11 +57,14 @@ protected:
    * as an argument as well.
    * @param configuration the configuration StyLit is running
    * @param pyramid the image pyramid
-   * @param level the level of the pyramid for which the forward NNF is being generated
+   * @param level the level of the pyramid for which the forward NNF is being
+   * generated
    * @return true if NNF generation succeeds; otherwise false
    */
-  virtual bool implementationOfGenerateNNF(const Configuration &configuration,
-                                           Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int level) = 0;
+  virtual bool implementationOfGenerateNNF(
+      const Configuration &configuration,
+      Pyramid<T, numGuideChannels, numStyleChannels> &pyramid, int level,
+      std::vector<float> &budgets) = 0;
 };
 
 #endif // NNFGENERATOR_H

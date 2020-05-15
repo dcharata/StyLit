@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cfloat>
 #include <cstring>
+#include <iostream>
 
 #ifdef __APPLE__
   #include <dispatch/dispatch.h>
@@ -38,14 +39,14 @@ A2f nnfError(const A2V2i& NNF,
              FUNC         patchError)
 {
   A2f E(size(NNF));
-  
-  #pragma omp parallel for schedule(static)
+
+  //#pragma omp parallel for schedule(static)
   for(int y=0;y<NNF.height();y++)
   for(int x=0;x<NNF.width();x++)
   {
     E(x,y) = patchError(patchWidth,V2i(x,y),NNF(x,y),FLT_MAX);
   }
-  
+
   return E;
 }
 
@@ -258,13 +259,15 @@ void resampleCPU(      Array2<Vec<N,T>>& O,
                  const Array2<Vec<N,T>>& I)
 {
   const float s = float(I.width())/float(O.width());
-  
+
   for(int y=0;y<O.height();y++)
   for(int x=0;x<O.width();x++)
   {
     O(x,y) = sampleBilinear(I,s*float(x),s*float(y));
   }
 }
+
+int calls = 0;
 
 template<int NS,int NG,typename T>
 struct PatchSSD_Split
@@ -291,11 +294,12 @@ struct PatchSSD_Split
     targetGuide(targetGuide),sourceGuide(sourceGuide),
     styleWeights(styleWeights),guideWeights(guideWeights) {}
 
-  float operator()(const int   patchSize,           
+  float operator()(const int   patchSize,
                    const V2i   txy,
                    const V2i   sxy,
                    const float ebest)
   {
+    calls += 1;
     const int tx = txy(0);
     const int ty = txy(1);
     const int sx = sxy(0);
@@ -303,7 +307,7 @@ struct PatchSSD_Split
 
     const int r = patchSize/2;
     float error = 0;
-  
+
     if(tx-r>=0 && tx+r<targetStyle.width() &&
        ty-r>=0 && ty+r<targetStyle.height())
     {
@@ -333,11 +337,11 @@ struct PatchSSD_Split
             ptrTg++;
             ptrSg++;
           }
-        }        
+        }
         ptrTs += ofsTs;
         ptrSs += ofsSs;
         ptrTg += ofsTg;
-        ptrSg += ofsSg;        
+        ptrSg += ofsSg;
         if(error>ebest) { break; }
       }
     }
@@ -367,7 +371,6 @@ struct PatchSSD_Split
         }
       }
     }
-
     return error;
   }
 };
@@ -470,7 +473,7 @@ void copy(void** out_dst,const Array2<T>& src)
 void updateOmega(A2i& Omega,const V2i& sizeA,const int patchWidth,const V2i& axy,const V2i& bxy,const int incdec)
 {
   const int r = patchWidth/2;
-  
+
   int* ptr = (int*)&Omega(bxy(0)-r,bxy(1)-r);
   const int ofs = (Omega.width()-patchWidth);
 
@@ -488,7 +491,7 @@ void updateOmega(A2i& Omega,const V2i& sizeA,const int patchWidth,const V2i& axy
 static int patchOmega(const int patchWidth,const V2i& bxy,const A2i& Omega)
 {
   const int r = patchWidth/2;
-  
+
   int sum = 0;
 
   const int* ptr = (int*)&Omega(bxy(0)-r,bxy(1)-r);
@@ -503,7 +506,9 @@ static int patchOmega(const int patchWidth,const V2i& bxy,const A2i& Omega)
     }
     ptr += ofs;
   }
-
+  if ((std::rand() % 1000000) == 0) {
+    std::cout << "count " << sum << std::endl;
+  }
   return sum;
 }
 
@@ -512,7 +517,6 @@ bool tryPatch(FUNC patchError,const V2i& sizeA,int patchWidth,const V2i& axy,con
 {
   const float curOcc = (float(patchOmega(patchWidth,N(axy),Omega))/float(patchWidth*patchWidth))/omegaBest;
   const float newOcc = (float(patchOmega(patchWidth,   bxy,Omega))/float(patchWidth*patchWidth))/omegaBest;
-    
   const float curErr = E(axy);
   const float newErr = patchError(patchWidth,axy,bxy,curErr+lambda*curOcc);
 
@@ -540,19 +544,19 @@ void patchmatch(const V2i&  sizeA,
                 A2i&   Omega)
 {
   const int w = patchWidth;
-    
+
   E = nnfError(N,patchWidth,patchError);
-  
+
   const float sra = 0.5f;
-  
+
   std::vector<int> irad;
-  
+
   irad.push_back((sizeB(0) > sizeB(1) ? sizeB(0) : sizeB(1)));
-  
+
   while (irad.back() != 1) irad.push_back(int(std::pow(sra, int(irad.size())) * irad[0]));
-  
+
   const int nir = int(irad.size());
-  
+
 #ifdef __APPLE__
   dispatch_queue_t gcdq = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH,0);
   const int numThreads_ = 8;
@@ -577,15 +581,15 @@ void patchmatch(const V2i&  sizeA,
   for (int iter = 0; iter < numIters; iter++)
   {
     const int iter_seed = rand();
-    
+
 #ifdef __APPLE__
     dispatch_apply(numTiles,gcdq,^(size_t blockIdx)
 #else
-    #pragma omp parallel num_threads(numTiles)
+    //#pragma omp parallel num_threads(numTiles)
 #endif
     {
       const bool odd = (iter%2 == 0);
-      
+
 #ifdef __APPLE__
       const int threadId = blockIdx;
 #else
@@ -594,67 +598,67 @@ void patchmatch(const V2i&  sizeA,
 
       const int _y0 = threadId*tileHeight;
       const int _y1 = threadId==numTiles-1 ? sizeA(1) : std::min(_y0+tileHeight,sizeA(1));
-      
+
       const int q  = odd ? 1 : -1;
       const int x0 = odd ? 0 : sizeA(0)-1;
       const int y0 = odd ? _y0 : _y1-1;
       const int x1 = odd ? sizeA(0) : -1;
       const int y1 = odd ? _y1 : _y0-1;
-      
+
       for (int y = y0; y != y1; y += q)
       for (int x = x0; x != x1; x += q)
-      {        
+      {
         if (odd ? (x > 0) : (x < sizeA(0)-1))
         {
           V2i n = N(x-q,y); n[0] += q;
-          
+
           if (odd ? (n[0] < sizeB(0)-w/2) : (n[0] >= w/2))
           {
             tryPatch(patchError,sizeA,w,V2i(x,y),n,N,E,Omega,omegaBest,lambda);
           }
         }
-        
+
         if (odd ? (y > 0) : (y <sizeA(1)-1))
         {
           V2i n = N(x,y-q); n[1] += q;
-          
+
           if (odd ? (n[1] < sizeB(1)-w/2) : (n[1] >= w/2))
           {
             tryPatch(patchError,sizeA,w,V2i(x,y),n,N,E,Omega,omegaBest,lambda);
           }
         }
-           
+
         #define RANDI(u) (18000 * ((u) & 65535) + ((u) >> 16))
 
         unsigned int seed = (x | (y<<11)) ^ iter_seed;
         seed = RANDI(seed);
-      
+
         const V2i pix0 = N(x,y);
         //for (int i = 0; i < nir; i++)
         for (int i = nir-1; i >=0; i--)
         {
           V2i tl = pix0 - V2i(irad[i], irad[i]);
           V2i br = pix0 + V2i(irad[i], irad[i]);
-          
+
           tl = std::max(tl,V2i(w/2,w/2));
           br = std::min(br,sizeB-V2i(w/2,w/2));
-          
+
           const int _rndX = RANDI(seed);
           const int _rndY = RANDI(_rndX);
           seed=_rndY;
-          
+
           const V2i n = V2i
           (
             tl[0] + (_rndX % (br[0]-tl[0])),
             tl[1] + (_rndY % (br[1]-tl[1]))
           );
-        
+
           tryPatch(patchError,sizeA,w,V2i(x,y),n,N,E,Omega,omegaBest,lambda);
         }
 
         #undef RANDI
       }
-    } 
+    }
 #ifdef __APPLE__
     );
 #endif
@@ -733,7 +737,7 @@ void ebsynthCpu(int    numStyleChannels,
   if (targetModulationData)
   {
     pyramid[levelCount-1].targetModulation = Array2<Vec<NG,unsigned char>>(V2i(pyramid[levelCount-1].targetWidth,pyramid[levelCount-1].targetHeight));
-    copy(&pyramid[levelCount-1].targetModulation,targetModulationData); 
+    copy(&pyramid[levelCount-1].targetModulation,targetModulationData);
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -755,7 +759,7 @@ void ebsynthCpu(int    numStyleChannels,
       //pyramid[level].NNF2         = Array2<Vec<2,int>>(levelTargetSize);
       pyramid[level].Omega        = Array2<int>(levelSourceSize);
       pyramid[level].E            = Array2<float>(levelTargetSize);
-   
+
       if (level<levelCount-1)
       {
         pyramid[level].sourceStyle  = Array2<Vec<NS,unsigned char>>(levelSourceSize);
@@ -780,7 +784,7 @@ void ebsynthCpu(int    numStyleChannels,
                                         patchSize,
                                         V2i(pyramid[level].targetWidth,pyramid[level].targetHeight),
                                         V2i(pyramid[level].sourceWidth,pyramid[level].sourceHeight));
-        
+
         pyramid[level-1].NNF = A2V2i();
       }
       else
@@ -878,7 +882,7 @@ void ebsynthCpu(int    numStyleChannels,
                                                          pyramid[level].sourceGuide,
                                                          styleWeightsVec,
                                                          guideWeightsVec),
-                     uniformityWeight,                             
+                     uniformityWeight,
                      numPatchMatchItersPerLevel[level],
                      -1,
                      pyramid[level].NNF,
@@ -888,7 +892,7 @@ void ebsynthCpu(int    numStyleChannels,
       }
       /*
       else
-      {       
+      {
         if (targetModulationData)
         {
           krnlEvalErrorPass<<<numBlocks,threadsPerBlock>>>(patchSize,
@@ -914,7 +918,7 @@ void ebsynthCpu(int    numStyleChannels,
                                                            pyramid[level].NNF,
                                                            pyramid[level].E);
         }
-        checkCudaError( cudaDeviceSynchronize() );        
+        checkCudaError( cudaDeviceSynchronize() );
       }
       */
       {
@@ -954,9 +958,8 @@ void ebsynthCpu(int    numStyleChannels,
         */
       }
     }
-
     if (level==levelCount-1 && (extraPass3x3==0 || (extraPass3x3!=0 && inExtraPass)))
-    {      
+    {
       if (outputNnfData!=NULL) { copy(&outputNnfData,pyramid[level].NNF); }
       copy(&outputImageData,pyramid[level].targetStyle);
     }

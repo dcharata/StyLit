@@ -106,8 +106,8 @@ bool test_hyperbolic_fitting(int num_pixels) {
   std::cout << "ground-truth parameters: "
             << "\ta: " << gt_params(0) << "\tb: " << gt_params(1) << std::endl;
 
-  double adiffpercentage = fabsf(gt_params(0) - params(0)) / gt_params(0);
-  double bdiffpercentage = fabsf(gt_params(1) - params(1)) / gt_params(1);
+  double adiffpercentage = std::abs(gt_params(0) - params(0)) / gt_params(0);
+  double bdiffpercentage = std::abs(gt_params(1) - params(1)) / gt_params(1);
 
   if (adiffpercentage < 0.1 && bdiffpercentage < 0.1) {
     std::cout << "status: passed" << std::endl;
@@ -159,7 +159,7 @@ bool TestErrorBudget::run() {
   // runtime
   start = high_resolution_clock::now();
   std::vector<std::pair<int, float>> vecerror;
-  calc.calculateErrorBudget(configuration, vecerror, nnferror, errorBudget);
+  //calc.calculateErrorBudget(configuration, vecerror, nnferror, 1, errorBudget);
   stop = high_resolution_clock::now();
   duration = duration_cast<milliseconds>(stop - start);
   std::cout << "runtime: " << duration.count() << " milliseconds" << std::endl;
