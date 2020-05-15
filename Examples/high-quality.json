@@ -1,0 +1,36 @@
+{
+  "inputs": {
+    "sourceGuideImagePaths": [
+      "/home/davidcharatan/Documents/StyLitBin/input/demo_sphere/small_full.png",
+      "/home/davidcharatan/Documents/StyLitBin/input/demo_sphere/small_direct_diffuse.png",
+      "/home/davidcharatan/Documents/StyLitBin/input/demo_sphere/small_spec.png",
+      "/home/davidcharatan/Documents/StyLitBin/input/demo_sphere/small_mask.png"
+    ],
+    "targetGuideImagePaths": [
+      "/home/davidcharatan/Documents/StyLitBin/input/demo_torus/small_full.png",
+      "/home/davidcharatan/Documents/StyLitBin/input/demo_torus/small_direct_diffuse.png",
+      "/home/davidcharatan/Documents/StyLitBin/input/demo_torus/small_direct_spec.png",
+      "/home/davidcharatan/Documents/StyLitBin/input/demo_torus/small_mask.png"
+    ],
+    "sourceStyleImagePaths": ["/home/davidcharatan/Documents/StyLitBin/input/demo_sphere/demo_style.png"]
+  },
+  "outputs": {
+    "targetStyleImagePaths": [
+      "test/original_src/examples/lowres_1/bin/target_style.png"
+    ]
+  },
+  "settings": {
+    "guideImageFormats": ["rgb", "rgb", "bw", "bw"],
+    "styleImageFormats": ["rgb"],
+    "guideImageWeights": [2, 2, 4, 4],
+    "styleImageWeights": [1],
+    "patchSize": 5,
+    "numPatchMatchIterations": 6,
+    "numPyramidLevels": 6,
+    "numOptimizationIterationsPerPyramidLevel": 6,
+    "nnfGenerationStoppingCriterion": 0.95,
+    "coordinatorType": "CUDA",
+    "omegaWeight": 0.02,
+    "maskLevelOptimization": 1
+  }
+}
