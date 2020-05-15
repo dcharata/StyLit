@@ -84,12 +84,16 @@ slots:
   void runStyLitCPU();
   void startStyLit();
   void updateCheckBox();
+  void updateCropRegion();
 
 private:
   void updateStyLitGUILabel();
 
   Configuration configuration;
   QPixmap originalPixmap;
+  QPixmap displayPixmap;
+  QPainter *paint;
+  QPen *pen;
 
   QLabel *screenshotLabel;
   QSpinBox *delaySpinBox;

@@ -100,6 +100,15 @@ StyLitGUI::StyLitGUI(Configuration configuration)
   connect(delaySpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this,
           &StyLitGUI::updateCheckBox);
 
+  connect(X, QOverload<int>::of(&QSpinBox::valueChanged), this,
+          &StyLitGUI::updateCropRegion);
+  connect(Y, QOverload<int>::of(&QSpinBox::valueChanged), this,
+          &StyLitGUI::updateCropRegion);
+  connect(W, QOverload<int>::of(&QSpinBox::valueChanged), this,
+          &StyLitGUI::updateCropRegion);
+  connect(H, QOverload<int>::of(&QSpinBox::valueChanged), this,
+          &StyLitGUI::updateCropRegion);
+
   hideThisWindowCheckBox =
       new QCheckBox(tr("Hide This Window"), optionsGroupBox);
 
@@ -132,6 +141,15 @@ StyLitGUI::StyLitGUI(Configuration configuration)
   mainLayout->addLayout(buttonsLayout);
 
   delaySpinBox->setValue(5);
+
+  originalPixmap = screen->grabWindow(0);
+
+  X->setValue(50);
+  Y->setValue(50);
+  W->setValue(200);
+  H->setValue(200);
+
+  updateCropRegion();
 
   setWindowTitle(tr("StyLitGUI"));
   resize(300, 200);
@@ -190,6 +208,17 @@ void StyLitGUI::updateCheckBox() {
   } else {
     hideThisWindowCheckBox->setDisabled(false);
   }
+}
+
+void StyLitGUI::updateCropRegion() {
+  displayPixmap = screen->grabWindow(0);
+  paint = new QPainter(&displayPixmap);
+  paint->setPen(*(new QColor(255, 0, 0, 255)));
+  if (X->value() > 0 && Y->value() > 0 && W->value() > 0 && H->value() > 0)
+    paint->drawRect(X->value(), Y->value(), W->value(), H->value());
+  screenshotLabel->setPixmap(displayPixmap.scaled(
+      screenshotLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+  paint->end();
 }
 
 void StyLitGUI::updateStyLitGUILabel() {
