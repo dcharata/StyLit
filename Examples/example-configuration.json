@@ -20,7 +20,7 @@
     ]
   },
   "settings": {
-    "guideImageFormats": ["rgb", "bw", "rgb", "rgb"],
+    "guideImageFormats": ["rgb", "rgb", "rgb", "bw"],
     "styleImageFormats": ["rgb"],
     "guideImageWeights": [2, 2, 2, 2],
     "styleImageWeights": [1],

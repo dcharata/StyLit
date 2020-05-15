@@ -69,6 +69,8 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
 
   NNF::randomize<T>(reverse.levels[coarsestLevel], random, a.levels[coarsestLevel],
                     b.levels[coarsestLevel], input.patchSize, weights);
+  NNF::randomize<T>(forward.levels[coarsestLevel], random, b.levels[coarsestLevel],
+                    a.levels[coarsestLevel], input.patchSize, weights);
   Applicator::apply<T>(forward.levels[coarsestLevel], b.levels[coarsestLevel],
                        a.levels[coarsestLevel], input.b.numChannels,
                        input.b.numChannels + input.bPrime.numChannels, input.patchSize);
@@ -84,6 +86,18 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
     Image<NNFEntry> &curForward = forward.levels[level];
     Image<T> &curA = a.levels[level];
     Image<T> &curB = b.levels[level];
+
+    // Generates the forward NNF used to complete the forward NNF.
+    Image<NNFEntry> tempForward(curForward.rows, curForward.cols, 1);
+    tempForward.allocate();
+    if (level == coarsestLevel) {
+      NNF::randomize(tempForward, random, curB, curA, input.patchSize, weights);
+    } else {
+      NNF::upscale(forward.levels[level + 1], tempForward, input.patchSize);
+      NNF::recalculateErrors(tempForward, curB, curA, input.patchSize, weights);
+    }
+    PatchMatch::run(tempForward, nullptr, curB, curA, random, input.patchSize,
+                    NUM_PATCH_MATCH_ITERATIONS, weights);
 
     for (int optimization = 0; optimization < NUM_OPTIMIZATIONS_PER_LEVEL; optimization++) {
       // Invalidates the forward NNF.
@@ -120,19 +134,8 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
       printf("StyLitCUDA: NNF is %f percent full (target: %f percent).\n", fractionFilled * 100.f,
              STOPPING_THRESHOLD * 100.f);
 
-      // Generates a forward NNF and uses it to fill the remaining entries in the NNF.
-      Image<NNFEntry> tempForward(curForward.rows, curForward.cols, 1);
-      tempForward.allocate();
-      if (level == coarsestLevel) {
-        NNF::randomize(tempForward, random, curB, curA, input.patchSize, weights);
-      } else {
-        NNF::upscale(forward.levels[level + 1], tempForward, input.patchSize);
-        NNF::recalculateErrors(tempForward, curB, curA, input.patchSize, weights);
-      }
-      PatchMatch::run(tempForward, nullptr, curB, curA, random, input.patchSize,
-                      NUM_PATCH_MATCH_ITERATIONS, weights);
+      // Fills the remaining entries in the NNF.
       ReverseToForwardNNF::fill(tempForward, curForward);
-      tempForward.free();
 
       if (optimization != NUM_OPTIMIZATIONS_PER_LEVEL - 1) {
         // Updates B' and stays on this pyramid level.
@@ -159,6 +162,7 @@ Coordinator<T>::Coordinator(InterfaceInput<T> &input)
       }
       bestReverseNNF.free();
     }
+    tempForward.free();
   }
 
   // Copies B' back to the caller.

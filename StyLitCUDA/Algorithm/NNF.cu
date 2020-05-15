@@ -1,5 +1,6 @@
 #include "NNF.cuh"
 
+#include "../EBSynth/Omega.cuh"
 #include "../Utilities/Coordinates.cuh"
 #include "../Utilities/Utilities.cuh"
 #include "Error.cuh"
