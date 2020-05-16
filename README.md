@@ -46,3 +46,11 @@ The master branch contains only the final CPU implementation of StyLit and EbSyn
 The CUDA implementation of the program is kept in its own separate branch, `dcharatan/cudaWithWeights`. The final 
 live demo version using CUDA is in the branch `cudaLiveDemo`. The final live demo version for the CPU is inthe branch 
 `LiverDemoVersion_1`.
+
+## References
+Fišer, Jakub, et al. "StyLit: illumination-guided example-based stylization of 3D renderings." ACM Transactions on Graphics (TOG) 35.4 (2016): 1-11.
+
+Hertzmann, Aaron, et al. "Image analogies." Proceedings of the 28th annual conference on Computer graphics and interactive techniques. 2001.
+
+![](Examples/title.png)
+
