@@ -73,6 +73,10 @@ The final live demo version using CUDA is in the branch `cudaLiveDemo`. The fina
 ![](Examples/results2.png)
 ![](Examples/results3.png)
 
+## Speed vs Quality
+
+![](Examples/Screenshot\ from\ 2020-05-25\ 02:05:09.png)
+
 ## References
 Fišer, Jakub, et al. "StyLit: illumination-guided example-based stylization of 3D renderings." ACM Transactions on Graphics (TOG) 35.4 (2016): 1-11.
 
